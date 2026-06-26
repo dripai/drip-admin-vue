@@ -61,6 +61,9 @@
    - 退出登录。
    - token 存储。
    - token 过期处理。
+   - Sa-Token 单 token 会话。
+   - 活跃续期状态展示和过期处理。
+   - 设备类型自动识别或由具体客户端固定写入。
    - 获取当前用户信息。
    - 获取当前用户菜单和权限码。
    - 修改当前用户密码。
@@ -382,6 +385,8 @@ Axios 封装要求：
 - 统一创建一个 request 实例。
 - 统一设置 baseURL、timeout、headers。
 - 统一处理 token 注入、业务错误、HTTP 错误、401、403。
+- 不实现 refresh token 和请求队列重放。
+- 有效请求由后端完成活跃续期，前端只保存登录响应中的 expireAt、idleTimeout、maxSessionDuration、deviceType。
 - API 模块只能调用统一 request 实例，不允许页面直接调用 axios。
 
 不要设计：
@@ -405,14 +410,15 @@ RBAC 规则：
 8. 前端按钮显示基于 permissionCode 判断，后端接口仍必须校验同一权限码。
 
 必须实现：
-1. 登录后保存 token。
-2. 调用 `GET /api/auth/me` 拉取当前用户信息、角色、菜单树和权限码。
-3. 不再单独请求菜单树或权限码接口。
-4. 根据菜单树生成动态路由。
-5. 根据权限码控制按钮显示。
-6. 路由守卫校验登录状态和路由权限。
-7. 退出登录清理 token、用户信息、菜单、权限码。
-8. 菜单图标根据后端返回的 icon key 通过 IconRenderer 统一渲染。
+1. 登录时自动携带 deviceType，deviceType 由前端运行端自动设置或由具体客户端固定写入。
+2. 登录后保存 token、expireAt、idleTimeout、maxSessionDuration、deviceType。
+3. 调用 `GET /api/auth/me` 拉取当前用户信息、角色、菜单树和权限码。
+4. 不再单独请求菜单树或权限码接口。
+5. 根据菜单树生成动态路由。
+6. 根据权限码控制按钮显示。
+7. 路由守卫校验登录状态和路由权限。
+8. 退出登录清理 token、用户信息、菜单、权限码和会话时间字段。
+9. 菜单图标根据后端返回的 icon key 通过 IconRenderer 统一渲染。
 
 规则：
 - 前端权限只负责显示控制和路由拦截。
@@ -423,6 +429,12 @@ RBAC 规则：
 - 未匹配路由显示 404。
 - 已登录用户访问登录页应跳转首页。
 - token 失效应跳转登录页。
+- 默认不使用 access token + refresh token 双 token 机制。
+- 前端收到 401 后清理登录态并跳转登录页。
+- PC 后台、移动端、条码枪 / PDA 或其他客户端登录统一使用同一套 token 处理逻辑，通过 deviceType 区分终端。
+- deviceType 由前端运行端自动设置，不在登录页提供手动选择。
+- deviceType 不限制为固定枚举，客户端传什么值，在线用户就展示什么值。
+- deviceType 仅用于会话识别、在线用户展示和日志追踪，不作为权限判断依据。
 
 十、状态管理
 
@@ -430,6 +442,10 @@ RBAC 规则：
 
 1. authStore
    - token。
+   - expireAt。
+   - idleTimeout。
+   - maxSessionDuration。
+   - deviceType。
    - login。
    - logout。
    - refreshCurrentUser。
@@ -720,6 +736,7 @@ RBAC 规则：
 表格列：
 - 用户名。
 - 姓名。
+- 设备类型。
 - IP。
 - userAgent。
 - 登录时间。
@@ -732,6 +749,7 @@ RBAC 规则：
 
 规则：
 - 在线用户数据来自后端会话或 token 存储。
+- 在线用户列表直接展示客户端上报的 deviceType 原始值，不做额外文案映射。
 - 强制下线必须二次确认。
 - 不能强制下线当前登录用户，除非后端明确允许。
 

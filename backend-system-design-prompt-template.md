@@ -130,7 +130,17 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 获取当前用户菜单和权限码
 
 要求：
-- 登录成功返回 token 和 token 过期时间。
+- 默认不使用 access token + refresh token 双 token 机制。
+- 使用 Sa-Token 单 token 会话机制，支持活跃续期、最大会话时长、在线用户查看和强制下线。
+- 支持设备类型 deviceType，用于区分电脑后台、移动端、条码枪 / PDA 或其他客户端。
+- 登录请求必须携带 deviceType，deviceType 由客户端自动设置或由具体客户端固定写入，不允许用户手动选择。
+- deviceType 是客户端上报的字符串，不固定为后端枚举。
+- 后端只校验 deviceType 非空、长度和字符安全，不将 deviceType 作为权限判断依据。
+- 登录成功返回 token、expireAt、idleTimeout、maxSessionDuration、deviceType。
+- 有效业务请求触发活跃续期，用户持续操作时保持在线。
+- 超过 idleTimeout 未操作则会话过期。
+- 超过 maxSessionDuration 必须重新登录，不允许无限续期。
+- 前端收到 401 后清理登录态并跳转登录页。
 - `GET /api/auth/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
 - 密码必须加密存储，不允许明文。
 - 登录失败要记录失败原因，但响应不能泄露敏感信息。
@@ -367,7 +377,6 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - requestParams
 - responseStatus
 - errorMessage
-- userAgent
 - costMs
 - createdAt
 
@@ -419,6 +428,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - username
 - realName
 - tokenId
+- deviceType
 - ip
 - userAgent
 - loginAt
@@ -427,6 +437,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 
 规则：
 - 在线用户数据来自 Sa-Token 会话和 Redis。
+- 在线用户列表必须直接展示客户端上报的 deviceType 原始值，不做额外文案映射。
 - 强制下线必须校验权限。
 - 默认不允许强制下线当前登录用户。
 - token 失效或用户退出后不应继续出现在在线用户列表。
@@ -586,7 +597,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 查询、详情、列表刷新等高频只读访问不写入数据库日志表，可写入文件日志。
 - 使用注解或拦截器记录业务操作日志。
 - 可配置模块名称和操作类型。
-- 自动记录操作人、IP、请求路径、耗时、结果。
+- 自动记录操作人、请求路径、耗时、结果。
 - 敏感字段脱敏。
 - 日志写入失败不能影响主业务，但需要记录内部文件日志。
 - 不单独设计额外日志模块，业务操作日志承担关键操作追踪职责。
@@ -760,7 +771,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 
 必须覆盖：
 1. 密码加密
-2. token 存储与过期
+2. Sa-Token 单 token 会话、活跃续期、空闲超时和最大会话时长
 3. 防止越权访问
 4. 参数校验
 5. SQL 注入防护
@@ -1007,7 +1018,11 @@ P1：常用增强
 
 1. 登录响应结构
    - token。
-   - token 过期时间。
+   - expireAt。
+   - idleTimeout。
+   - maxSessionDuration。
+   - deviceType。
+   - 不返回 refreshToken。
 
 2. 当前用户信息结构
    - 接口：GET /api/auth/me。
@@ -1069,7 +1084,6 @@ P1：常用增强
    - requestParams。
    - responseStatus。
    - errorMessage。
-   - userAgent。
    - costMs。
    - createdAt。
 
