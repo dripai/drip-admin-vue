@@ -95,7 +95,7 @@ async function run(row: JobItem) {
   message.success('操作成功');
 }
 async function showRecords(row: JobItem) {
-  const res = await queryJobRecords(row.id, { page: 1, pageSize: 20 });
+  const res = await queryJobRecords(row.id, { page: 1, pageSize: 10 });
   records.value = res.list;
   recordsOpen.value = true;
 }

@@ -17,5 +17,5 @@ public class PageQuery {
     public void setPageSize(Integer pageSize) { this.pageSize = pageSize; }
 
     public int pageOrDefault() { return page == null || page < 1 ? 1 : page; }
-    public int pageSizeOrDefault() { return pageSize == null ? 20 : Math.min(100, Math.max(1, pageSize)); }
+    public int pageSizeOrDefault() { return pageSize == null ? 10 : Math.min(100, Math.max(1, pageSize)); }
 }

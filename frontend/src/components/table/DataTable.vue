@@ -35,9 +35,13 @@ watch(
 );
 
 const visibleColumns = computed(() =>
-  props.columns.filter((column) =>
-    checkedKeys.value.includes(String(column.dataIndex || column.key)),
-  ),
+  props.columns
+    .filter((column) => checkedKeys.value.includes(String(column.dataIndex || column.key)))
+    .map((column) =>
+      column.dataIndex === 'action'
+        ? { ...column, className: ['table-action-cell', column.className].filter(Boolean).join(' ') }
+        : column,
+    ),
 );
 const columnOptions = computed(() =>
   props.columns.map((column) => ({
@@ -101,6 +105,7 @@ function updateDensity(info: { key: string }) {
     </a-space>
   </div>
   <a-table
+    class="data-table"
     row-key="id"
     :columns="visibleColumns"
     :data-source="dataSource"
@@ -141,5 +146,14 @@ function updateDensity(info: { key: string }) {
 .column-panel :deep(.ant-checkbox-group) {
   display: grid;
   gap: 8px;
+}
+.data-table :deep(.table-action-cell .ant-space) {
+  gap: 2px !important;
+}
+.data-table :deep(.table-action-cell .ant-btn-link) {
+  padding-inline: 4px;
+}
+.data-table :deep(.table-action-cell .ant-space-item) {
+  line-height: 1;
 }
 </style>

@@ -134,7 +134,7 @@ export interface LoginLogItem {
   ip: string;
   userAgent: string;
   failureReason?: string;
-  createdAt: string;
+  loginAt: string;
 }
 export interface OperationLogItem {
   id: ID;

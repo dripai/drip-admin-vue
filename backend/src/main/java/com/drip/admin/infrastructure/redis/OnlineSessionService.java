@@ -76,7 +76,7 @@ public class OnlineSessionService {
         rows = filter(rows, "ip", q.get("ip"));
         rows = filter(rows, "deviceType", q.get("deviceType"));
         int page = Math.max(1, AdminUtils.parseInt(q.get("page"), 1));
-        int pageSize = Math.min(100, Math.max(1, AdminUtils.parseInt(q.get("pageSize"), 20)));
+        int pageSize = Math.min(100, Math.max(1, AdminUtils.parseInt(q.get("pageSize"), 10)));
         int from = Math.min(rows.size(), (page - 1) * pageSize);
         int to = Math.min(rows.size(), from + pageSize);
         return new PageResult<>(rows.subList(from, to), rows.size(), page, pageSize);

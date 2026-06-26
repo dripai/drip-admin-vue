@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
+import dayjs from 'dayjs';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import SearchForm from '@/components/form/SearchForm.vue';
 import DataTable from '@/components/table/DataTable.vue';
 import { useTable } from '@/composables/useTable';
 import { getLoginLog, queryLoginLogs } from '@/api/system/log';
+import type { LoginLogItem } from '@/types/system';
 const fields = [
   { label: '用户名', field: 'username', component: 'input' as const },
   {
@@ -25,21 +27,34 @@ const columns: TableColumnType[] = [
   { title: '用户名', dataIndex: 'username' },
   { title: '状态', dataIndex: 'status' },
   { title: 'IP', dataIndex: 'ip' },
-  { title: 'userAgent', dataIndex: 'userAgent' },
+  { title: '客户端', dataIndex: 'userAgent', ellipsis: true },
   { title: '失败原因', dataIndex: 'failureReason' },
-  { title: '创建时间', dataIndex: 'createdAt' },
+  { title: '登录时间', dataIndex: 'loginAt' },
   { title: '操作', dataIndex: 'action' },
 ];
 const detailOpen = ref(false);
 const detail = ref<any>();
-const table = useTable<any, Record<string, unknown>>(
+const table = useTable<LoginLogItem, Record<string, unknown>>(
   queryLoginLogs as any,
   {},
   { storageKey: 'system.loginLog.query' },
 );
-async function openDetail(row: any) {
+async function openDetail(row: LoginLogItem) {
   detail.value = await getLoginLog(row.id);
   detailOpen.value = true;
+}
+function statusText(status: LoginLogItem['status']) {
+  if (status === 'SUCCESS') return '成功';
+  if (status === 'FAILED') return '失败';
+  return '登出';
+}
+function statusColor(status: LoginLogItem['status']) {
+  if (status === 'SUCCESS') return 'green';
+  if (status === 'FAILED') return 'red';
+  return 'default';
+}
+function formatTime(value?: string) {
+  return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '';
 }
 onMounted(table.refresh);
 </script>
@@ -60,7 +75,16 @@ onMounted(table.refresh);
       @change="table.handleTableChange"
       @refresh="table.refresh"
       ><template #bodyCell="{ column, record }"
-        ><template v-if="column.dataIndex === 'action'"
+        ><template v-if="column.dataIndex === 'status'"
+          ><a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag></template
+        ><template v-else-if="column.dataIndex === 'userAgent'"
+          ><a-tooltip :title="record.userAgent"
+            ><span class="user-agent">{{ record.userAgent }}</span></a-tooltip
+          ></template
+        ><template v-else-if="column.dataIndex === 'loginAt'">{{
+          formatTime(record.loginAt)
+        }}</template
+        ><template v-else-if="column.dataIndex === 'action'"
           ><a-button type="link" @click="openDetail(record)">详情</a-button></template
         ></template
       ></DataTable
@@ -73,3 +97,13 @@ onMounted(table.refresh);
     ></PageContainer
   >
 </template>
+<style scoped lang="scss">
+.user-agent {
+  display: inline-block;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+</style>

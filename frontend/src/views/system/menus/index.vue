@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { message } from 'ant-design-vue';
+import type { TableColumnType } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
@@ -51,17 +52,17 @@ const statusOptions = [
   { label: '启用', value: 'ENABLED' },
   { label: '禁用', value: 'DISABLED' },
 ];
-const columns = [
-  { title: '名称', dataIndex: 'name', width: 180 },
-  { title: '类型', dataIndex: 'type', width: 90 },
-  { title: '权限标识', dataIndex: 'permissionCode', width: 180 },
-  { title: '路由路径', dataIndex: 'path', width: 180 },
-  { title: '组件路径', dataIndex: 'component', width: 180 },
-  { title: '图标', dataIndex: 'icon', width: 80 },
-  { title: '显示', dataIndex: 'visible', width: 80 },
-  { title: '排序', dataIndex: 'sort', width: 80 },
-  { title: '状态', dataIndex: 'status', width: 90 },
-  { title: '操作', dataIndex: 'action', width: 170 },
+const columns: TableColumnType[] = [
+  { title: '名称', dataIndex: 'name', width: 220 },
+  { title: '类型', dataIndex: 'type', width: 86 },
+  { title: '权限标识', dataIndex: 'permissionCode' },
+  { title: '路由路径', dataIndex: 'path' },
+  { title: '组件路径', dataIndex: 'component' },
+  { title: '图标', dataIndex: 'icon', width: 56, align: 'center' },
+  { title: '显示', dataIndex: 'visible', width: 62, align: 'center' },
+  { title: '排序', dataIndex: 'sort', width: 64, align: 'center' },
+  { title: '状态', dataIndex: 'status', width: 78, align: 'center' },
+  { title: '操作', dataIndex: 'action', width: 124, align: 'center' },
 ];
 const parentTreeData = computed(() => buildParentOptions(data.value));
 const expandedRowKeys = computed(() => flattenMenuIds(data.value));
@@ -236,7 +237,7 @@ onMounted(load);
           <StatusTag :status="record.status" />
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <a-space>
+          <a-space :size="2">
             <a-button type="link" @click="openEdit(record)">编辑</a-button>
             <ConfirmAction
               :title="record.status === 'ENABLED' ? '禁用' : '启用'"
