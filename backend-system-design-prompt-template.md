@@ -25,30 +25,58 @@
 
 请默认使用一种清晰、主流、适合企业后台的技术栈，并说明选择理由。
 
-推荐技术栈：
-- Java 21 / Java 17
-- Spring Boot 3
-- Spring Security
-- MyBatis-Plus 或 JPA，优先选择一种，不要同时混用
-- PostgreSQL 或 MySQL，优先选择一种
-- Redis，用于 token、缓存、限流、验证码等明确场景
-- Flyway 或 Liquibase，用于数据库版本管理
+固定技术栈：
+- JDK 25
+- Spring Boot 4.1.x
+- Sa-Token 1.45.x，使用 `sa-token-spring-boot4-starter`，用于登录认证、接口鉴权、角色权限、按钮权限、会话管理和强制下线
+- MyBatis-Plus 3.5.x，使用 `mybatis-plus-spring-boot4-starter`，用于 ORM、分页、条件构造、通用 CRUD 和 Mapper 扩展
+- MySQL 8.0，固定作为业务数据库
+- Redis，用于 token 会话、验证码、限流、在线用户和必要缓存
+- Flyway，用于数据库版本管理
 - OpenAPI / Swagger，用于接口文档
 - JUnit 5，用于单元测试
-- Testcontainers 可选，用于集成测试
 
-如果使用其他语言或框架，也必须保持同等工程完整度，包括：
-- 分层架构
-- 统一响应
-- 统一异常
-- 权限控制
-- 参数校验
-- 数据库迁移
-- 日志审计
-- 测试方案
-- 部署方案
+技术栈约束：
+1. 不使用 Spring Security。
+2. 不使用 JPA。
+3. 数据库固定使用 MySQL 8.0，不同时兼容 MySQL 和 PostgreSQL。
+4. 不引入 Testcontainers。
+5. 不设计多套鉴权框架、多套 ORM 或多套数据库适配分支。
+6. 如果依赖版本不兼容或缺少必要依赖，必须返回明确错误，不要切换到替代技术栈。
 
-三、架构分层
+说明：
+- Spring Boot 4 已提供 Java 25 一等支持。
+- Sa-Token 1.45.x 已提供 Spring Boot 4 相关 starter / common 依赖，可用于 Spring Boot 4 项目。
+- MyBatis-Plus 3.5.x 已提供 Spring Boot 4 starter，可用于 Spring Boot 4 项目。
+- MyBatis-Plus 支持多种数据库，但为了减少兼容分支，本模板固定使用 MySQL 8.0。
+
+三、MyBatis-Plus SQL 编写规范
+
+JDK 25 已支持 Java text block。后端项目默认不使用 XML Mapper，SQL 统一放在 Java 代码中，避免 XML 和 Java 双入口维护。
+
+规范：
+1. 基础 CRUD 使用 MyBatis-Plus BaseMapper、IService、LambdaQueryWrapper、LambdaUpdateWrapper。
+2. 简单自定义 SQL 使用 Mapper 接口注解，例如 `@Select`、`@Update`、`@Insert`、`@Delete`。
+3. 多行 SQL 使用 Java text block 编写，保持 SQL 可读。
+4. 动态 SQL 不在注解里拼接复杂字符串，优先使用 MyBatis-Plus Wrapper。
+5. Wrapper 无法表达的复杂动态 SQL 使用 `@SelectProvider`、`@UpdateProvider` 等 Java Provider 类。
+6. 不生成 `src/main/resources/mapper/*.xml`。
+7. 不在 SQL 中使用 `${}` 拼接用户输入。
+8. 排序字段、表名、列名等必须使用后端白名单映射，不能直接接收前端原始字段拼接 SQL。
+
+示例：
+```java
+@Select("""
+    select
+      id, username, real_name, phone, status, created_at
+    from sys_user
+    where deleted = 0
+      and username = #{username}
+    """)
+UserEntity findActiveByUsername(@Param("username") String username);
+```
+
+四、架构分层
 
 请设计清晰的后端分层结构：
 
@@ -65,7 +93,7 @@
 
 3. Domain 层
    - 定义核心业务对象、枚举、领域规则。
-   - 权限、用户状态、菜单类型、数据权限范围等规则应集中表达。
+   - 权限、用户状态、菜单类型、日志类型等规则应集中表达。
 
 4. Repository / Mapper 层
    - 负责数据库访问。
@@ -76,7 +104,7 @@
    - 统一封装 Redis、对象存储、消息队列、邮件短信、第三方接口等基础设施。
    - 没有明确业务需要时，不要引入额外中间件。
 
-四、核心模块
+五、核心模块
 
 请至少设计以下后端模块，并为每个模块说明：
 - 模块职责
@@ -89,7 +117,7 @@
 - 校验规则
 - 错误场景
 - 事务边界
-- 是否需要审计日志
+- 是否需要登录日志或业务操作日志
 
 1. 认证模块
 
@@ -97,12 +125,13 @@
 - 登录
 - 退出登录
 - 获取当前用户信息
-- 刷新 token 可选
+- Sa-Token 会话续期策略
 - 修改当前用户密码
 - 获取当前用户菜单和权限码
 
 要求：
-- 登录成功返回 token、用户基础信息、角色、权限码。
+- 登录成功返回 token 和 token 过期时间。
+- `GET /api/auth/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
 - 密码必须加密存储，不允许明文。
 - 登录失败要记录失败原因，但响应不能泄露敏感信息。
 - 禁用用户不能登录。
@@ -114,7 +143,6 @@
 - POST /api/auth/login
 - POST /api/auth/logout
 - GET /api/auth/me
-- GET /api/auth/permissions
 - PUT /api/auth/password
 
 2. 用户管理模块
@@ -181,7 +209,6 @@
 - 启用 / 禁用角色
 - 配置菜单权限
 - 配置按钮权限
-- 配置数据权限
 - 查看角色关联用户
 
 角色字段：
@@ -189,7 +216,6 @@
 - roleName
 - roleCode
 - status
-- dataScope
 - remark
 - createdAt
 - updatedAt
@@ -307,15 +333,30 @@
 - 同一字典类型下 value 唯一。
 - 被业务引用的字典项删除前必须明确返回错误。
 
-7. 操作日志模块
+7. 日志管理模块
 
 功能：
-- 记录操作日志
-- 日志分页查询
-- 日志详情
-- 按操作人、模块、类型、状态、时间范围查询
+- 记录登录日志
+- 登录日志分页查询
+- 登录日志详情
+- 记录业务操作日志
+- 业务操作日志分页查询
+- 业务操作日志详情
+- 按操作人、模块、类型、状态、时间范围查询业务操作日志
 
-日志字段：
+登录日志字段：
+- id
+- userId
+- username
+- realName
+- loginType
+- status
+- failureReason
+- ip
+- userAgent
+- loginAt
+
+业务操作日志字段：
 - id
 - operatorId
 - operatorName
@@ -326,15 +367,17 @@
 - requestParams
 - responseStatus
 - errorMessage
-- ip
 - userAgent
 - costMs
 - createdAt
 
 要求：
 - 日志只读，不提供普通删除接口。
-- 登录、删除、禁用、授权、重置密码等关键操作必须记录。
+- 登录、登出、登录失败写入登录日志表。
+- 新增、编辑、删除、启用、禁用、授权、重置密码、备份、恢复、手动执行任务等关键变更写入业务操作日志表。
+- 查询、详情、列表刷新等高频只读访问不写入数据库日志表，可写入文件日志。
 - 敏感字段如 password、token、secret 必须脱敏。
+- 业务操作日志承担关键操作追踪职责，不单独设计重复的日志分析模块。
 
 8. 系统配置模块
 
@@ -364,7 +407,98 @@
 - sensitive 配置查询时默认脱敏。
 - 更新配置后刷新配置缓存。
 
-五、通用后端能力
+9. 在线用户模块
+
+功能：
+- 在线用户分页列表
+- 在线用户详情
+- 强制用户下线
+
+字段：
+- userId
+- username
+- realName
+- tokenId
+- ip
+- userAgent
+- loginAt
+- lastActiveAt
+- expireAt
+
+规则：
+- 在线用户数据来自 Sa-Token 会话和 Redis。
+- 强制下线必须校验权限。
+- 默认不允许强制下线当前登录用户。
+- token 失效或用户退出后不应继续出现在在线用户列表。
+
+10. 定时任务模块
+
+功能：
+- 定时任务分页列表
+- 定时任务详情
+- 新增任务
+- 编辑任务
+- 删除任务
+- 启用 / 禁用任务
+- 手动执行任务
+- 执行记录查询
+
+任务字段：
+- id
+- jobName
+- jobCode
+- cronExpression
+- beanName
+- methodName
+- params
+- status
+- remark
+- createdAt
+- updatedAt
+
+执行记录字段：
+- id
+- jobId
+- jobName
+- status
+- startedAt
+- finishedAt
+- costMs
+- errorMessage
+
+规则：
+- jobCode 全局唯一。
+- cronExpression 必须校验格式。
+- 任务调用目标必须来自后端白名单，不允许前端传任意类名或脚本。
+- 手动执行、删除、禁用任务必须记录业务操作日志。
+
+11. 数据库管理模块
+
+功能：
+- 数据库备份列表
+- 创建备份
+- 下载备份
+- 恢复备份
+- 删除备份记录
+
+备份字段：
+- id
+- backupName
+- filePath
+- fileSize
+- status
+- createdBy
+- createdAt
+- remark
+
+规则：
+- 创建备份、恢复备份、删除备份必须校验权限。
+- 恢复备份属于高风险操作，必须记录业务操作日志。
+- 备份文件路径不能由前端传入。
+- 下载备份必须校验权限。
+- 备份与恢复脚本失败时返回明确错误，不静默降级。
+
+六、通用后端能力
 
 必须设计以下公共能力，避免各模块重复实现。
 
@@ -420,34 +554,42 @@
 4. 权限控制
 
 要求：
-- 支持路由权限、按钮权限、数据权限。
+- 使用 Sa-Token 完成登录认证、角色校验和权限码校验。
+- 支持路由 / 页面权限和按钮权限。
 - 使用注解或统一拦截器校验权限码。
 - 权限码命名格式为 module:resource:action。
 - 超级管理员权限逻辑集中处理。
 - 不要在每个接口中手写重复权限判断。
+- 当前通用后台不内置数据权限。
+- 涉及财务、报表、多组织数据隔离等业务时，在具体业务模块中按业务维度单独设计数据权限，不在基础 RBAC 中提前抽象 dataScope。
+- 后续业务数据权限可以通过独立业务权限表、查询条件构造器或业务拦截器扩展，但不得影响当前用户、角色、菜单、按钮权限的基础模型。
 
-5. 数据权限
-
-数据范围：
-- ALL：全部数据
-- DEPT：本部门数据
-- DEPT_AND_CHILD：本部门及子部门数据
-- SELF：本人数据
-- CUSTOM：自定义部门数据
+5. 事务管理
 
 要求：
-- 数据权限在查询层统一注入过滤条件。
-- 不允许前端传入数据权限范围决定可见数据。
-- 管理员操作越权数据时返回 403。
+- 默认启用 Spring 声明式事务管理。
+- 事务边界统一放在 Application / Service 层，Controller 层不声明事务。
+- 涉及新增、编辑、删除、授权、重置密码、启用 / 禁用、菜单权限保存、角色权限保存、系统配置更新、定时任务状态变更、数据库备份恢复等写操作，必须明确事务边界。
+- 查询接口默认不声明事务；存在一致性读取要求的复杂查询可以使用只读事务。
+- 一个业务用例应只有一个清晰的事务入口，避免多个 Service 随意嵌套事务导致边界不清。
+- 事务内不执行耗时外部调用，例如远程 HTTP 请求、文件上传、邮件短信发送、长时间脚本执行。
+- 数据库状态与缓存状态需要保持一致时，缓存刷新、缓存删除、消息通知等副作用应在事务提交后执行。
+- 批量写操作必须明确失败策略：全部回滚或部分成功，并在接口响应中清楚表达。
+- 业务异常和系统异常不能被吞掉；需要回滚的异常必须继续抛出，保证事务可以正确回滚。
+- 业务操作日志应在主业务成功后记录；日志写入失败不能回滚主业务，但必须写入内部文件日志。
 
-6. 审计日志
+6. 日志记录
 
 要求：
-- 使用注解或拦截器记录操作日志。
+- 登录、登出、登录失败记录到登录日志表。
+- 新增、编辑、删除、启用、禁用、授权、重置密码、备份、恢复、手动执行任务等关键变更记录到业务操作日志表。
+- 查询、详情、列表刷新等高频只读访问不写入数据库日志表，可写入文件日志。
+- 使用注解或拦截器记录业务操作日志。
 - 可配置模块名称和操作类型。
 - 自动记录操作人、IP、请求路径、耗时、结果。
 - 敏感字段脱敏。
-- 日志写入失败不能影响主业务，但需要记录内部错误日志。
+- 日志写入失败不能影响主业务，但需要记录内部文件日志。
+- 不单独设计额外日志模块，业务操作日志承担关键操作追踪职责。
 
 7. 字典能力
 
@@ -457,7 +599,7 @@
 - 字典缓存失效策略明确。
 - 业务接口返回字典 value，前端根据字典渲染 label。
 
-8. 文件上传能力，可选
+8. 文件上传能力
 
 只有业务明确需要时才设计。
 
@@ -467,7 +609,7 @@
 - 文件访问权限明确。
 - 不要默认允许任意文件上传。
 
-六、数据库设计要求
+七、数据库设计要求
 
 请输出完整数据库表设计，包括：
 - 表名
@@ -491,7 +633,11 @@
 - sys_dept
 - sys_dict_type
 - sys_dict_item
+- sys_login_log
 - sys_operation_log
+- sys_job
+- sys_job_run_log
+- sys_db_backup
 - sys_config
 
 数据库设计原则：
@@ -503,7 +649,7 @@
 6. 常用查询条件需要索引。
 7. 不要滥用 JSON 字段存核心关系数据。
 
-七、接口设计要求
+八、接口设计要求
 
 每个接口请输出：
 - 接口名称
@@ -517,6 +663,10 @@
 - 业务规则
 
 接口路径规范：
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+- PUT /api/auth/password
 - GET /api/system/users
 - GET /api/system/users/{id}
 - POST /api/system/users
@@ -524,6 +674,57 @@
 - DELETE /api/system/users/{id}
 - PATCH /api/system/users/{id}/status
 - PUT /api/system/users/{id}/roles
+- GET /api/system/roles
+- GET /api/system/roles/{id}
+- POST /api/system/roles
+- PUT /api/system/roles/{id}
+- DELETE /api/system/roles/{id}
+- PATCH /api/system/roles/{id}/status
+- PUT /api/system/roles/{id}/permissions
+- GET /api/system/menus
+- POST /api/system/menus
+- PUT /api/system/menus/{id}
+- DELETE /api/system/menus/{id}
+- PATCH /api/system/menus/{id}/status
+- GET /api/system/depts
+- POST /api/system/depts
+- PUT /api/system/depts/{id}
+- DELETE /api/system/depts/{id}
+- PATCH /api/system/depts/{id}/status
+- GET /api/system/dicts/types
+- POST /api/system/dicts/types
+- PUT /api/system/dicts/types/{id}
+- DELETE /api/system/dicts/types/{id}
+- GET /api/system/dicts/types/{id}/items
+- POST /api/system/dicts/items
+- PUT /api/system/dicts/items/{id}
+- DELETE /api/system/dicts/items/{id}
+- PATCH /api/system/dicts/items/{id}/status
+- GET /api/system/configs
+- POST /api/system/configs
+- PUT /api/system/configs/{id}
+- DELETE /api/system/configs/{id}
+- PATCH /api/system/configs/{id}/status
+- GET /api/system/login-logs
+- GET /api/system/login-logs/{id}
+- GET /api/system/operation-logs
+- GET /api/system/operation-logs/{id}
+- GET /api/system/online-users
+- GET /api/system/online-users/{tokenId}
+- POST /api/system/online-users/{tokenId}/kickout
+- GET /api/system/jobs
+- GET /api/system/jobs/{id}
+- POST /api/system/jobs
+- PUT /api/system/jobs/{id}
+- DELETE /api/system/jobs/{id}
+- PATCH /api/system/jobs/{id}/status
+- POST /api/system/jobs/{id}/run
+- GET /api/system/jobs/{id}/run-logs
+- GET /api/system/database/backups
+- POST /api/system/database/backups
+- GET /api/system/database/backups/{id}/download
+- POST /api/system/database/backups/{id}/restore
+- DELETE /api/system/database/backups/{id}
 
 规范要求：
 1. 查询用 GET。
@@ -534,7 +735,7 @@
 6. 批量操作使用明确的 batch 路径。
 7. 不要把动作藏在 query 参数中。
 
-八、错误码设计
+九、错误码设计
 
 请设计统一错误码体系：
 
@@ -555,7 +756,7 @@
 - 400401：部门存在子节点，不能删除
 - 400501：字典项被引用，不能删除
 
-九、安全设计
+十、安全设计
 
 必须覆盖：
 1. 密码加密
@@ -565,8 +766,8 @@
 5. SQL 注入防护
 6. XSS 输入处理建议
 7. 敏感字段脱敏
-8. 操作日志审计
-9. 登录失败限制可选
+8. 登录日志和业务操作日志
+9. 登录失败限制
 10. CORS 配置
 
 不要设计：
@@ -574,9 +775,9 @@
 - 前端决定权限
 - 接口只靠菜单隐藏做权限控制
 - 日志记录完整 token 或密码
-- 万能管理员绕过所有审计
+- 万能管理员绕过关键业务操作日志
 
-十、测试设计
+十一、测试设计
 
 请输出测试方案：
 
@@ -591,7 +792,10 @@
    - 用户增删改查
    - 角色授权
    - 菜单树查询
-   - 数据权限过滤
+   - 登录日志记录
+   - 业务操作日志记录
+   - 定时任务执行记录
+   - 数据库备份记录
 
 3. 接口测试
    - 正常请求
@@ -607,17 +811,17 @@
    - 软删除过滤
    - 关联表唯一索引
 
-十一、项目目录结构
+十二、项目目录结构
 
 请设计清晰目录结构，例如：
 
-src/main/java/com/example/admin/
+src/main/java/com/drip/admin/
   common/
     response/
     exception/
     validation/
     security/
-    audit/
+    log/
   config/
   modules/
     auth/
@@ -633,6 +837,9 @@ src/main/java/com/example/admin/
       dict/
       config/
       log/
+      online/
+      job/
+      database/
   infrastructure/
     redis/
     storage/
@@ -647,7 +854,7 @@ src/main/resources/
   application-dev.yml
   application-prod.yml
 
-十二、需要输出的最终内容
+十三、需要输出的最终内容
 
 请完整输出以下内容：
 
@@ -672,14 +879,14 @@ src/main/resources/
    - RBAC 模型。
    - 菜单权限。
    - 按钮权限。
-   - 数据权限。
    - 路由与接口权限关系。
 
 6. 公共能力设计
    - 统一响应。
    - 统一异常。
    - 参数校验。
-   - 审计日志。
+   - 登录日志。
+   - 业务操作日志。
    - 字典缓存。
    - 安全控制。
 
@@ -690,7 +897,9 @@ src/main/resources/
    - 登录接口。
    - 用户分页查询。
    - 角色授权保存。
-   - 操作日志注解。
+   - 业务操作日志注解。
+   - 登录日志记录。
+   - Sa-Token 权限校验。
 
 8. 测试方案
    - 单元测试。
@@ -716,10 +925,9 @@ src/main/resources/
 11. MVP 迭代拆分
    - P0：第一版必须完成，缺少则系统不可用。
    - P1：常用增强能力。
-   - P2：后续扩展能力。
    - 每个优先级都必须说明对应模块、接口和验收标准。
 
-十三、额外约束
+十四、额外约束
 
 必须避免以下问题：
 1. 不要只讲微服务、DDD、高并发等概念，必须落到表、接口、字段、权限和代码结构。
@@ -733,7 +941,7 @@ src/main/resources/
 9. 不要省略错误场景。
 10. 不要省略数据库约束。
 
-十四、可运行交付要求
+十五、可运行交付要求
 
 最终结果必须能指导或直接生成一个可运行后台管理系统，不只停留在设计说明。
 
@@ -745,12 +953,12 @@ src/main/resources/
 5. 必要环境变量说明。
 6. 健康检查接口。
 7. Swagger / OpenAPI 访问路径。
-8. 至少覆盖登录、当前用户、菜单权限、用户管理、角色授权、操作日志的测试用例。
+8. 至少覆盖登录、当前用户、菜单权限、用户管理、角色授权、登录日志、业务操作日志的测试用例。
 
 第一版必须形成完整闭环：
-登录 -> 获取当前用户信息 -> 获取菜单权限 -> 用户管理 -> 角色授权 -> 权限生效 -> 操作日志记录。
+登录 -> 获取当前用户信息 -> 获取菜单权限 -> 用户管理 -> 角色授权 -> 权限生效 -> 登录日志和业务操作日志记录。
 
-十五、MVP 优先级
+十六、MVP 优先级
 
 请将功能拆为：
 
@@ -761,7 +969,8 @@ P0：第一版必须完成
 - 角色管理。
 - 菜单与按钮权限管理。
 - 角色授权后权限立即或重新登录后生效。
-- 操作日志记录。
+- 登录日志记录和查询。
+- 业务操作日志记录和查询。
 - 数据库迁移和初始化数据。
 - 统一响应、统一异常、参数校验、权限拦截。
 
@@ -769,17 +978,21 @@ P1：常用增强
 - 部门管理。
 - 字典管理。
 - 系统配置。
-- 数据权限。
 - 登录失败限制。
 - 字典缓存。
-- 接口级审计日志查询。
-
-P2：后续扩展
-- 文件上传。
-- 批量导入导出。
-- 消息通知。
 - 在线用户管理。
-- 更细粒度的审计报表。
+- 定时任务管理。
+- 数据库管理：备份与恢复。
+- 文件上传基础能力预留，不设计具体业务流程。
+- 批量导入 / 导出基础能力预留，不设计具体业务流程。
+
+不单独设置 P2。后续扩展必须先明确业务场景，再进入新的迭代清单。
+
+日志处理原则：
+- 不单独设计额外日志模块或报表模块。
+- 登录日志用于记录登录、登出、登录失败、IP、设备信息等会话事件。
+- 业务操作日志用于记录新增、编辑、删除、启用、禁用、授权、重置密码、备份、恢复、手动执行任务等关键变更事件。
+- 业务操作日志承担关键操作追踪职责。
 
 每个优先级必须输出：
 - 功能范围。
@@ -788,18 +1001,16 @@ P2：后续扩展
 - 权限点。
 - 验收标准。
 
-十六、前后端联调契约
+十七、前后端联调契约
 
 必须明确以下接口响应结构，保证前端可以直接联调：
 
 1. 登录响应结构
    - token。
    - token 过期时间。
-   - 用户基础信息。
-   - 角色编码列表。
-   - 权限码列表。
 
 2. 当前用户信息结构
+   - 接口：GET /api/auth/me。
    - 用户 ID。
    - 用户名。
    - 姓名。
@@ -807,6 +1018,7 @@ P2：后续扩展
    - 部门信息。
    - 角色列表。
    - 权限码列表。
+   - 菜单树。
 
 3. 菜单树结构
    - id。
@@ -843,10 +1055,25 @@ P2：后续扩展
 
 7. 权限约束
    - 按钮权限由后端返回的 permissionCode 判断。
-   - 数据权限只由后端根据当前用户计算。
-   - 前端不能传入数据权限范围决定可见数据。
+   - 前端只负责菜单、路由和按钮显示控制。
+   - 后端接口必须使用 Sa-Token 校验权限码。
 
-十七、验收标准
+8. 业务操作日志结构
+   - id。
+   - operatorId。
+   - operatorName。
+   - module。
+   - action。
+   - method。
+   - path。
+   - requestParams。
+   - responseStatus。
+   - errorMessage。
+   - userAgent。
+   - costMs。
+   - createdAt。
+
+十八、验收标准
 
 每个 P0 功能必须提供验收标准，格式如下：
 
@@ -867,9 +1094,9 @@ P2：后续扩展
 8. 普通管理员不能操作超级管理员。
 9. 不能删除当前登录用户。
 10. 删除存在子节点的菜单必须失败。
-11. 关键操作必须写入操作日志。
+11. 关键变更操作必须写入业务操作日志。
 
-十八、迭代闭环要求
+十九、迭代闭环要求
 
 每一轮开发或设计输出必须包含：
 1. 本轮完成的功能。
