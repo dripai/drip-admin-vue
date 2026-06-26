@@ -124,7 +124,7 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
-    @PostMapping("/users/{id}/reset-password")
+    @PostMapping("/users/{id}/resetPassword")
     @RequirePermission("system:user:reset-password")
     @OperationLog(module = "用户管理", action = "重置密码")
     public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody PasswordResetRequest request) {

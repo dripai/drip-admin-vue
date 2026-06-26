@@ -47,6 +47,7 @@ import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.service.impl.AuthServiceImpl;
+import com.drip.admin.modules.system.controller.AuthController;
 import com.drip.admin.modules.system.controller.DatabaseBackupController;
 import com.drip.admin.modules.system.service.DatabaseBackupService;
 import com.drip.admin.modules.system.service.impl.DatabaseBackupServiceImpl;
@@ -337,6 +338,16 @@ class BackendContractTests {
     }
 
     @Test
+    void systemControllersUseSystemBasePathAndCamelCaseUrls() throws Exception {
+        assertEquals("/system", AuthController.class.getAnnotation(org.springframework.web.bind.annotation.RequestMapping.class).value()[0]);
+        assertMapping(UserController.class, "resetPassword", org.springframework.web.bind.annotation.PostMapping.class, "/users/{id}/resetPassword", long.class, PasswordResetRequest.class);
+        assertMapping(SystemLogController.class, "loginLogs", org.springframework.web.bind.annotation.GetMapping.class, "/loginLogs", LoginLogQuery.class);
+        assertMapping(SystemLogController.class, "operationLogs", org.springframework.web.bind.annotation.GetMapping.class, "/operationLogs", OperationLogQuery.class);
+        assertMapping(OnlineUserController.class, "onlineUsers", org.springframework.web.bind.annotation.GetMapping.class, "/onlineUsers", OnlineUserQuery.class);
+        assertMapping(JobController.class, "jobLogs", org.springframework.web.bind.annotation.GetMapping.class, "/jobs/{id}/runLogs", long.class, JobRunLogQuery.class);
+    }
+
+    @Test
     void operationLogFailureDoesNotRollbackBusinessResult() throws Throwable {
         LogService logService = mock(LogService.class);
         OperationLogAspect aspect = new OperationLogAspect(logService);
@@ -448,6 +459,14 @@ class BackendContractTests {
         RequirePermission permission = method.getAnnotation(RequirePermission.class);
 
         assertEquals(permissionCode, permission.value());
+    }
+
+    private static <T extends java.lang.annotation.Annotation> void assertMapping(Class<?> type, String methodName, Class<T> annotationType, String path, Class<?>... parameterTypes) throws Exception {
+        Method method = type.getMethod(methodName, parameterTypes);
+        java.lang.annotation.Annotation annotation = method.getAnnotation(annotationType);
+        Method value = annotationType.getMethod("value");
+
+        assertEquals(path, ((String[]) value.invoke(annotation))[0]);
     }
 
     private static boolean hasTableLogicField(Class<?> entityType) {

@@ -64,6 +64,8 @@ import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.*;
 
+@RestController
+@RequestMapping("/system")
 public class AuthController {
     private final AuthService authService;
 

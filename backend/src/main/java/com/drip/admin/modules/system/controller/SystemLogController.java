@@ -22,25 +22,25 @@ public class SystemLogController {
         this.logQueryService = logQueryService;
     }
 
-    @GetMapping("/login-logs")
+    @GetMapping("/loginLogs")
     @RequirePermission("system:login-log:list")
     public ApiResponse<PageResult<SysLoginLogEntity>> loginLogs(LoginLogQuery query) {
         return ApiResponse.success(logQueryService.loginLogs(query));
     }
 
-    @GetMapping("/login-logs/{id}")
+    @GetMapping("/loginLogs/{id}")
     @RequirePermission("system:login-log:list")
     public ApiResponse<SysLoginLogEntity> loginLog(@PathVariable long id) {
         return ApiResponse.success(logQueryService.loginLog(id));
     }
 
-    @GetMapping("/operation-logs")
+    @GetMapping("/operationLogs")
     @RequirePermission("system:operation-log:list")
     public ApiResponse<PageResult<SysOperationLogEntity>> operationLogs(OperationLogQuery query) {
         return ApiResponse.success(logQueryService.operationLogs(query));
     }
 
-    @GetMapping("/operation-logs/{id}")
+    @GetMapping("/operationLogs/{id}")
     @RequirePermission("system:operation-log:list")
     public ApiResponse<SysOperationLogEntity> operationLog(@PathVariable long id) {
         return ApiResponse.success(logQueryService.operationLog(id));

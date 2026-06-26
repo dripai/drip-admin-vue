@@ -86,7 +86,7 @@ public class JobController {
         return ApiResponse.success(null);
     }
 
-    @GetMapping("/jobs/{id}/run-logs")
+    @GetMapping("/jobs/{id}/runLogs")
     @RequirePermission("system:job:list")
     public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, JobRunLogQuery query) {
         return ApiResponse.success(jobService.runLogs(id, query));

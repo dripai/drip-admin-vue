@@ -22,19 +22,19 @@ public class OnlineUserController {
         this.onlineUserService = onlineUserService;
     }
 
-    @GetMapping("/online-users")
+    @GetMapping("/onlineUsers")
     @RequirePermission("system:online:list")
     public ApiResponse<PageResult<OnlineUserVo>> onlineUsers(OnlineUserQuery query) {
         return ApiResponse.success(onlineUserService.page(query));
     }
 
-    @GetMapping("/online-users/{tokenId}")
+    @GetMapping("/onlineUsers/{tokenId}")
     @RequirePermission("system:online:list")
     public ApiResponse<OnlineUserVo> onlineUser(@PathVariable String tokenId) {
         return ApiResponse.success(onlineUserService.detail(tokenId));
     }
 
-    @PostMapping("/online-users/{tokenId}/kickout")
+    @PostMapping("/onlineUsers/{tokenId}/kickout")
     @RequirePermission("system:online:kickout")
     @OperationLog(module = "在线用户", action = "强制下线")
     public ApiResponse<Void> kickout(@PathVariable String tokenId) {

@@ -154,7 +154,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 超过 idleTimeout 未操作则会话过期。
 - 超过 maxSessionDuration 必须重新登录，不允许无限续期。
 - 前端收到 401 后清理登录态并跳转登录页。
-- `GET /api/auth/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
+- `GET /api/system/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
 - 密码必须加密存储，不允许明文。
 - 登录失败要记录失败原因，但响应不能泄露敏感信息。
 - 禁用用户不能登录。
@@ -163,10 +163,10 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 无权限访问返回 403。
 
 接口示例：
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- PUT /api/auth/password
+- POST /api/system/login
+- POST /api/system/logout
+- GET /api/system/me
+- PUT /api/system/password
 
 2. 用户管理模块
 
@@ -687,10 +687,10 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 业务规则
 
 接口路径规范：
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- PUT /api/auth/password
+- POST /api/system/login
+- POST /api/system/logout
+- GET /api/system/me
+- PUT /api/system/password
 - GET /api/system/users
 - GET /api/system/users/{id}
 - POST /api/system/users
@@ -729,13 +729,13 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - PUT /api/system/configs/{id}
 - DELETE /api/system/configs/{id}
 - PATCH /api/system/configs/{id}/status
-- GET /api/system/login-logs
-- GET /api/system/login-logs/{id}
-- GET /api/system/operation-logs
-- GET /api/system/operation-logs/{id}
-- GET /api/system/online-users
-- GET /api/system/online-users/{tokenId}
-- POST /api/system/online-users/{tokenId}/kickout
+- GET /api/system/loginLogs
+- GET /api/system/loginLogs/{id}
+- GET /api/system/operationLogs
+- GET /api/system/operationLogs/{id}
+- GET /api/system/onlineUsers
+- GET /api/system/onlineUsers/{tokenId}
+- POST /api/system/onlineUsers/{tokenId}/kickout
 - GET /api/system/jobs
 - GET /api/system/jobs/{id}
 - POST /api/system/jobs
@@ -743,7 +743,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - DELETE /api/system/jobs/{id}
 - PATCH /api/system/jobs/{id}/status
 - POST /api/system/jobs/{id}/run
-- GET /api/system/jobs/{id}/run-logs
+- GET /api/system/jobs/{id}/runLogs
 - GET /api/system/database/backups
 - POST /api/system/database/backups
 - GET /api/system/database/backups/{id}/download
@@ -1098,9 +1098,6 @@ src/main/resources/
 7. Swagger / OpenAPI 访问路径。
 8. 至少覆盖登录、当前用户、菜单权限、用户管理、角色授权、登录日志、业务操作日志的测试用例。
 
-第一版必须形成完整闭环：
-登录 -> 获取当前用户信息 -> 获取菜单权限 -> 用户管理 -> 角色授权 -> 权限生效 -> 登录日志和业务操作日志记录。
-
 十六、MVP 优先级
 
 请将功能拆为：
@@ -1157,7 +1154,7 @@ P1：常用增强
    - 不返回 refreshToken。
 
 2. 当前用户信息结构
-   - 接口：GET /api/auth/me。
+   - 接口：GET /api/system/me。
    - 用户 ID。
    - 用户名。
    - 姓名。
