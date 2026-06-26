@@ -90,7 +90,7 @@ function openEdit(row: UserItem) {
     email: row.email,
     password: '',
     deptId: row.dept?.id,
-    roleIds: row.roles.map((r) => r.id),
+    roleIds: row.roles?.map((r) => r.id) || [],
     status: row.status,
   });
   modalOpen.value = true;
@@ -127,7 +127,7 @@ async function reset(row: UserItem) {
 }
 function openAssign(row: UserItem) {
   current.value = row;
-  form.roleIds = row.roles.map((r) => r.id);
+  form.roleIds = row.roles?.map((r) => r.id) || [];
   loadRoleOptions();
   assignOpen.value = true;
 }

@@ -9,7 +9,7 @@ export function createUser(data: UserForm) {
   return post<void>('/system/user', withNumericStatus(data as unknown as Record<string, unknown>));
 }
 export function updateUser(id: ID, data: UserForm) {
-  return put<void>(`/system/user/${id}`, withNumericStatus(data as unknown as Record<string, unknown>));
+  return put<void>(`/system/user/${id}`, userUpdatePayload(data));
 }
 export function deleteUser(id: ID) {
   return del<void>(`/system/user/${id}`);
@@ -25,4 +25,10 @@ export function assignUserRoles(id: ID, roleIds: ID[]) {
 }
 export function listRoleOptions() {
   return get<RoleSummary[]>('/system/role/option');
+}
+
+function userUpdatePayload(data: UserForm) {
+  const payload = withNumericStatus(data as unknown as Record<string, unknown>);
+  if (!payload.password) delete payload.password;
+  return payload;
 }
