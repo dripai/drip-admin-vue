@@ -190,6 +190,7 @@ export interface DatabaseBackupItem {
 export interface PreferenceState {
   collapsed: boolean;
   tableSize: 'small' | 'middle' | 'large';
+  layoutMode: 'side' | 'doubleSide' | 'mix';
 }
 export interface OptionItem {
   label: string;
