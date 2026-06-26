@@ -28,6 +28,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -213,6 +214,11 @@ class BackendContractTests {
         assertEquals(HttpStatus.NOT_FOUND, handler.business(new BusinessException(404000, "not found")).getStatusCode());
         assertEquals(HttpStatus.CONFLICT, handler.business(new BusinessException(409000, "conflict")).getStatusCode());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, handler.business(new BusinessException(500000, "system")).getStatusCode());
+    }
+
+    @Test
+    void globalExceptionHandlerIsRegisteredAsControllerAdvice() {
+        assertTrue(GlobalExceptionHandler.class.isAnnotationPresent(RestControllerAdvice.class));
     }
 
     private static void assertOperationLogged(Class<?> type, String methodName, Class<?>... parameterTypes) throws Exception {
