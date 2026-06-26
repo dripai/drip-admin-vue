@@ -241,6 +241,36 @@ public class AdminService {
     }
 
     @Transactional
+    public void deleteDictType(long id) {
+        detail("sys_dict_type", id);
+        Long count = jdbc.queryForObject("select count(1) from sys_dict_item where dict_type_id = ? and deleted = 0", Long.class, id);
+    if (count != null && count > 0) throw new BusinessException(400501, "字典类型存在字典项，不能删除");
+    softDelete("sys_dict_type", id);
+    }
+
+    @Transactional
+    public void deleteDictItem(long id) {
+        Map<String, Object> item = detail("sys_dict_item", id);
+        Map<String, Object> type = detail("sys_dict_type", longOf(item.get("dict_type_id")));
+        String dictCode = stringOf(type.get("dict_code"));
+        String value = stringOf(item.get("value"));
+    if ("common_status".equals(dictCode) && commonStatusValueReferenced(value)) {
+    throw new BusinessException(400501, "字典项被引用，不能删除");
+        }
+    softDelete("sys_dict_item", id);
+    }
+
+    private boolean commonStatusValueReferenced(String value) {
+        int status = intOf(value);
+        List<String> tables = List.of("sys_user", "sys_role", "sys_menu", "sys_dept", "sys_dict_type", "sys_dict_item", "sys_config", "sys_job");
+    for (String table : tables) {
+            Long count = jdbc.queryForObject("select count(1) from " + table + " where status = ? and deleted = 0", Long.class, status);
+    if (count != null && count > 0) return true;
+        }
+        return false;
+    }
+
+    @Transactional
     public Long insert(String table, Map<String, Object> body, Set<String> allowed) {
         TableMeta.require(table);
         LinkedHashMap<String, Object> values = columns(body, allowed);

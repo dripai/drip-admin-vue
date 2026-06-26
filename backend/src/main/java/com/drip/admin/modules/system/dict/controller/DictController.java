@@ -100,7 +100,7 @@ public class DictController {
     @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典类型")
     public ApiResponse<Void> deleteDictType(@PathVariable long id) {
-        adminService.softDelete("sys_dict_type", id);
+        adminService.deleteDictType(id);
         adminService.refreshDictCache();
         return ApiResponse.success(null);
     }
@@ -133,7 +133,7 @@ public class DictController {
     @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典项")
     public ApiResponse<Void> deleteDictItem(@PathVariable long id) {
-        adminService.softDelete("sys_dict_item", id);
+        adminService.deleteDictItem(id);
         adminService.refreshDictCache();
         return ApiResponse.success(null);
     }

@@ -6,6 +6,7 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.service.AuthService;
@@ -170,6 +171,35 @@ class BackendContractTests {
         assertEquals(null, AdminService.class.getMethod("runJob", long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
+    }
+
+    @Test
+    void referencedCommonStatusDictItemCannotBeDeleted() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        AdminService adminService = new AdminService(
+            jdbc,
+            mock(OnlineSessionService.class),
+            mock(JobExecutorRegistry.class),
+            1024,
+            "image/png",
+            "./backups",
+            "jdbc:mysql://localhost:3307/drip-manager",
+            "root",
+            "root",
+            "mysqldump",
+            "mysql"
+        );
+
+        when(jdbc.queryForList("select * from sys_dict_item where id = ? and deleted = 0", 5L))
+            .thenReturn(List.of(Map.of("id", 5L, "dict_type_id", 1L, "value", "1")));
+        when(jdbc.queryForList("select * from sys_dict_type where id = ? and deleted = 0", 1L))
+            .thenReturn(List.of(Map.of("id", 1L, "dict_code", "common_status")));
+        when(jdbc.queryForObject("select count(1) from sys_user where status = ? and deleted = 0", Long.class, 1))
+            .thenReturn(1L);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> adminService.deleteDictItem(5L));
+
+        assertEquals(400501, error.code());
     }
 
     private static void assertOperationLogged(Class<?> type, String methodName, Class<?>... parameterTypes) throws Exception {
