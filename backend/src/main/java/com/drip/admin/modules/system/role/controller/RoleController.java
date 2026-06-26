@@ -17,7 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.dto.PasswordRequest;
 import com.drip.admin.modules.auth.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.role.service.RoleService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -68,42 +68,42 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 @RestController
 @RequestMapping("/api/system")
 public class RoleController {
-    private final AdminService adminService;
+    private final RoleService roleService;
 
-   public RoleController(AdminService adminService) {
-        this.adminService = adminService;
+   public RoleController(RoleService roleService) {
+        this.roleService = roleService;
     }
 
     @GetMapping("/roles")
     @RequirePermission("system:role:list")
     public ApiResponse<PageResult<Map<String, Object>>> roles(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(adminService.page("sys_role", q, List.of("role_name", "role_code", "status", "created_at")));
+        return ApiResponse.success(roleService.page(q));
     }
 
     @GetMapping("/roles/{id}")
     @RequirePermission("system:role:list")
     public ApiResponse<Map<String, Object>> role(@PathVariable long id) {
-        return ApiResponse.success(adminService.detail("sys_role", id));
+        return ApiResponse.success(roleService.detail(id));
     }
 
     @GetMapping("/roles/{id}/users")
     @RequirePermission("system:role:list")
     public ApiResponse<PageResult<Map<String, Object>>> roleUsers(@PathVariable long id, @RequestParam Map<String, String> q) {
-        return ApiResponse.success(adminService.roleUsers(id, q));
+        return ApiResponse.success(roleService.users(id, q));
     }
 
     @PostMapping("/roles")
     @RequirePermission("system:role:create")
     @OperationLog(module = "角色管理", action = "新增角色")
     public ApiResponse<Long> createRole(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(adminService.insert("sys_role", body, Set.of("role_name", "role_code", "status", "remark")));
+        return ApiResponse.success(roleService.create(body));
     }
 
     @PutMapping("/roles/{id}")
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "编辑角色")
     public ApiResponse<Void> updateRole(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.update("sys_role", id, body, Set.of("role_name", "role_code", "status", "remark"));
+        roleService.update(id, body);
         return ApiResponse.success(null);
     }
 
@@ -111,7 +111,7 @@ public class RoleController {
     @RequirePermission("system:role:delete")
     @OperationLog(module = "角色管理", action = "删除角色")
     public ApiResponse<Void> deleteRole(@PathVariable long id) {
-        adminService.deleteRole(id);
+        roleService.delete(id);
         return ApiResponse.success(null);
     }
 
@@ -119,7 +119,7 @@ public class RoleController {
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "变更角色状态")
     public ApiResponse<Void> roleStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.updateStatus("sys_role", id, intValue(body, "status", 1), true);
+        roleService.updateStatus(id, intValue(body, "status", 1));
         return ApiResponse.success(null);
     }
 
@@ -127,7 +127,7 @@ public class RoleController {
     @RequirePermission("system:role:permission")
     @OperationLog(module = "角色管理", action = "角色授权")
     public ApiResponse<Void> rolePermissions(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.assignRoleMenus(id, longList(body.get("menuIds")));
+        roleService.assignMenus(id, longList(body.get("menuIds")));
         return ApiResponse.success(null);
     }
 }

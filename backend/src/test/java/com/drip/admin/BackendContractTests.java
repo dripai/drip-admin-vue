@@ -20,6 +20,7 @@ import com.drip.admin.modules.system.dept.controller.DeptController;
 import com.drip.admin.modules.system.dict.controller.DictController;
 import com.drip.admin.modules.system.menu.controller.MenuController;
 import com.drip.admin.modules.system.role.controller.RoleController;
+import com.drip.admin.modules.system.role.service.RoleService;
 import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.file.controller.FileController;
 import com.drip.admin.modules.system.online.controller.OnlineUserController;
@@ -141,12 +142,12 @@ class BackendContractTests {
 
     @Test
     void roleAuthorizationPersistsMenuIdsOnly() {
-        AdminService adminService = mock(AdminService.class);
-        RoleController controller = new RoleController(adminService);
+        RoleService roleService = mock(RoleService.class);
+        RoleController controller = new RoleController(roleService);
 
         controller.rolePermissions(7L, Map.of("menuIds", List.of(1, 2, 3)));
 
-        verify(adminService).assignRoleMenus(7L, List.of(1L, 2L, 3L));
+        verify(roleService).assignMenus(7L, List.of(1L, 2L, 3L));
     }
 
     @Test
