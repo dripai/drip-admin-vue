@@ -848,22 +848,136 @@ src/main/java/com/drip/admin/
     log/
   config/
   modules/
-    auth/
-      controller/
-      service/
-      dto/
-      vo/
     system/
-      user/
-      role/
-      menu/
-      dept/
-      dict/
-      config/
-      log/
-      online/
-      job/
-      database/
+      controller/
+        AuthController
+        UserController
+        RoleController
+        MenuController
+        DeptController
+        DictController
+        ConfigController
+        LoginLogController
+        OperationLogController
+        OnlineUserController
+        JobController
+        DatabaseController
+      service/
+        impl/
+          AuthServiceImpl
+          UserServiceImpl
+          RoleServiceImpl
+          MenuServiceImpl
+          DeptServiceImpl
+          DictServiceImpl
+          ConfigServiceImpl
+          LoginLogServiceImpl
+          OperationLogServiceImpl
+          OnlineUserServiceImpl
+          JobServiceImpl
+          DatabaseServiceImpl
+        AuthService
+        UserService
+        RoleService
+        MenuService
+        DeptService
+        DictService
+        ConfigService
+        LoginLogService
+        OperationLogService
+        OnlineUserService
+        JobService
+        DatabaseService
+      mapper/
+        SysUserMapper
+        SysRoleMapper
+        SysUserRoleMapper
+        SysMenuMapper
+        SysRoleMenuMapper
+        SysDeptMapper
+        SysDictTypeMapper
+        SysDictItemMapper
+        SysLoginLogMapper
+        SysOperationLogMapper
+        SysJobMapper
+        SysJobRunLogMapper
+        SysDbBackupMapper
+        SysConfigMapper
+      entity/
+        SysUserEntity
+        SysRoleEntity
+        SysUserRoleEntity
+        SysMenuEntity
+        SysRoleMenuEntity
+        SysDeptEntity
+        SysDictTypeEntity
+        SysDictItemEntity
+        SysLoginLogEntity
+        SysOperationLogEntity
+        SysJobEntity
+        SysJobRunLogEntity
+        SysDbBackupEntity
+        SysConfigEntity
+      dto/
+        LoginRequest
+        PasswordUpdateRequest
+        UserQueryDTO
+        UserCreateDTO
+        UserUpdateDTO
+        UserStatusDTO
+        UserRoleAssignDTO
+        UserResetPasswordDTO
+        RoleQueryDTO
+        RoleCreateDTO
+        RoleUpdateDTO
+        RoleStatusDTO
+        RolePermissionAssignDTO
+        MenuCreateDTO
+        MenuUpdateDTO
+        MenuStatusDTO
+        MenuSortDTO
+        DeptCreateDTO
+        DeptUpdateDTO
+        DeptStatusDTO
+        DeptMoveDTO
+        DictTypeQueryDTO
+        DictTypeCreateDTO
+        DictTypeUpdateDTO
+        DictItemCreateDTO
+        DictItemUpdateDTO
+        DictItemStatusDTO
+        ConfigQueryDTO
+        ConfigCreateDTO
+        ConfigUpdateDTO
+        ConfigStatusDTO
+        LoginLogQueryDTO
+        OperationLogQueryDTO
+        OnlineUserQueryDTO
+        JobQueryDTO
+        JobCreateDTO
+        JobUpdateDTO
+        JobStatusDTO
+        JobRunLogQueryDTO
+        DatabaseBackupCreateDTO
+        DatabaseBackupQueryDTO
+      vo/
+        LoginVO
+        UserInfoVO
+        UserVO
+        RoleVO
+        MenuTreeVO
+        MenuVO
+        DeptTreeVO
+        DeptVO
+        DictTypeVO
+        DictItemVO
+        ConfigVO
+        LoginLogVO
+        OperationLogVO
+        OnlineUserVO
+        JobVO
+        JobRunLogVO
+        DatabaseBackupVO
   infrastructure/
     redis/
     storage/
@@ -877,6 +991,11 @@ src/main/resources/
   application.yml
   application-dev.yml
   application-prod.yml
+
+说明：
+- `modules/system/` 下按分层公用目录组织系统模块代码，不再为 `user`、`role`、`menu`、`dept`、`dict` 等每个功能单独建立重复的子目录。
+- `controller/`、`service/`、`service/impl/`、`mapper/`、`entity/`、`dto/`、`vo/` 是 system 模块共享目录；文件名体现具体业务能力边界。
+- `common/` 只放跨模块通用能力，`infrastructure/` 只放 Redis、存储、外部命令等基础设施适配，避免业务逻辑散落到公共层。
 
 十三、需要输出的最终内容
 

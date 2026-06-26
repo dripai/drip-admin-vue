@@ -1,4 +1,4 @@
-package com.drip.admin.common.log;
+package com.drip.admin.modules.system.controller;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
@@ -17,7 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.service.MenuService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -64,38 +64,50 @@ import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.*;
 
-@Aspect
-@Component
-public class OperationLogAspect {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OperationLogAspect.class);
 
-    private final LogService logService;
+@RestController
+@RequestMapping("/api/system")
+public class MenuController {
+    private final MenuService menuService;
 
-    public OperationLogAspect(LogService logService) {
-        this.logService = logService;
+   public MenuController(MenuService menuService) {
+        this.menuService = menuService;
     }
 
-    @Around("@annotation(operationLog)")
-    public Object write(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
-        long started = System.currentTimeMillis();
-        HttpServletRequest request = currentRequest();
-        String params = maskSensitive(Arrays.toString(point.getArgs()));
-        try {
-            Object result = point.proceed();
-    safeLog(operationLog, request, params, "SUCCESS", null, System.currentTimeMillis() - started);
-            return result;
-        } catch (Throwable ex) {
-    safeLog(operationLog, request, params, "FAIL", ex.getMessage(), System.currentTimeMillis() - started);
-            throw ex;
-        }
+    @GetMapping("/menus")
+    @RequirePermission("system:menu:list")
+    public ApiResponse<List<Map<String, Object>>> menus() {
+        return ApiResponse.success(menuService.tree());
     }
 
-   private void safeLog(OperationLog operationLog, HttpServletRequest request, String params, String status, String errorMessage, long costMs) {
-        try {
-            logService.operation(operationLog.module(), operationLog.action(), request.getMethod(), request.getRequestURI(), params, status, errorMessage, costMs);
-        } catch (Exception ex) {
-            LOGGER.error("Business operation log write failed: module={}, action={}, path={}",
-                operationLog.module(), operationLog.action(), request.getRequestURI(), ex);
-        }
+    @PostMapping("/menus")
+    @RequirePermission("system:menu:create")
+    @OperationLog(module = "菜单管理", action = "新增菜单")
+    public ApiResponse<Long> createMenu(@RequestBody Map<String, Object> body) {
+        return ApiResponse.success(menuService.create(body));
+    }
+
+    @PutMapping("/menus/{id}")
+    @RequirePermission("system:menu:update")
+    @OperationLog(module = "菜单管理", action = "编辑菜单")
+    public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        menuService.update(id, body);
+        return ApiResponse.success(null);
+    }
+
+    @DeleteMapping("/menus/{id}")
+    @RequirePermission("system:menu:delete")
+    @OperationLog(module = "菜单管理", action = "删除菜单")
+    public ApiResponse<Void> deleteMenu(@PathVariable long id) {
+        menuService.delete(id);
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/menus/{id}/status")
+    @RequirePermission("system:menu:status")
+    @OperationLog(module = "菜单管理", action = "变更菜单状态")
+    public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        menuService.updateStatus(id, intValue(body, "status", 1));
+        return ApiResponse.success(null);
     }
 }

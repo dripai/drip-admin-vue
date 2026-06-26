@@ -1,4 +1,4 @@
-package com.drip.admin.common.log;
+package com.drip.admin.modules.system.controller;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
@@ -17,7 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.service.RoleService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -64,38 +64,70 @@ import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.*;
 
-@Aspect
-@Component
-public class OperationLogAspect {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OperationLogAspect.class);
 
-    private final LogService logService;
+@RestController
+@RequestMapping("/api/system")
+public class RoleController {
+    private final RoleService roleService;
 
-    public OperationLogAspect(LogService logService) {
-        this.logService = logService;
+   public RoleController(RoleService roleService) {
+        this.roleService = roleService;
     }
 
-    @Around("@annotation(operationLog)")
-    public Object write(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
-        long started = System.currentTimeMillis();
-        HttpServletRequest request = currentRequest();
-        String params = maskSensitive(Arrays.toString(point.getArgs()));
-        try {
-            Object result = point.proceed();
-    safeLog(operationLog, request, params, "SUCCESS", null, System.currentTimeMillis() - started);
-            return result;
-        } catch (Throwable ex) {
-    safeLog(operationLog, request, params, "FAIL", ex.getMessage(), System.currentTimeMillis() - started);
-            throw ex;
-        }
+    @GetMapping("/roles")
+    @RequirePermission("system:role:list")
+    public ApiResponse<PageResult<Map<String, Object>>> roles(@RequestParam Map<String, String> q) {
+        return ApiResponse.success(roleService.page(q));
     }
 
-   private void safeLog(OperationLog operationLog, HttpServletRequest request, String params, String status, String errorMessage, long costMs) {
-        try {
-            logService.operation(operationLog.module(), operationLog.action(), request.getMethod(), request.getRequestURI(), params, status, errorMessage, costMs);
-        } catch (Exception ex) {
-            LOGGER.error("Business operation log write failed: module={}, action={}, path={}",
-                operationLog.module(), operationLog.action(), request.getRequestURI(), ex);
-        }
+    @GetMapping("/roles/{id}")
+    @RequirePermission("system:role:list")
+    public ApiResponse<Map<String, Object>> role(@PathVariable long id) {
+        return ApiResponse.success(roleService.detail(id));
+    }
+
+    @GetMapping("/roles/{id}/users")
+    @RequirePermission("system:role:list")
+    public ApiResponse<PageResult<Map<String, Object>>> roleUsers(@PathVariable long id, @RequestParam Map<String, String> q) {
+        return ApiResponse.success(roleService.users(id, q));
+    }
+
+    @PostMapping("/roles")
+    @RequirePermission("system:role:create")
+    @OperationLog(module = "角色管理", action = "新增角色")
+    public ApiResponse<Long> createRole(@RequestBody Map<String, Object> body) {
+        return ApiResponse.success(roleService.create(body));
+    }
+
+    @PutMapping("/roles/{id}")
+    @RequirePermission("system:role:update")
+    @OperationLog(module = "角色管理", action = "编辑角色")
+    public ApiResponse<Void> updateRole(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        roleService.update(id, body);
+        return ApiResponse.success(null);
+    }
+
+    @DeleteMapping("/roles/{id}")
+    @RequirePermission("system:role:delete")
+    @OperationLog(module = "角色管理", action = "删除角色")
+    public ApiResponse<Void> deleteRole(@PathVariable long id) {
+        roleService.delete(id);
+        return ApiResponse.success(null);
+    }
+
+    @PatchMapping("/roles/{id}/status")
+    @RequirePermission("system:role:update")
+    @OperationLog(module = "角色管理", action = "变更角色状态")
+    public ApiResponse<Void> roleStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        roleService.updateStatus(id, intValue(body, "status", 1));
+        return ApiResponse.success(null);
+    }
+
+    @PutMapping("/roles/{id}/permissions")
+    @RequirePermission("system:role:permission")
+    @OperationLog(module = "角色管理", action = "角色授权")
+    public ApiResponse<Void> rolePermissions(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        roleService.assignMenus(id, longList(body.get("menuIds")));
+        return ApiResponse.success(null);
     }
 }

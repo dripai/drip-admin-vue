@@ -1,4 +1,4 @@
-package com.drip.admin.common.log;
+package com.drip.admin.modules.system.controller;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
@@ -64,38 +64,32 @@ import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.*;
 
-@Aspect
-@Component
-public class OperationLogAspect {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OperationLogAspect.class);
+public class AuthController {
+    private final AuthService authService;
 
-    private final LogService logService;
-
-    public OperationLogAspect(LogService logService) {
-        this.logService = logService;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
-    @Around("@annotation(operationLog)")
-    public Object write(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
-        long started = System.currentTimeMillis();
-        HttpServletRequest request = currentRequest();
-        String params = maskSensitive(Arrays.toString(point.getArgs()));
-        try {
-            Object result = point.proceed();
-    safeLog(operationLog, request, params, "SUCCESS", null, System.currentTimeMillis() - started);
-            return result;
-        } catch (Throwable ex) {
-    safeLog(operationLog, request, params, "FAIL", ex.getMessage(), System.currentTimeMillis() - started);
-            throw ex;
-        }
+    @PostMapping("/login")
+    public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
+        return ApiResponse.success(authService.login(request, servletRequest));
     }
 
-   private void safeLog(OperationLog operationLog, HttpServletRequest request, String params, String status, String errorMessage, long costMs) {
-        try {
-            logService.operation(operationLog.module(), operationLog.action(), request.getMethod(), request.getRequestURI(), params, status, errorMessage, costMs);
-        } catch (Exception ex) {
-            LOGGER.error("Business operation log write failed: module={}, action={}, path={}",
-                operationLog.module(), operationLog.action(), request.getRequestURI(), ex);
-        }
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(HttpServletRequest request) {
+        authService.logout(request);
+        return ApiResponse.success(null);
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<Map<String, Object>> me() {
+        return ApiResponse.success(authService.me(currentUserId()));
+    }
+
+    @PutMapping("/password")
+    public ApiResponse<Void> password(@Valid @RequestBody PasswordRequest request) {
+        authService.changePassword(currentUserId(), request);
+        return ApiResponse.success(null);
     }
 }

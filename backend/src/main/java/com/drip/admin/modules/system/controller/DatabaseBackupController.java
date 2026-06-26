@@ -1,4 +1,4 @@
-package com.drip.admin.common.log;
+package com.drip.admin.modules.system.controller;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
@@ -64,38 +64,51 @@ import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.*;
 
-@Aspect
-@Component
-public class OperationLogAspect {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OperationLogAspect.class);
 
-    private final LogService logService;
+@RestController
+@RequestMapping("/api/system")
+public class DatabaseBackupController {
+    private final AdminService adminService;
 
-    public OperationLogAspect(LogService logService) {
-        this.logService = logService;
+   public DatabaseBackupController(AdminService adminService) {
+        this.adminService = adminService;
     }
 
-    @Around("@annotation(operationLog)")
-    public Object write(ProceedingJoinPoint point, OperationLog operationLog) throws Throwable {
-        long started = System.currentTimeMillis();
-        HttpServletRequest request = currentRequest();
-        String params = maskSensitive(Arrays.toString(point.getArgs()));
-        try {
-            Object result = point.proceed();
-    safeLog(operationLog, request, params, "SUCCESS", null, System.currentTimeMillis() - started);
-            return result;
-        } catch (Throwable ex) {
-    safeLog(operationLog, request, params, "FAIL", ex.getMessage(), System.currentTimeMillis() - started);
-            throw ex;
-        }
+    @GetMapping("/database/backups")
+    @RequirePermission("system:database:backup:list")
+    public ApiResponse<PageResult<Map<String, Object>>> backups(@RequestParam Map<String, String> q) {
+        return ApiResponse.success(adminService.pageReadonly("sys_db_backup", q, "created_at"));
     }
 
-   private void safeLog(OperationLog operationLog, HttpServletRequest request, String params, String status, String errorMessage, long costMs) {
-        try {
-            logService.operation(operationLog.module(), operationLog.action(), request.getMethod(), request.getRequestURI(), params, status, errorMessage, costMs);
-        } catch (Exception ex) {
-            LOGGER.error("Business operation log write failed: module={}, action={}, path={}",
-                operationLog.module(), operationLog.action(), request.getRequestURI(), ex);
-        }
+    @PostMapping("/database/backups")
+    @RequirePermission("system:database:backup:create")
+    @OperationLog(module = "数据库备份", action = "创建备份")
+    public ApiResponse<Long> createBackup(@RequestBody(required = false) Map<String, Object> body) {
+        return ApiResponse.success(adminService.createBackup(Optional.ofNullable(body).orElseGet(Map::of), currentUserId()));
+    }
+
+    @GetMapping(value = "/database/backups/{id}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @RequirePermission("system:database:backup:download")
+    public ResponseEntity<byte[]> downloadBackup(@PathVariable long id) throws IOException {
+        BackupFile file = adminService.downloadBackup(id);
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=\"" + file.name() + "\"")
+            .body(file.content());
+    }
+
+    @PostMapping("/database/backups/{id}/restore")
+    @RequirePermission("system:database:backup:restore")
+    @OperationLog(module = "数据库备份", action = "恢复备份")
+    public ApiResponse<Void> restoreBackup(@PathVariable long id, @RequestBody Map<String, Object> body) {
+        adminService.restoreBackup(id, body);
+        return ApiResponse.success(null);
+    }
+
+    @DeleteMapping("/database/backups/{id}")
+    @RequirePermission("system:database:backup:delete")
+    @OperationLog(module = "数据库备份", action = "删除备份记录")
+    public ApiResponse<Void> deleteBackup(@PathVariable long id) {
+        adminService.deleteBackup(id);
+        return ApiResponse.success(null);
     }
 }
