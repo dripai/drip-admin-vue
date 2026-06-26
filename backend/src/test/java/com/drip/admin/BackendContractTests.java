@@ -26,6 +26,7 @@ import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.file.controller.FileController;
 import com.drip.admin.modules.system.online.controller.OnlineUserController;
 import com.drip.admin.modules.system.user.controller.UserController;
+import com.drip.admin.modules.system.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -162,6 +163,16 @@ class BackendContractTests {
     }
 
     @Test
+    void userControllerDelegatesRoleAssignmentToUserService() {
+        UserService userService = mock(UserService.class);
+        UserController controller = new UserController(userService);
+
+        controller.userRoles(10L, Map.of("roleIds", List.of(1, 2)));
+
+        verify(userService).assignRoles(10L, List.of(1L, 2L));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -266,26 +277,14 @@ class BackendContractTests {
     }
 
     @Test
-    void userRoleAssignmentRejectsUnknownRoleIdsBeforeReplacingRoles() {
+    void userServiceRejectsUnknownRoleIdsBeforeReplacingRoles() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        AdminService adminService = new AdminService(
-            jdbc,
-            mock(OnlineSessionService.class),
-            mock(JobExecutorRegistry.class),
-            1024,
-            "image/png",
-            "./backups",
-            "jdbc:mysql://localhost:3307/drip-manager",
-            "root",
-            "root",
-            "mysqldump",
-            "mysql"
-        );
+        UserService userService = new UserService(jdbc);
 
         when(jdbc.queryForObject("select count(1) from sys_role where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
             .thenReturn(1L);
 
-        BusinessException error = assertThrows(BusinessException.class, () -> adminService.assignUserRoles(10L, List.of(1L, 99L)));
+        BusinessException error = assertThrows(BusinessException.class, () -> userService.assignRoles(10L, List.of(1L, 99L)));
 
         assertEquals(400000, error.code());
         verify(jdbc, never()).update("delete from sys_user_role where user_id = ?", 10L);

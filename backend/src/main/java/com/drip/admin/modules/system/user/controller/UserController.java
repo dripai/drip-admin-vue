@@ -17,7 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.dto.PasswordRequest;
 import com.drip.admin.modules.auth.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.user.service.UserService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -68,36 +68,36 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 @RestController
 @RequestMapping("/api/system")
 public class UserController {
-    private final AdminService adminService;
+    private final UserService userService;
 
-   public UserController(AdminService adminService) {
-        this.adminService = adminService;
+   public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/users")
     @RequirePermission("system:user:list")
     public ApiResponse<PageResult<Map<String, Object>>> users(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(adminService.page("sys_user", q, List.of("username", "real_name", "phone", "status", "dept_id", "created_at")));
+        return ApiResponse.success(userService.page(q));
     }
 
     @GetMapping("/users/{id}")
     @RequirePermission("system:user:detail")
     public ApiResponse<Map<String, Object>> user(@PathVariable long id) {
-        return ApiResponse.success(adminService.detail("sys_user", id));
+        return ApiResponse.success(userService.detail(id));
     }
 
     @PostMapping("/users")
     @RequirePermission("system:user:create")
     @OperationLog(module = "用户管理", action = "新增用户")
     public ApiResponse<Long> createUser(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(adminService.createUser(body));
+        return ApiResponse.success(userService.create(body));
     }
 
     @PutMapping("/users/{id}")
     @RequirePermission("system:user:update")
     @OperationLog(module = "用户管理", action = "编辑用户")
     public ApiResponse<Void> updateUser(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.updateUser(id, body);
+        userService.update(id, body);
         return ApiResponse.success(null);
     }
 
@@ -105,7 +105,7 @@ public class UserController {
     @RequirePermission("system:user:delete")
     @OperationLog(module = "用户管理", action = "删除用户")
     public ApiResponse<Void> deleteUser(@PathVariable long id) {
-        adminService.deleteUser(currentUserId(), id);
+        userService.delete(id);
         return ApiResponse.success(null);
     }
 
@@ -114,10 +114,7 @@ public class UserController {
     @OperationLog(module = "用户管理", action = "变更用户状态")
     public ApiResponse<Void> userStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         int status = intValue(body, "status", 1);
-        if (id == currentUserId() && status != 1) {
-            throw new BusinessException(400000, "不能禁用当前登录用户");
-        }
-        adminService.updateStatus("sys_user", id, status, true);
+        userService.updateStatus(id, status);
         return ApiResponse.success(null);
     }
 
@@ -125,7 +122,7 @@ public class UserController {
     @RequirePermission("system:user:assign-role")
     @OperationLog(module = "用户管理", action = "分配角色")
     public ApiResponse<Void> userRoles(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.assignUserRoles(id, longList(body.get("roleIds")));
+        userService.assignRoles(id, longList(body.get("roleIds")));
         return ApiResponse.success(null);
     }
 
@@ -133,7 +130,7 @@ public class UserController {
     @RequirePermission("system:user:reset-password")
     @OperationLog(module = "用户管理", action = "重置密码")
     public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.resetPassword(id, stringValue(body, "password", "Admin@123456"));
+        userService.resetPassword(id, stringValue(body, "password", "Admin@123456"));
         return ApiResponse.success(null);
     }
 }
