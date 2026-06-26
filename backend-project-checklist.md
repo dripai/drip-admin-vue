@@ -133,5 +133,6 @@
 - 2026-06-26：用户模块补齐独立 `UserService`，用户分页、详情、增删改、状态、重置密码、分配角色和用户保护规则迁出通用 `AdminService`。
 - 2026-06-26：部门模块补齐独立 `DeptService`，部门树、增删改、状态变更、子部门和部门用户删除保护、父级移动防环规则迁出通用 `AdminService`。
 - 2026-06-26：字典模块补齐独立 `DictService`，字典类型、字典项、状态变更、缓存刷新和通用状态引用保护迁出通用 `AdminService`。
-- 2026-06-26：执行 `mvn test` 通过，26 个测试全部成功。
+- 2026-06-26：系统配置模块补齐独立 `ConfigService`，配置分页、详情脱敏、增删改、状态变更和内置配置删除保护迁出通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，29 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。

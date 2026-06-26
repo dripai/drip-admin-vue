@@ -16,6 +16,7 @@ import com.drip.admin.modules.system.database.controller.DatabaseBackupControlle
 import com.drip.admin.modules.system.health.controller.HealthController;
 import com.drip.admin.modules.system.job.controller.JobController;
 import com.drip.admin.modules.system.config.controller.ConfigController;
+import com.drip.admin.modules.system.config.service.ConfigService;
 import com.drip.admin.modules.system.dept.controller.DeptController;
 import com.drip.admin.modules.system.dept.service.DeptService;
 import com.drip.admin.modules.system.dict.controller.DictController;
@@ -195,6 +196,16 @@ class BackendContractTests {
     }
 
     @Test
+    void configControllerDelegatesWritesToConfigService() {
+        ConfigService configService = mock(ConfigService.class);
+        ConfigController controller = new ConfigController(configService);
+
+        controller.updateConfig(6L, Map.of("configValue", "demo"));
+
+        verify(configService).update(6L, Map.of("configValue", "demo"));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -360,6 +371,33 @@ class BackendContractTests {
         BusinessException error = assertThrows(BusinessException.class, () -> dictService.deleteItem(5L));
 
         assertEquals(400501, error.code());
+    }
+
+    @Test
+    void configServiceMasksSensitiveConfigValues() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        ConfigService configService = new ConfigService(jdbc);
+
+        when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
+            .thenReturn(List.of(Map.of("id", 8L, "config_value", "secret", "is_sensitive", 1)));
+
+        Map<String, Object> row = configService.detail(8L);
+
+        assertEquals("******", row.get("config_value"));
+    }
+
+    @Test
+    void builtinConfigCannotBeDeleted() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        ConfigService configService = new ConfigService(jdbc);
+
+        when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
+            .thenReturn(List.of(Map.of("id", 8L, "builtin", 1)));
+
+        BusinessException error = assertThrows(BusinessException.class, () -> configService.delete(8L));
+
+        assertEquals(400000, error.code());
+        verify(jdbc, never()).update("update sys_config set deleted = 1 where id = ?", 8L);
     }
 
     @Test
