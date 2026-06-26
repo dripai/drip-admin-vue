@@ -146,3 +146,4 @@
 - 2026-06-26：批量完成 `UserService`、`RoleService`、`MenuService`、`DeptService`、`DictService`、`ConfigService`、`SystemLogQueryService` 接口与 `service/impl/*Impl` 实现类拆分，Controller 统一注入接口。
 - 2026-06-26：补齐 MyBatis-Plus `@MapperScan`、驼峰映射配置、14 张系统表 Entity 和对应 `BaseMapper`，实体字段与 Flyway `V1__init_schema.sql` 表结构对齐。
 - 2026-06-26：`service/impl` 采用显式 typed Mapper 注入规则，各业务实现类注入自身负责的 Entity Mapper 和必要关系表 Mapper，不使用统一表名分发式 Mapper 容器。
+- 2026-06-26：Service 接口按 MyBatis-Plus 第 2 种模式改造为 `IService<Entity>`，实现类继承 `ServiceImpl<Mapper, Entity>`；返回结果从 `Map<String,Object>` / `PageResult<Map<...>>` 改为 Entity、VO 或 `PageResult<Entity>`，删除遗留通用 `AdminService`。

@@ -1,13 +1,15 @@
 package com.drip.admin.modules.system.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysConfigEntity;
 
 import java.util.Map;
 
-public interface ConfigService {
-    PageResult<Map<String, Object>> page(Map<String, String> q);
+public interface ConfigService extends IService<SysConfigEntity> {
+    PageResult<SysConfigEntity> page(Map<String, String> q);
 
-    Map<String, Object> detail(long id);
+    SysConfigEntity detail(long id);
 
     Long create(Map<String, Object> body);
 

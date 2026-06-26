@@ -17,6 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
+import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.service.UserService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,13 +76,13 @@ public class UserController {
 
     @GetMapping("/users")
     @RequirePermission("system:user:list")
-    public ApiResponse<PageResult<Map<String, Object>>> users(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysUserEntity>> users(@RequestParam Map<String, String> q) {
         return ApiResponse.success(userService.page(q));
     }
 
     @GetMapping("/users/{id}")
     @RequirePermission("system:user:detail")
-    public ApiResponse<Map<String, Object>> user(@PathVariable long id) {
+    public ApiResponse<SysUserEntity> user(@PathVariable long id) {
         return ApiResponse.success(userService.detail(id));
     }
 

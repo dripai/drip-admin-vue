@@ -1,11 +1,14 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.drip.admin.common.exception.BusinessException;
+import com.drip.admin.modules.system.entity.SysDeptEntity;
+import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.mapper.SysDeptMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.service.DeptService;
-
-import com.drip.admin.common.exception.BusinessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.drip.admin.modules.system.vo.DeptTreeVo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,103 +18,81 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static com.drip.admin.shared.utils.AdminUtils.buildTree;
+import static com.drip.admin.shared.utils.AdminUtils.intOf;
 import static com.drip.admin.shared.utils.AdminUtils.longOf;
 import static com.drip.admin.shared.utils.AdminUtils.requireNonBlank;
-import static com.drip.admin.shared.utils.AdminUtils.snakeToCamel;
 
 @Service
-public class DeptServiceImpl implements DeptService {
-    private static final Set<String> DEPT_COLUMNS = Set.of(
-        "parent_id", "dept_name", "dept_code", "leader_user_id", "sort", "status"
-    );
-
-    private final JdbcTemplate jdbc;
-    private final SysDeptMapper deptMapper;
+public class DeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDeptEntity> implements DeptService {
     private final SysUserMapper userMapper;
 
-    public DeptServiceImpl(JdbcTemplate jdbc, SysDeptMapper deptMapper, SysUserMapper userMapper) {
-        this.jdbc = jdbc;
-        this.deptMapper = deptMapper;
+    public DeptServiceImpl(SysUserMapper userMapper) {
         this.userMapper = userMapper;
     }
 
-    public List<Map<String, Object>> tree() {
-        List<Map<String, Object>> rows = jdbc.queryForList("""
-            select *
-            from sys_dept
-            where deleted = 0
-            order by sort asc, id asc
-            """);
-        return buildTree(rows.stream().map(LinkedHashMap::new).collect(Collectors.toList()), "parent_id");
+    @Override
+    public List<DeptTreeVo> tree() {
+        List<SysDeptEntity> rows = list(new QueryWrapper<SysDeptEntity>().orderByAsc("sort", "id"));
+        return buildTree(rows.stream().map(this::toTreeVo).toList());
     }
 
-    public Map<String, Object> detail(long id) {
-        List<Map<String, Object>> rows = jdbc.queryForList("select * from sys_dept where id = ? and deleted = 0", id);
-        if (rows.isEmpty()) {
-            throw new BusinessException(404000, "资源不存在");
-        }
-        return new LinkedHashMap<>(rows.getFirst());
+    @Override
+    public SysDeptEntity detail(long id) {
+        SysDeptEntity entity = getById(id);
+        if (entity == null) throw new BusinessException(404000, "?????");
+        return entity;
     }
 
+    @Override
     @Transactional
     public Long create(Map<String, Object> body) {
         requireNonBlank(body, "dept_name", "deptName");
         requireNonBlank(body, "dept_code", "deptCode");
-        LinkedHashMap<String, Object> values = columns(body);
-        if (values.isEmpty()) {
-            throw new BusinessException(400000, "请求参数错误");
-        }
-        String cols = String.join(", ", values.keySet());
-        String placeholders = values.keySet().stream().map(k -> "?").collect(Collectors.joining(", "));
-        jdbc.update("insert into sys_dept (" + cols + ") values (" + placeholders + ")", values.values().toArray());
-        return jdbc.queryForObject("select last_insert_id()", Long.class);
+        SysDeptEntity entity = new SysDeptEntity();
+        apply(entity, body);
+        save(entity);
+        return entity.getId();
     }
 
+    @Override
     @Transactional
     public void update(long id, Map<String, Object> body) {
         detail(id);
         assertValidParent(id, body);
-        LinkedHashMap<String, Object> values = columns(body);
-        if (values.isEmpty()) {
-            return;
-        }
-        String set = values.keySet().stream().map(k -> k + " = ?").collect(Collectors.joining(", "));
-        List<Object> args = new ArrayList<>(values.values());
-        args.add(id);
-        jdbc.update("update sys_dept set " + set + " where id = ? and deleted = 0", args.toArray());
+        SysDeptEntity entity = new SysDeptEntity();
+        entity.setId(id);
+        apply(entity, body);
+        updateById(entity);
     }
 
+    @Override
     @Transactional
     public void delete(long id) {
         detail(id);
-        Long childCount = jdbc.queryForObject("select count(1) from sys_dept where parent_id = ? and deleted = 0", Long.class, id);
-        if (childCount != null && childCount > 0) {
-            throw new BusinessException(400401, "部门存在子节点，不能删除");
-        }
-        Long userCount = jdbc.queryForObject("select count(1) from sys_user where dept_id = ? and deleted = 0", Long.class, id);
-        if (userCount != null && userCount > 0) {
-            throw new BusinessException(400401, "部门存在用户，不能删除");
-        }
-        jdbc.update("update sys_dept set deleted = 1 where id = ?", id);
+        Long childCount = count(new QueryWrapper<SysDeptEntity>().eq("parent_id", id));
+        if (childCount != null && childCount > 0) throw new BusinessException(400401, "????????????");
+        Long userCount = userMapper.selectCount(new QueryWrapper<SysUserEntity>().eq("dept_id", id));
+        if (userCount != null && userCount > 0) throw new BusinessException(400401, "???????????");
+        removeById(id);
     }
 
+    @Override
     @Transactional
     public void updateStatus(long id, int status) {
         detail(id);
-        jdbc.update("update sys_dept set status = ? where id = ? and deleted = 0", status, id);
+        SysDeptEntity entity = new SysDeptEntity();
+        entity.setId(id);
+        entity.setStatus(status);
+        updateById(entity);
     }
 
     private void assertValidParent(long id, Map<String, Object> body) {
         Object rawParentId = body.containsKey("parent_id") ? body.get("parent_id") : body.get("parentId");
-        if (rawParentId == null) {
-            return;
-        }
+        if (rawParentId == null) return;
         long parentId = longOf(rawParentId);
         if (parentId == id || descendantDeptIds(id).contains(parentId)) {
-            throw new BusinessException(400000, "不能把部门移动到自身的子部门下");
+            throw new BusinessException(400000, "???????????????");
         }
     }
 
@@ -122,23 +103,37 @@ public class DeptServiceImpl implements DeptService {
     }
 
     private void collectDept(long id, Set<Long> result) {
-        List<Long> children = jdbc.queryForList("select id from sys_dept where parent_id = ? and deleted = 0", Long.class, id);
-        for (Long child : children) {
-            result.add(child);
-            collectDept(child, result);
+        List<SysDeptEntity> children = list(new QueryWrapper<SysDeptEntity>().eq("parent_id", id));
+        for (SysDeptEntity child : children) {
+            result.add(child.getId());
+            collectDept(child.getId(), result);
         }
     }
 
-    private static LinkedHashMap<String, Object> columns(Map<String, Object> body) {
-        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
-        for (String col : DEPT_COLUMNS) {
-            String camel = snakeToCamel(col);
-            if (body.containsKey(col)) {
-                values.put(col, body.get(col));
-            } else if (body.containsKey(camel)) {
-                values.put(col, body.get(camel));
-            }
-        }
-        return values;
+    private DeptTreeVo toTreeVo(SysDeptEntity entity) {
+        DeptTreeVo vo = new DeptTreeVo();
+        vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setDeptName(entity.getDeptName()); vo.setDeptCode(entity.getDeptCode());
+        vo.setLeaderUserId(entity.getLeaderUserId()); vo.setSort(entity.getSort()); vo.setStatus(entity.getStatus());
+        vo.setCreatedAt(entity.getCreatedAt()); vo.setUpdatedAt(entity.getUpdatedAt());
+        return vo;
     }
+
+    private static List<DeptTreeVo> buildTree(List<DeptTreeVo> rows) {
+        Map<Long, DeptTreeVo> byId = new LinkedHashMap<>(); rows.forEach(row -> byId.put(row.getId(), row));
+        List<DeptTreeVo> roots = new ArrayList<>();
+        for (DeptTreeVo row : rows) {
+            Long parentId = row.getParentId() == null ? 0L : row.getParentId();
+            if (parentId == 0 || !byId.containsKey(parentId)) roots.add(row); else byId.get(parentId).getChildren().add(row);
+        }
+        return roots;
+    }
+
+    private static void apply(SysDeptEntity entity, Map<String, Object> body) {
+        setLong(body, "parent_id", "parentId", entity::setParentId); setString(body, "dept_name", "deptName", entity::setDeptName);
+        setString(body, "dept_code", "deptCode", entity::setDeptCode); setLong(body, "leader_user_id", "leaderUserId", entity::setLeaderUserId);
+        setInteger(body, "sort", entity::setSort); setInteger(body, "status", entity::setStatus);
+    }
+    private static void setString(Map<String, Object> body, String snake, String camel, java.util.function.Consumer<String> setter) { Object value = body.containsKey(snake) ? body.get(snake) : body.get(camel); if (value != null) setter.accept(String.valueOf(value)); }
+    private static void setInteger(Map<String, Object> body, String key, java.util.function.Consumer<Integer> setter) { if (body.containsKey(key)) setter.accept(intOf(body.get(key))); }
+    private static void setLong(Map<String, Object> body, String snake, String camel, java.util.function.Consumer<Long> setter) { Object value = body.containsKey(snake) ? body.get(snake) : body.get(camel); if (value != null) setter.accept(longOf(value)); }
 }

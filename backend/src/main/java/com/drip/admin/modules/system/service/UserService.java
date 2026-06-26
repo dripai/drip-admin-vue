@@ -1,14 +1,16 @@
 package com.drip.admin.modules.system.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysUserEntity;
 
 import java.util.List;
 import java.util.Map;
 
-public interface UserService {
-    PageResult<Map<String, Object>> page(Map<String, String> q);
+public interface UserService extends IService<SysUserEntity> {
+    PageResult<SysUserEntity> page(Map<String, String> q);
 
-    Map<String, Object> detail(long id);
+    SysUserEntity detail(long id);
 
     Long create(Map<String, Object> body);
 

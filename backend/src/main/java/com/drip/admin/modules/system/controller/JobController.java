@@ -4,6 +4,8 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.entity.SysJobEntity;
+import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
 import com.drip.admin.modules.system.service.JobService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,13 +33,13 @@ public class JobController {
 
     @GetMapping("/jobs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<Map<String, Object>>> jobs(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysJobEntity>> jobs(@RequestParam Map<String, String> q) {
         return ApiResponse.success(jobService.page(q));
     }
 
     @GetMapping("/jobs/{id}")
     @RequirePermission("system:job:list")
-    public ApiResponse<Map<String, Object>> job(@PathVariable long id) {
+    public ApiResponse<SysJobEntity> job(@PathVariable long id) {
         return ApiResponse.success(jobService.detail(id));
     }
 
@@ -82,7 +84,7 @@ public class JobController {
 
     @GetMapping("/jobs/{id}/run-logs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<Map<String, Object>>> jobLogs(@PathVariable long id, @RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, @RequestParam Map<String, String> q) {
         return ApiResponse.success(jobService.runLogs(id, q));
     }
 }

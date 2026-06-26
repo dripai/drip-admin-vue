@@ -1,158 +1,128 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.drip.admin.common.exception.BusinessException;
+import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysDictItemEntity;
+import com.drip.admin.modules.system.entity.SysDictTypeEntity;
 import com.drip.admin.modules.system.mapper.SysDictItemMapper;
 import com.drip.admin.modules.system.mapper.SysDictTypeMapper;
 import com.drip.admin.modules.system.service.DictService;
-
-import com.drip.admin.common.exception.BusinessException;
-import com.drip.admin.common.response.PageResult;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import static com.drip.admin.shared.utils.AdminUtils.intOf;
+import static com.drip.admin.shared.utils.AdminUtils.longOf;
 import static com.drip.admin.shared.utils.AdminUtils.parseInt;
 import static com.drip.admin.shared.utils.AdminUtils.requireNonBlank;
-import static com.drip.admin.shared.utils.AdminUtils.snakeToCamel;
-import static com.drip.admin.shared.utils.AdminUtils.stringOf;
 
 @Service
-public class DictServiceImpl implements DictService {
-    private static final Set<String> TYPE_COLUMNS = Set.of("dict_name", "dict_code", "status", "remark");
-    private static final Set<String> ITEM_COLUMNS = Set.of("dict_type_id", "label", "value", "color", "sort", "status");
-    private final JdbcTemplate jdbc;
-    private final SysDictTypeMapper dictTypeMapper;
+public class DictServiceImpl extends ServiceImpl<SysDictTypeMapper, SysDictTypeEntity> implements DictService {
     private final SysDictItemMapper dictItemMapper;
-    private final Map<String, List<Map<String, Object>>> dictCache = new HashMap<>();
+    private final Map<String, List<SysDictItemEntity>> dictCache = new HashMap<>();
 
-    public DictServiceImpl(JdbcTemplate jdbc, SysDictTypeMapper dictTypeMapper, SysDictItemMapper dictItemMapper) {
-        this.jdbc = jdbc;
-        this.dictTypeMapper = dictTypeMapper;
+    public DictServiceImpl(SysDictItemMapper dictItemMapper) {
         this.dictItemMapper = dictItemMapper;
     }
 
-    public PageResult<Map<String, Object>> types(Map<String, String> q) {
+    @Override
+    public PageResult<SysDictTypeEntity> types(Map<String, String> q) {
         int page = Math.max(1, parseInt(q.get("page"), 1));
         int pageSize = Math.min(100, Math.max(1, parseInt(q.get("pageSize"), 20)));
-        List<Object> args = new ArrayList<>();
-        StringBuilder where = new StringBuilder(" where deleted = 0");
-        for (String filter : List.of("dict_name", "dict_code", "status")) {
-            String value = q.getOrDefault(filter, q.get(snakeToCamel(filter)));
-            if (value != null && !value.isBlank()) {
-                where.append(" and ").append(filter).append(" like ?");
-                args.add("%" + value + "%");
-            }
-        }
-        Long total = jdbc.queryForObject("select count(1) from sys_dict_type" + where, Long.class, args.toArray());
-        List<Object> listArgs = new ArrayList<>(args);
-        listArgs.add((page - 1) * pageSize);
-        listArgs.add(pageSize);
-        List<Map<String, Object>> rows = jdbc.queryForList(
-            "select * from sys_dict_type" + where + " order by created_at desc limit ?, ?",
-            listArgs.toArray()
-        );
-        return new PageResult<>(rows, total == null ? 0 : total, page, pageSize);
+        QueryWrapper<SysDictTypeEntity> wrapper = new QueryWrapper<>();
+        likeIfPresent(wrapper, "dict_name", q.getOrDefault("dict_name", q.get("dictName")));
+        likeIfPresent(wrapper, "dict_code", q.getOrDefault("dict_code", q.get("dictCode")));
+        likeIfPresent(wrapper, "status", q.get("status"));
+        wrapper.orderByDesc("created_at");
+        Page<SysDictTypeEntity> result = page(new Page<>(page, pageSize), wrapper);
+        return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
     }
 
-    public List<Map<String, Object>> items(long dictTypeId) {
+    @Override
+    public List<SysDictItemEntity> items(long dictTypeId) {
         typeDetail(dictTypeId);
-        return jdbc.queryForList(
-            "select * from sys_dict_item where dict_type_id = ? and deleted = 0 order by sort asc, id asc",
-            dictTypeId
-        );
+        return dictItemMapper.selectList(new QueryWrapper<SysDictItemEntity>().eq("dict_type_id", dictTypeId).orderByAsc("sort", "id"));
     }
 
-    public Map<String, Object> typeDetail(long id) {
-        return detail("sys_dict_type", id);
+    @Override
+    public SysDictTypeEntity typeDetail(long id) {
+        SysDictTypeEntity entity = getById(id);
+        if (entity == null) throw new BusinessException(404000, "?????");
+        return entity;
     }
 
-    public Map<String, Object> itemDetail(long id) {
-        return detail("sys_dict_item", id);
+    @Override
+    public SysDictItemEntity itemDetail(long id) {
+        SysDictItemEntity entity = dictItemMapper.selectById(id);
+        if (entity == null) throw new BusinessException(404000, "?????");
+        return entity;
     }
 
+    @Override
     @Transactional
     public Long createType(Map<String, Object> body) {
-        requireNonBlank(body, "dict_name", "dictName");
-        requireNonBlank(body, "dict_code", "dictCode");
-        Long id = insert("sys_dict_type", body, TYPE_COLUMNS);
-        refreshCache();
-        return id;
+        requireNonBlank(body, "dict_name", "dictName"); requireNonBlank(body, "dict_code", "dictCode");
+        SysDictTypeEntity entity = new SysDictTypeEntity(); applyType(entity, body); save(entity); refreshCache(); return entity.getId();
     }
 
+    @Override
     @Transactional
     public void updateType(long id, Map<String, Object> body) {
-        typeDetail(id);
-        update("sys_dict_type", id, body, TYPE_COLUMNS);
-        refreshCache();
+        typeDetail(id); SysDictTypeEntity entity = new SysDictTypeEntity(); entity.setId(id); applyType(entity, body); updateById(entity); refreshCache();
     }
 
+    @Override
     @Transactional
     public void deleteType(long id) {
         typeDetail(id);
-        Long count = jdbc.queryForObject("select count(1) from sys_dict_item where dict_type_id = ? and deleted = 0", Long.class, id);
-        if (count != null && count > 0) {
-            throw new BusinessException(400501, "字典类型存在字典项，不能删除");
-        }
-        jdbc.update("update sys_dict_type set deleted = 1 where id = ?", id);
-        refreshCache();
+        Long count = dictItemMapper.selectCount(new QueryWrapper<SysDictItemEntity>().eq("dict_type_id", id));
+        if (count != null && count > 0) throw new BusinessException(400501, "??????????????");
+        removeById(id); refreshCache();
     }
 
+    @Override
     @Transactional
     public Long createItem(Map<String, Object> body) {
-        requireNonBlank(body, "label");
-        requireNonBlank(body, "value");
-        typeDetail(intOf(value(body, "dict_type_id")));
-        Long id = insert("sys_dict_item", body, ITEM_COLUMNS);
-        refreshCache();
-        return id;
+        requireNonBlank(body, "label"); requireNonBlank(body, "value"); typeDetail(longOf(value(body, "dict_type_id")));
+        SysDictItemEntity entity = new SysDictItemEntity(); applyItem(entity, body); dictItemMapper.insert(entity); refreshCache(); return entity.getId();
     }
 
+    @Override
     @Transactional
     public void updateItem(long id, Map<String, Object> body) {
-        itemDetail(id);
-        Object dictTypeId = value(body, "dict_type_id");
-        if (dictTypeId != null) {
-            typeDetail(intOf(dictTypeId));
-        }
-        update("sys_dict_item", id, body, ITEM_COLUMNS);
-        refreshCache();
+        itemDetail(id); Object dictTypeId = value(body, "dict_type_id"); if (dictTypeId != null) typeDetail(longOf(dictTypeId));
+        SysDictItemEntity entity = new SysDictItemEntity(); entity.setId(id); applyItem(entity, body); dictItemMapper.updateById(entity); refreshCache();
     }
 
+    @Override
     @Transactional
     public void deleteItem(long id) {
-        Map<String, Object> item = itemDetail(id);
-        Map<String, Object> type = typeDetail(intOf(item.get("dict_type_id")));
-        String dictCode = stringOf(type.get("dict_code"));
-        String itemValue = stringOf(item.get("value"));
-        if ("common_status".equals(dictCode) && commonStatusValueReferenced(itemValue)) {
-            throw new BusinessException(400501, "字典项被引用，不能删除");
+        SysDictItemEntity item = itemDetail(id);
+        SysDictTypeEntity type = typeDetail(item.getDictTypeId());
+        if ("common_status".equals(type.getDictCode()) && commonStatusValueReferenced(item.getValue())) {
+            throw new BusinessException(400501, "???????????");
         }
-        jdbc.update("update sys_dict_item set deleted = 1 where id = ?", id);
-        refreshCache();
+        dictItemMapper.deleteById(id); refreshCache();
     }
 
+    @Override
     @Transactional
     public void updateItemStatus(long id, int status) {
-        itemDetail(id);
-        jdbc.update("update sys_dict_item set status = ? where id = ? and deleted = 0", status, id);
-        refreshCache();
+        itemDetail(id); SysDictItemEntity entity = new SysDictItemEntity(); entity.setId(id); entity.setStatus(status); dictItemMapper.updateById(entity); refreshCache();
     }
 
+    @Override
     public void refreshCache() {
         dictCache.clear();
-        for (Map<String, Object> type : jdbc.queryForList("select * from sys_dict_type where deleted = 0 and status = 1")) {
-            dictCache.put(stringOf(type.get("dict_code")), jdbc.queryForList(
-                "select * from sys_dict_item where dict_type_id = ? and deleted = 0 order by sort asc, id asc",
-                type.get("id")
-            ));
+        for (SysDictTypeEntity type : list(new QueryWrapper<SysDictTypeEntity>().eq("status", 1))) {
+            dictCache.put(type.getDictCode(), dictItemMapper.selectList(new QueryWrapper<SysDictItemEntity>().eq("dict_type_id", type.getId()).orderByAsc("sort", "id")));
         }
     }
 
@@ -160,63 +130,23 @@ public class DictServiceImpl implements DictService {
         int status = intOf(value);
         List<String> tables = List.of("sys_user", "sys_role", "sys_menu", "sys_dept", "sys_dict_type", "sys_dict_item", "sys_config", "sys_job");
         for (String table : tables) {
-            Long count = jdbc.queryForObject("select count(1) from " + table + " where status = ? and deleted = 0", Long.class, status);
-            if (count != null && count > 0) {
-                return true;
-            }
+            Long count = baseMapper.selectCount(new QueryWrapper<SysDictTypeEntity>().apply("exists (select 1 from " + table + " where status = {0} and deleted = 0)", status));
+            if (count != null && count > 0) return true;
         }
         return false;
     }
 
-    private Map<String, Object> detail(String table, long id) {
-        List<Map<String, Object>> rows = jdbc.queryForList("select * from " + table + " where id = ? and deleted = 0", id);
-        if (rows.isEmpty()) {
-            throw new BusinessException(404000, "资源不存在");
-        }
-        return new LinkedHashMap<>(rows.getFirst());
+    private static void applyType(SysDictTypeEntity entity, Map<String, Object> body) {
+        setString(body, "dict_name", "dictName", entity::setDictName); setString(body, "dict_code", "dictCode", entity::setDictCode); setInteger(body, "status", entity::setStatus); setString(body, "remark", entity::setRemark);
     }
-
-    private Long insert(String table, Map<String, Object> body, Set<String> allowed) {
-        LinkedHashMap<String, Object> values = columns(body, allowed);
-        if (values.isEmpty()) {
-            throw new BusinessException(400000, "请求参数错误");
-        }
-        String cols = String.join(", ", values.keySet());
-        String placeholders = values.keySet().stream().map(k -> "?").collect(Collectors.joining(", "));
-        jdbc.update("insert into " + table + " (" + cols + ") values (" + placeholders + ")", values.values().toArray());
-        return jdbc.queryForObject("select last_insert_id()", Long.class);
+    private static void applyItem(SysDictItemEntity entity, Map<String, Object> body) {
+        setLong(body, "dict_type_id", "dictTypeId", entity::setDictTypeId); setString(body, "label", entity::setLabel); setString(body, "value", entity::setValue); setString(body, "color", entity::setColor); setInteger(body, "sort", entity::setSort); setInteger(body, "status", entity::setStatus);
     }
-
-    private void update(String table, long id, Map<String, Object> body, Set<String> allowed) {
-        LinkedHashMap<String, Object> values = columns(body, allowed);
-        if (values.isEmpty()) {
-            return;
-        }
-        String set = values.keySet().stream().map(k -> k + " = ?").collect(Collectors.joining(", "));
-        List<Object> args = new ArrayList<>(values.values());
-        args.add(id);
-        jdbc.update("update " + table + " set " + set + " where id = ? and deleted = 0", args.toArray());
-    }
-
-    private static LinkedHashMap<String, Object> columns(Map<String, Object> body, Set<String> allowed) {
-        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
-        for (String col : allowed) {
-            Object raw = value(body, col);
-            if (raw != null) {
-                values.put(col, raw);
-            }
-        }
-        return values;
-    }
-
-    private static Object value(Map<String, Object> body, String column) {
-        String camel = snakeToCamel(column);
-        if (body.containsKey(column)) {
-            return body.get(column);
-        }
-        if (body.containsKey(camel)) {
-            return body.get(camel);
-        }
-        return null;
-    }
+    private static Object value(Map<String, Object> body, String column) { String camel = snakeToCamel(column); return body.containsKey(column) ? body.get(column) : body.get(camel); }
+    private static String snakeToCamel(String value) { StringBuilder out = new StringBuilder(); boolean upper = false; for (char c : value.toCharArray()) { if (c == '_') upper = true; else if (upper) { out.append(Character.toUpperCase(c)); upper = false; } else out.append(c); } return out.toString(); }
+    private static void likeIfPresent(QueryWrapper<SysDictTypeEntity> wrapper, String column, String value) { if (value != null && !value.isBlank()) wrapper.like(column, value); }
+    private static void setString(Map<String, Object> body, String key, java.util.function.Consumer<String> setter) { if (body.containsKey(key)) setter.accept(String.valueOf(body.get(key))); }
+    private static void setString(Map<String, Object> body, String snake, String camel, java.util.function.Consumer<String> setter) { Object value = body.containsKey(snake) ? body.get(snake) : body.get(camel); if (value != null) setter.accept(String.valueOf(value)); }
+    private static void setInteger(Map<String, Object> body, String key, java.util.function.Consumer<Integer> setter) { if (body.containsKey(key)) setter.accept(intOf(body.get(key))); }
+    private static void setLong(Map<String, Object> body, String snake, String camel, java.util.function.Consumer<Long> setter) { Object value = body.containsKey(snake) ? body.get(snake) : body.get(camel); if (value != null) setter.accept(longOf(value)); }
 }

@@ -1,10 +1,10 @@
 package com.drip.admin.modules.system.service;
 
+import com.drip.admin.modules.system.vo.FileUploadVo;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Map;
 
 public interface FileService {
-    Map<String, Object> upload(MultipartFile file) throws IOException;
+    FileUploadVo upload(MultipartFile file) throws IOException;
 }

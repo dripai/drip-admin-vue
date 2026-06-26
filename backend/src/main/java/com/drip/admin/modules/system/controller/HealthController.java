@@ -6,17 +6,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Map;
+import com.drip.admin.modules.system.vo.HealthVo;
 
 @RestController
 @RequestMapping("/api")
 public class HealthController {
     @GetMapping("/health")
-    public ApiResponse<Map<String, Object>> health() {
-        return ApiResponse.success(Map.of(
-            "status", "UP",
-            "service", "drip-admin-backend",
-            "timestamp", Instant.now().toString()
-        ));
+    public ApiResponse<HealthVo> health() {
+        return ApiResponse.success(new HealthVo("UP", "drip-admin-backend", Instant.now().toString()));
     }
 }

@@ -4,6 +4,7 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.entity.SysConfigEntity;
 import com.drip.admin.modules.system.service.ConfigService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ public class ConfigController {
 
     @GetMapping("/configs")
     @RequirePermission("system:config:list")
-    public ApiResponse<PageResult<Map<String, Object>>> configs(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysConfigEntity>> configs(@RequestParam Map<String, String> q) {
         return ApiResponse.success(configService.page(q));
     }
 

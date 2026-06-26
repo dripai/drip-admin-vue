@@ -18,6 +18,7 @@ import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.service.MenuService;
+import com.drip.admin.modules.system.vo.MenuTreeVo;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -36,7 +37,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,7 +76,7 @@ public class MenuController {
 
     @GetMapping("/menus")
     @RequirePermission("system:menu:list")
-    public ApiResponse<List<Map<String, Object>>> menus() {
+    public ApiResponse<List<MenuTreeVo>> menus() {
         return ApiResponse.success(menuService.tree());
     }
 

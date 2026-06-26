@@ -5,6 +5,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.entity.SysDbBackupEntity;
 import com.drip.admin.modules.system.service.DatabaseBackupService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class DatabaseBackupController {
 
     @GetMapping("/database/backups")
     @RequirePermission("system:database:backup:list")
-    public ApiResponse<PageResult<Map<String, Object>>> backups(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysDbBackupEntity>> backups(@RequestParam Map<String, String> q) {
         return ApiResponse.success(databaseBackupService.page(q));
     }
 

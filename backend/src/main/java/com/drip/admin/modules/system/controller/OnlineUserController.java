@@ -5,6 +5,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.service.OnlineUserService;
+import com.drip.admin.modules.system.vo.OnlineUserVo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,13 +26,13 @@ public class OnlineUserController {
 
     @GetMapping("/online-users")
     @RequirePermission("system:online:list")
-    public ApiResponse<PageResult<Map<String, Object>>> onlineUsers(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<OnlineUserVo>> onlineUsers(@RequestParam Map<String, String> q) {
         return ApiResponse.success(onlineUserService.page(q));
     }
 
     @GetMapping("/online-users/{tokenId}")
     @RequirePermission("system:online:list")
-    public ApiResponse<Map<String, Object>> onlineUser(@PathVariable String tokenId) {
+    public ApiResponse<OnlineUserVo> onlineUser(@PathVariable String tokenId) {
         return ApiResponse.success(onlineUserService.detail(tokenId));
     }
 

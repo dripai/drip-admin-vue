@@ -1,13 +1,16 @@
 package com.drip.admin.modules.system.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysJobEntity;
+import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
 
 import java.util.Map;
 
-public interface JobService {
-    PageResult<Map<String, Object>> page(Map<String, String> q);
+public interface JobService extends IService<SysJobEntity> {
+    PageResult<SysJobEntity> page(Map<String, String> q);
 
-    Map<String, Object> detail(long id);
+    SysJobEntity detail(long id);
 
     Long create(Map<String, Object> body);
 
@@ -19,5 +22,5 @@ public interface JobService {
 
     void run(long id);
 
-    PageResult<Map<String, Object>> runLogs(long jobId, Map<String, String> q);
+    PageResult<SysJobRunLogEntity> runLogs(long jobId, Map<String, String> q);
 }

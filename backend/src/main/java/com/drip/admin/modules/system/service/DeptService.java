@@ -1,12 +1,16 @@
 package com.drip.admin.modules.system.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.drip.admin.modules.system.entity.SysDeptEntity;
+import com.drip.admin.modules.system.vo.DeptTreeVo;
+
 import java.util.List;
 import java.util.Map;
 
-public interface DeptService {
-    List<Map<String, Object>> tree();
+public interface DeptService extends IService<SysDeptEntity> {
+    List<DeptTreeVo> tree();
 
-    Map<String, Object> detail(long id);
+    SysDeptEntity detail(long id);
 
     Long create(Map<String, Object> body);
 

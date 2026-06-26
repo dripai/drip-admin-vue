@@ -1,18 +1,21 @@
 package com.drip.admin.modules.system.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysDictItemEntity;
+import com.drip.admin.modules.system.entity.SysDictTypeEntity;
 
 import java.util.List;
 import java.util.Map;
 
-public interface DictService {
-    PageResult<Map<String, Object>> types(Map<String, String> q);
+public interface DictService extends IService<SysDictTypeEntity> {
+    PageResult<SysDictTypeEntity> types(Map<String, String> q);
 
-    List<Map<String, Object>> items(long dictTypeId);
+    List<SysDictItemEntity> items(long dictTypeId);
 
-    Map<String, Object> typeDetail(long id);
+    SysDictTypeEntity typeDetail(long id);
 
-    Map<String, Object> itemDetail(long id);
+    SysDictItemEntity itemDetail(long id);
 
     Long createType(Map<String, Object> body);
 

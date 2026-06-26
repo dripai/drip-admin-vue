@@ -4,6 +4,7 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.service.DeptService;
+import com.drip.admin.modules.system.vo.DeptTreeVo;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,7 +31,7 @@ public class DeptController {
 
     @GetMapping("/depts")
     @RequirePermission("system:dept:list")
-    public ApiResponse<List<Map<String, Object>>> depts() {
+    public ApiResponse<List<DeptTreeVo>> depts() {
         return ApiResponse.success(deptService.tree());
     }
 

@@ -4,6 +4,8 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.entity.SysDictItemEntity;
+import com.drip.admin.modules.system.entity.SysDictTypeEntity;
 import com.drip.admin.modules.system.service.DictService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +34,7 @@ public class DictController {
 
     @GetMapping("/dicts/types")
     @RequirePermission("system:dict:list")
-    public ApiResponse<PageResult<Map<String, Object>>> dictTypes(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysDictTypeEntity>> dictTypes(@RequestParam Map<String, String> q) {
         return ApiResponse.success(dictService.types(q));
     }
 
@@ -61,7 +63,7 @@ public class DictController {
 
     @GetMapping("/dicts/types/{id}/items")
     @RequirePermission("system:dict:list")
-    public ApiResponse<List<Map<String, Object>>> dictItems(@PathVariable long id) {
+    public ApiResponse<List<SysDictItemEntity>> dictItems(@PathVariable long id) {
         return ApiResponse.success(dictService.items(id));
     }
 

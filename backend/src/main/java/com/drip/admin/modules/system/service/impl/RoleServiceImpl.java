@@ -1,191 +1,151 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.drip.admin.common.exception.BusinessException;
+import com.drip.admin.common.response.PageResult;
+import com.drip.admin.modules.system.entity.SysMenuEntity;
+import com.drip.admin.modules.system.entity.SysRoleEntity;
+import com.drip.admin.modules.system.entity.SysRoleMenuEntity;
+import com.drip.admin.modules.system.entity.SysUserEntity;
+import com.drip.admin.modules.system.entity.SysUserRoleEntity;
 import com.drip.admin.modules.system.mapper.SysMenuMapper;
 import com.drip.admin.modules.system.mapper.SysRoleMapper;
 import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.RoleService;
-
-import com.drip.admin.common.exception.BusinessException;
-import com.drip.admin.common.response.PageResult;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.intOf;
 import static com.drip.admin.shared.utils.AdminUtils.parseInt;
 import static com.drip.admin.shared.utils.AdminUtils.requireNonBlank;
-import static com.drip.admin.shared.utils.AdminUtils.snakeToCamel;
 
 @Service
-public class RoleServiceImpl implements RoleService {
-    private static final Set<String> ROLE_COLUMNS = Set.of("role_name", "role_code", "status", "remark");
-    private final JdbcTemplate jdbc;
-    private final SysRoleMapper roleMapper;
+public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity> implements RoleService {
     private final SysUserMapper userMapper;
     private final SysUserRoleMapper userRoleMapper;
     private final SysMenuMapper menuMapper;
     private final SysRoleMenuMapper roleMenuMapper;
 
-    public RoleServiceImpl(
-        JdbcTemplate jdbc,
-        SysRoleMapper roleMapper,
-        SysUserMapper userMapper,
-        SysUserRoleMapper userRoleMapper,
-        SysMenuMapper menuMapper,
-        SysRoleMenuMapper roleMenuMapper
-    ) {
-        this.jdbc = jdbc;
-        this.roleMapper = roleMapper;
+    public RoleServiceImpl(SysUserMapper userMapper, SysUserRoleMapper userRoleMapper, SysMenuMapper menuMapper, SysRoleMenuMapper roleMenuMapper) {
         this.userMapper = userMapper;
         this.userRoleMapper = userRoleMapper;
         this.menuMapper = menuMapper;
         this.roleMenuMapper = roleMenuMapper;
     }
 
-    public PageResult<Map<String, Object>> page(Map<String, String> q) {
+    @Override
+    public PageResult<SysRoleEntity> page(Map<String, String> q) {
         int page = Math.max(1, parseInt(q.get("page"), 1));
         int pageSize = Math.min(100, Math.max(1, parseInt(q.get("pageSize"), 20)));
-        List<Object> args = new ArrayList<>();
-        StringBuilder where = new StringBuilder(" where deleted = 0");
-        for (String filter : List.of("role_name", "role_code", "status", "created_at")) {
-            String value = q.getOrDefault(filter, q.get(snakeToCamel(filter)));
-            if (value != null && !value.isBlank()) {
-                where.append(" and ").append(filter).append(" like ?");
-                args.add("%" + value + "%");
-            }
-        }
-        Long total = jdbc.queryForObject("select count(1) from sys_role" + where, Long.class, args.toArray());
-        List<Object> listArgs = new ArrayList<>(args);
-        listArgs.add((page - 1) * pageSize);
-        listArgs.add(pageSize);
-        List<Map<String, Object>> rows = jdbc.queryForList(
-            "select * from sys_role" + where + " order by created_at desc limit ?, ?",
-            listArgs.toArray()
-        );
-        return new PageResult<>(rows, total == null ? 0 : total, page, pageSize);
+        QueryWrapper<SysRoleEntity> wrapper = new QueryWrapper<>();
+        likeIfPresent(wrapper, "role_name", q.getOrDefault("role_name", q.get("roleName")));
+        likeIfPresent(wrapper, "role_code", q.getOrDefault("role_code", q.get("roleCode")));
+        likeIfPresent(wrapper, "status", q.get("status"));
+        likeIfPresent(wrapper, "created_at", q.getOrDefault("created_at", q.get("createdAt")));
+        wrapper.orderByDesc("created_at");
+        Page<SysRoleEntity> result = page(new Page<>(page, pageSize), wrapper);
+        return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
     }
 
-    public Map<String, Object> detail(long id) {
-        List<Map<String, Object>> rows = jdbc.queryForList("select * from sys_role where id = ? and deleted = 0", id);
-        if (rows.isEmpty()) {
-            throw new BusinessException(404000, "资源不存在");
-        }
-        return new LinkedHashMap<>(rows.getFirst());
+    @Override
+    public SysRoleEntity detail(long id) {
+        SysRoleEntity entity = getById(id);
+        if (entity == null) throw new BusinessException(404000, "?????");
+        return entity;
     }
 
-    public PageResult<Map<String, Object>> users(long roleId, Map<String, String> q) {
+    @Override
+    public PageResult<SysUserEntity> users(long roleId, Map<String, String> q) {
         detail(roleId);
         int page = Math.max(1, parseInt(q.get("page"), 1));
         int pageSize = Math.min(100, Math.max(1, parseInt(q.get("pageSize"), 20)));
-        Long total = jdbc.queryForObject("""
-            select count(1)
-            from sys_user u
-            join sys_user_role ur on ur.user_id = u.id
-            where ur.role_id = ? and u.deleted = 0
-            """, Long.class, roleId);
-        List<Map<String, Object>> rows = jdbc.queryForList("""
-            select u.id, u.username, u.real_name, u.phone, u.email, u.status, u.dept_id, u.created_at
-            from sys_user u
-            join sys_user_role ur on ur.user_id = u.id
-            where ur.role_id = ? and u.deleted = 0
-            order by u.created_at desc
-            limit ?, ?
-            """, roleId, (page - 1) * pageSize, pageSize);
-        return new PageResult<>(rows, total == null ? 0 : total, page, pageSize);
+        List<Long> userIds = userRoleMapper.selectList(new QueryWrapper<SysUserRoleEntity>().eq("role_id", roleId))
+            .stream().map(SysUserRoleEntity::getUserId).toList();
+        if (userIds.isEmpty()) return new PageResult<>(List.of(), 0, page, pageSize);
+        Page<SysUserEntity> result = userMapper.selectPage(new Page<>(page, pageSize), new QueryWrapper<SysUserEntity>().in("id", userIds).orderByDesc("created_at"));
+        return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
     }
 
+    @Override
     @Transactional
     public Long create(Map<String, Object> body) {
         requireNonBlank(body, "role_name", "roleName");
         requireNonBlank(body, "role_code", "roleCode");
-        LinkedHashMap<String, Object> values = columns(body);
-        String cols = String.join(", ", values.keySet());
-        String placeholders = values.keySet().stream().map(k -> "?").collect(Collectors.joining(", "));
-        jdbc.update("insert into sys_role (" + cols + ") values (" + placeholders + ")", values.values().toArray());
-        return jdbc.queryForObject("select last_insert_id()", Long.class);
+        SysRoleEntity entity = new SysRoleEntity();
+        apply(entity, body);
+        save(entity);
+        return entity.getId();
     }
 
+    @Override
     @Transactional
     public void update(long id, Map<String, Object> body) {
         detail(id);
-        LinkedHashMap<String, Object> values = columns(body);
-        if (values.isEmpty()) {
-            return;
-        }
-        String set = values.keySet().stream().map(k -> k + " = ?").collect(Collectors.joining(", "));
-        List<Object> args = new ArrayList<>(values.values());
-        args.add(id);
-        jdbc.update("update sys_role set " + set + " where id = ? and deleted = 0", args.toArray());
+        SysRoleEntity entity = new SysRoleEntity();
+        entity.setId(id);
+        apply(entity, body);
+        updateById(entity);
     }
 
+    @Override
     @Transactional
     public void delete(long id) {
-        Map<String, Object> role = detail(id);
-        if (intOf(role.get("builtin")) == 1) {
-            throw new BusinessException(400000, "内置角色禁止删除");
-        }
-        Long count = jdbc.queryForObject("select count(1) from sys_user_role where role_id = ?", Long.class, id);
-        if (count != null && count > 0) {
-            throw new BusinessException(409000, "角色已分配用户，不能删除");
-        }
-        jdbc.update("update sys_role set deleted = 1 where id = ?", id);
+        SysRoleEntity role = detail(id);
+        if (Objects.equals(role.getBuiltin(), 1)) throw new BusinessException(400000, "????????");
+        Long count = userRoleMapper.selectCount(new QueryWrapper<SysUserRoleEntity>().eq("role_id", id));
+        if (count != null && count > 0) throw new BusinessException(409000, "????????????");
+        removeById(id);
     }
 
+    @Override
     @Transactional
     public void updateStatus(long id, int status) {
         detail(id);
-        jdbc.update("update sys_role set status = ? where id = ? and deleted = 0", status, id);
+        SysRoleEntity entity = new SysRoleEntity();
+        entity.setId(id);
+        entity.setStatus(status);
+        updateById(entity);
     }
 
+    @Override
     @Transactional
     public void assignMenus(long roleId, List<Long> menuIds) {
         detail(roleId);
         assertExistingMenus(menuIds);
-        jdbc.update("delete from sys_role_menu where role_id = ?", roleId);
+        roleMenuMapper.delete(new QueryWrapper<SysRoleMenuEntity>().eq("role_id", roleId));
         for (Long menuId : menuIds) {
-            jdbc.update("insert into sys_role_menu (role_id, menu_id) values (?, ?)", roleId, menuId);
+            SysRoleMenuEntity relation = new SysRoleMenuEntity();
+            relation.setRoleId(roleId);
+            relation.setMenuId(menuId);
+            roleMenuMapper.insert(relation);
         }
     }
 
     private void assertExistingMenus(List<Long> menuIds) {
-        if (menuIds == null || menuIds.isEmpty()) {
-            return;
-        }
+        if (menuIds == null || menuIds.isEmpty()) return;
         List<Long> uniqueIds = menuIds.stream().filter(Objects::nonNull).distinct().toList();
-        if (uniqueIds.size() != menuIds.size()) {
-            throw new BusinessException(400000, "菜单权限不存在");
-        }
-        String placeholders = uniqueIds.stream().map(id -> "?").collect(Collectors.joining(", "));
-        Long count = jdbc.queryForObject(
-            "select count(1) from sys_menu where id in (" + placeholders + ") and deleted = 0",
-            Long.class,
-            uniqueIds.toArray()
-        );
-        if (count == null || count != uniqueIds.size()) {
-            throw new BusinessException(400000, "菜单权限不存在");
-        }
+        if (uniqueIds.size() != menuIds.size()) throw new BusinessException(400000, "???????");
+        Long count = menuMapper.selectCount(new QueryWrapper<SysMenuEntity>().in("id", uniqueIds));
+        if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "???????");
     }
 
-    private static LinkedHashMap<String, Object> columns(Map<String, Object> body) {
-        LinkedHashMap<String, Object> values = new LinkedHashMap<>();
-        for (String col : ROLE_COLUMNS) {
-            String camel = snakeToCamel(col);
-            if (body.containsKey(col)) {
-                values.put(col, body.get(col));
-            } else if (body.containsKey(camel)) {
-                values.put(col, body.get(camel));
-            }
-        }
-        return values;
+    private static void apply(SysRoleEntity entity, Map<String, Object> body) {
+        setString(body, "role_name", "roleName", entity::setRoleName);
+        setString(body, "role_code", "roleCode", entity::setRoleCode);
+        setInteger(body, "status", entity::setStatus);
+        setString(body, "remark", entity::setRemark);
     }
+
+    private static void likeIfPresent(QueryWrapper<SysRoleEntity> wrapper, String column, String value) { if (value != null && !value.isBlank()) wrapper.like(column, value); }
+    private static void setString(Map<String, Object> body, String key, java.util.function.Consumer<String> setter) { if (body.containsKey(key)) setter.accept(String.valueOf(body.get(key))); }
+    private static void setString(Map<String, Object> body, String snake, String camel, java.util.function.Consumer<String> setter) { Object value = body.containsKey(snake) ? body.get(snake) : body.get(camel); if (value != null) setter.accept(String.valueOf(value)); }
+    private static void setInteger(Map<String, Object> body, String key, java.util.function.Consumer<Integer> setter) { if (body.containsKey(key)) setter.accept(intOf(body.get(key))); }
 }

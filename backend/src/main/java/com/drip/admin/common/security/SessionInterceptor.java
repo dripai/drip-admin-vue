@@ -18,7 +18,6 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

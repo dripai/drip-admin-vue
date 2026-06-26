@@ -17,6 +17,8 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
+import com.drip.admin.modules.system.vo.AuthLoginVo;
+import com.drip.admin.modules.system.vo.AuthMeVo;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -35,7 +37,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +72,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
+    public ApiResponse<AuthLoginVo> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         return ApiResponse.success(authService.login(request, servletRequest));
     }
 
@@ -82,7 +83,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<Map<String, Object>> me() {
+    public ApiResponse<AuthMeVo> me() {
         return ApiResponse.success(authService.me(currentUserId()));
     }
 

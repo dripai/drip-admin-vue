@@ -17,6 +17,8 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
+import com.drip.admin.modules.system.entity.SysRoleEntity;
+import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.service.RoleService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +38,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,19 +77,19 @@ public class RoleController {
 
     @GetMapping("/roles")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<Map<String, Object>>> roles(@RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysRoleEntity>> roles(@RequestParam Map<String, String> q) {
         return ApiResponse.success(roleService.page(q));
     }
 
     @GetMapping("/roles/{id}")
     @RequirePermission("system:role:list")
-    public ApiResponse<Map<String, Object>> role(@PathVariable long id) {
+    public ApiResponse<SysRoleEntity> role(@PathVariable long id) {
         return ApiResponse.success(roleService.detail(id));
     }
 
     @GetMapping("/roles/{id}/users")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<Map<String, Object>>> roleUsers(@PathVariable long id, @RequestParam Map<String, String> q) {
+    public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, @RequestParam Map<String, String> q) {
         return ApiResponse.success(roleService.users(id, q));
     }
 

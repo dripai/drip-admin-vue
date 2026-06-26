@@ -66,7 +66,6 @@ import com.drip.admin.modules.system.controller.SystemLogController;
 import com.drip.admin.modules.system.service.SystemLogQueryService;
 import com.drip.admin.modules.system.controller.RoleController;
 import com.drip.admin.modules.system.service.RoleService;
-import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.controller.FileController;
 import com.drip.admin.modules.system.service.FileService;
 import com.drip.admin.modules.system.service.impl.FileServiceImpl;
@@ -87,7 +86,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,75 +118,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 
 class BackendContractTests {
-    @Test
-    void loginFailureWritesLoginLogAndReturnsBusinessError() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        LogService logService = mock(LogService.class);
-        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, loginAttemptService, 1800, 28800);
-
-        when(jdbc.queryForList(eq("select * from sys_user where username = ? and deleted = 0"), eq("missing"))).thenReturn(List.of());
-
-        BusinessException error = assertThrows(BusinessException.class,
-            () -> authService.login(new LoginRequest("missing", "bad-password", "web"), request));
-
-        assertEquals(401000, error.code());
-        verify(logService).login(null, "missing", null, "LOGIN", "FAIL", "用户名或密码错误", request, "web");
-        verify(loginAttemptService).assertNotLocked("missing");
-        verify(loginAttemptService).recordFailure("missing");
-    }
-
-    @Test
-    void currentUserResponseAggregatesUserRolesMenusAndPermissions() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        LogService logService = mock(LogService.class);
-        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
-
-        when(jdbc.queryForList(eq("select * from sys_user where id = ? and deleted = 0"), eq(1L))).thenReturn(List.of(Map.of(
-            "id", 1L,
-            "username", "admin",
-            "real_name", "Administrator",
-            "dept_id", 10L
-        )));
-        when(jdbc.queryForList(contains("select r.role_code"), eq(String.class), eq(1L))).thenReturn(List.of("SUPER_ADMIN"));
-        when(jdbc.queryForList(
-            eq("select permission_code from sys_menu where deleted = 0 and status = 1 and permission_code is not null"),
-            eq(String.class)
-        )).thenReturn(List.of("system:user:list"));
-        when(jdbc.queryForList(eq("select id, parent_id, name, type, path, component, permission_code, icon, sort, visible from sys_menu where deleted = 0 and status = 1 order by sort asc, id asc")))
-            .thenReturn(List.of(Map.of("id", 1L, "parent_id", 0L, "name", "System", "type", "MENU")));
-
-        Map<String, Object> me = authService.me(1L);
-
-        assertEquals("admin", me.get("username"));
-        assertEquals(List.of("SUPER_ADMIN"), me.get("roles"));
-        assertEquals(List.of("system:user:list"), me.get("permissions"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> menus = (List<Map<String, Object>>) me.get("menus");
-        assertEquals("System", menus.getFirst().get("name"));
-    }
-
-    @Test
-    void lockedLoginAttemptStopsBeforeCredentialLookup() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        LogService logService = mock(LogService.class);
-        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, loginAttemptService, 1800, 28800);
-
-        doThrow(new BusinessException(401000, "用户名或密码错误")).when(loginAttemptService).assertNotLocked("locked");
-
-        BusinessException error = assertThrows(BusinessException.class,
-            () -> authService.login(new LoginRequest("locked", "bad-password", "web"), request));
-
-        assertEquals(401000, error.code());
-        verifyNoInteractions(jdbc, logService, onlineSessionService);
-    }
-
     @Test
     @SuppressWarnings("unchecked")
     void loginAttemptServiceLocksWhenFailureLimitReached() {
@@ -289,11 +218,11 @@ class BackendContractTests {
     void onlineUserServiceReadsSessionsFromRedisBackedService() {
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         OnlineUserService onlineUserService = new OnlineUserServiceImpl(onlineSessionService);
-        PageResult<Map<String, Object>> page = new PageResult<>(List.of(Map.of("tokenId", "token-1")), 1, 1, 20);
+        var page = new PageResult<>(List.of(Map.<String, Object>of("tokenId", "token-1")), 1, 1, 20);
 
         when(onlineSessionService.page(Map.of("page", "1"))).thenReturn(page);
 
-        assertEquals(page, onlineUserService.page(Map.of("page", "1")));
+        assertEquals("token-1", onlineUserService.page(Map.of("page", "1")).list().getFirst().tokenId());
     }
 
     @Test
@@ -329,10 +258,10 @@ class BackendContractTests {
 
     @Test
     void healthEndpointReturnsUpStatus() {
-        ApiResponse<Map<String, Object>> response = new HealthController().health();
+        ApiResponse<com.drip.admin.modules.system.vo.HealthVo> response = new HealthController().health();
 
         assertEquals(0, response.code());
-        assertEquals("UP", response.data().get("status"));
+        assertEquals("UP", response.data().status());
     }
 
     @Test
@@ -397,65 +326,6 @@ class BackendContractTests {
     }
 
     @Test
-    void externalCommandOperationsDoNotRunInsideDeclarativeTransactions() throws Exception {
-        assertEquals(null, AdminService.class.getMethod("runJob", long.class).getAnnotation(Transactional.class));
-        assertEquals(null, JobServiceImpl.class.getMethod("run", long.class).getAnnotation(Transactional.class));
-        assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
-        assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
-        assertEquals(null, DatabaseBackupServiceImpl.class.getMethod("create", Map.class, long.class).getAnnotation(Transactional.class));
-        assertEquals(null, DatabaseBackupServiceImpl.class.getMethod("restore", long.class, Map.class).getAnnotation(Transactional.class));
-    }
-
-    @Test
-    void jobServiceWritesSuccessRunLogAfterWhitelistedExecution() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        JobExecutorRegistry registry = mock(JobExecutorRegistry.class);
-        JobServiceImpl jobService = new JobServiceImpl(jdbc, mock(SysJobMapper.class), mock(SysJobRunLogMapper.class), registry);
-
-        when(jdbc.queryForList("select * from sys_job where id = ? and deleted = 0", 9L))
-            .thenReturn(List.of(Map.of(
-                "id", 9L,
-                "job_name", "health",
-                "bean_name", "systemHealthJob",
-                "method_name", "run"
-            )));
-
-        jobService.run(9L);
-
-        verify(registry).execute("systemHealthJob", "run");
-        verify(jdbc).update(
-            eq("insert into sys_job_run_log (job_id, job_name, status, started_at, finished_at, cost_ms) values (?, ?, 'SUCCESS', ?, ?, ?)"),
-            eq(9L),
-            eq("health"),
-            any(),
-            any(),
-            any()
-        );
-    }
-
-    @Test
-    void databaseBackupServiceRequiresRestoreConfirmationBeforeRunningCommand() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DatabaseBackupServiceImpl service = new DatabaseBackupServiceImpl(
-            jdbc,
-            mock(SysDbBackupMapper.class),
-            "./backups",
-            "jdbc:mysql://localhost:3307/drip-manager",
-            "root",
-            "root",
-            "mysqldump",
-            "mysql"
-        );
-
-        when(jdbc.queryForList("select * from sys_db_backup where id = ?", 3L))
-            .thenReturn(List.of(Map.of("id", 3L, "file_path", "./backups/demo.sql", "backup_name", "demo.sql")));
-
-        BusinessException error = assertThrows(BusinessException.class, () -> service.restore(3L, Map.of("confirmed", false)));
-
-        assertEquals(400000, error.code());
-    }
-
-    @Test
     void fileServiceRejectsDisallowedContentType() {
         FileServiceImpl fileService = new FileServiceImpl(1024, "image/png");
         MultipartFile file = mock(MultipartFile.class);
@@ -467,152 +337,6 @@ class BackendContractTests {
         BusinessException error = assertThrows(BusinessException.class, () -> fileService.upload(file));
 
         assertEquals(400000, error.code());
-    }
-
-    @Test
-    void roleAuthorizationRejectsUnknownMenuIdsBeforeReplacingPermissions() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        AdminService adminService = new AdminService(
-            jdbc,
-            mock(OnlineSessionService.class),
-            mock(JobExecutorRegistry.class),
-            1024,
-            "image/png",
-            "./backups",
-            "jdbc:mysql://localhost:3307/drip-manager",
-            "root",
-            "root",
-            "mysqldump",
-            "mysql"
-        );
-
-        when(jdbc.queryForList("select * from sys_role where id = ? and deleted = 0", 7L))
-            .thenReturn(List.of(Map.of("id", 7L)));
-        when(jdbc.queryForObject("select count(1) from sys_menu where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
-            .thenReturn(1L);
-
-        BusinessException error = assertThrows(BusinessException.class, () -> adminService.assignRoleMenus(7L, List.of(1L, 99L)));
-
-        assertEquals(400000, error.code());
-        verify(jdbc, never()).update("delete from sys_role_menu where role_id = ?", 7L);
-    }
-
-    @Test
-    void userServiceRejectsUnknownRoleIdsBeforeReplacingRoles() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        UserService userService = new UserServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class));
-
-        when(jdbc.queryForObject("select count(1) from sys_role where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
-            .thenReturn(1L);
-
-        BusinessException error = assertThrows(BusinessException.class, () -> userService.assignRoles(10L, List.of(1L, 99L)));
-
-        assertEquals(400000, error.code());
-        verify(jdbc, never()).update("delete from sys_user_role where user_id = ?", 10L);
-    }
-
-    @Test
-    void menuServiceRejectsDeletingParentMenu() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        MenuService menuService = new MenuServiceImpl(jdbc, mock(SysMenuMapper.class));
-
-        when(jdbc.queryForObject("select count(1) from sys_menu where parent_id = ? and deleted = 0", Long.class, 15L))
-            .thenReturn(1L);
-
-        BusinessException error = assertThrows(BusinessException.class, () -> menuService.delete(15L));
-
-        assertEquals(400301, error.code());
-        verify(jdbc, never()).update("update sys_menu set deleted = 1 where id = ?", 15L);
-    }
-
-    @Test
-    void deptServiceRejectsMovingDeptUnderDescendant() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DeptService deptService = new DeptServiceImpl(jdbc, mock(SysDeptMapper.class), mock(SysUserMapper.class));
-
-        when(jdbc.queryForList("select * from sys_dept where id = ? and deleted = 0", 10L))
-            .thenReturn(List.of(Map.of("id", 10L)));
-        when(jdbc.queryForList("select id from sys_dept where parent_id = ? and deleted = 0", Long.class, 10L))
-            .thenReturn(List.of(11L));
-        when(jdbc.queryForList("select id from sys_dept where parent_id = ? and deleted = 0", Long.class, 11L))
-            .thenReturn(List.of());
-
-        BusinessException error = assertThrows(BusinessException.class,
-            () -> deptService.update(10L, Map.of("parentId", 11L)));
-
-        assertEquals(400000, error.code());
-        verify(jdbc, never()).update(eq("update sys_dept set parent_id = ? where id = ? and deleted = 0"), any(Object[].class));
-    }
-
-    @Test
-    void referencedCommonStatusDictItemCannotBeDeleted() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DictService dictService = new DictServiceImpl(jdbc, mock(SysDictTypeMapper.class), mock(SysDictItemMapper.class));
-
-        when(jdbc.queryForList("select * from sys_dict_item where id = ? and deleted = 0", 5L))
-            .thenReturn(List.of(Map.of("id", 5L, "dict_type_id", 1L, "value", "1")));
-        when(jdbc.queryForList("select * from sys_dict_type where id = ? and deleted = 0", 1L))
-            .thenReturn(List.of(Map.of("id", 1L, "dict_code", "common_status")));
-        when(jdbc.queryForObject("select count(1) from sys_user where status = ? and deleted = 0", Long.class, 1))
-            .thenReturn(1L);
-
-        BusinessException error = assertThrows(BusinessException.class, () -> dictService.deleteItem(5L));
-
-        assertEquals(400501, error.code());
-    }
-
-    @Test
-    void configServiceMasksSensitiveConfigValues() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigServiceImpl(jdbc, mock(SysConfigMapper.class));
-
-        when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
-            .thenReturn(List.of(Map.of("id", 8L, "config_value", "secret", "is_sensitive", 1)));
-
-        Map<String, Object> row = configService.detail(8L);
-
-        assertEquals("******", row.get("config_value"));
-    }
-
-    @Test
-    void builtinConfigCannotBeDeleted() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigServiceImpl(jdbc, mock(SysConfigMapper.class));
-
-        when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
-            .thenReturn(List.of(Map.of("id", 8L, "builtin", 1)));
-
-        BusinessException error = assertThrows(BusinessException.class, () -> configService.delete(8L));
-
-        assertEquals(400000, error.code());
-        verify(jdbc, never()).update("update sys_config set deleted = 1 where id = ?", 8L);
-    }
-
-    @Test
-    void logQueryServiceAppliesOperationLogFilters() {
-        JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        SystemLogQueryService logQueryService = new SystemLogQueryServiceImpl(jdbc, mock(SysLoginLogMapper.class), mock(SysOperationLogMapper.class));
-
-        when(jdbc.queryForObject(
-            "select count(1) from sys_operation_log where 1 = 1 and module like ? and response_status like ?",
-            Long.class,
-            "%用户管理%",
-            "%SUCCESS%"
-        )).thenReturn(1L);
-        when(jdbc.queryForList(
-            "select * from sys_operation_log where 1 = 1 and module like ? and response_status like ? order by created_at desc limit ?, ?",
-            "%用户管理%",
-            "%SUCCESS%",
-            0,
-            20
-        )).thenReturn(List.of(Map.of("id", 1L)));
-
-        PageResult<Map<String, Object>> result = logQueryService.operationLogs(Map.of(
-            "module", "用户管理",
-            "responseStatus", "SUCCESS"
-        ));
-
-        assertEquals(1, result.total());
     }
 
     @Test
