@@ -17,6 +17,7 @@ import com.drip.admin.modules.system.health.controller.HealthController;
 import com.drip.admin.modules.system.job.controller.JobController;
 import com.drip.admin.modules.system.config.controller.ConfigController;
 import com.drip.admin.modules.system.dept.controller.DeptController;
+import com.drip.admin.modules.system.dept.service.DeptService;
 import com.drip.admin.modules.system.dict.controller.DictController;
 import com.drip.admin.modules.system.menu.controller.MenuController;
 import com.drip.admin.modules.system.menu.service.MenuService;
@@ -173,6 +174,16 @@ class BackendContractTests {
     }
 
     @Test
+    void deptControllerDelegatesWritesToDeptService() {
+        DeptService deptService = mock(DeptService.class);
+        DeptController controller = new DeptController(deptService);
+
+        controller.updateDept(3L, Map.of("deptName", "Research"));
+
+        verify(deptService).update(3L, Map.of("deptName", "Research"));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -302,6 +313,25 @@ class BackendContractTests {
 
         assertEquals(400301, error.code());
         verify(jdbc, never()).update("update sys_menu set deleted = 1 where id = ?", 15L);
+    }
+
+    @Test
+    void deptServiceRejectsMovingDeptUnderDescendant() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        DeptService deptService = new DeptService(jdbc);
+
+        when(jdbc.queryForList("select * from sys_dept where id = ? and deleted = 0", 10L))
+            .thenReturn(List.of(Map.of("id", 10L)));
+        when(jdbc.queryForList("select id from sys_dept where parent_id = ? and deleted = 0", Long.class, 10L))
+            .thenReturn(List.of(11L));
+        when(jdbc.queryForList("select id from sys_dept where parent_id = ? and deleted = 0", Long.class, 11L))
+            .thenReturn(List.of());
+
+        BusinessException error = assertThrows(BusinessException.class,
+            () -> deptService.update(10L, Map.of("parentId", 11L)));
+
+        assertEquals(400000, error.code());
+        verify(jdbc, never()).update(eq("update sys_dept set parent_id = ? where id = ? and deleted = 0"), any(Object[].class));
     }
 
     @Test
