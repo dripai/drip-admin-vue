@@ -17,7 +17,6 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
 import com.drip.admin.modules.system.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -66,19 +65,19 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 
 @Component
 public class PermissionProvider implements StpInterface {
-    private final AdminService adminService;
+    private final AuthService authService;
 
-    public PermissionProvider(AdminService adminService) {
-        this.adminService = adminService;
+    public PermissionProvider(AuthService authService) {
+        this.authService = authService;
     }
 
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
-        return adminService.permissionCodes(Long.parseLong(String.valueOf(loginId)));
+        return authService.permissionCodes(Long.parseLong(String.valueOf(loginId)));
     }
 
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
-        return adminService.roleCodes(Long.parseLong(String.valueOf(loginId)));
+        return authService.roleCodes(Long.parseLong(String.valueOf(loginId)));
     }
 }

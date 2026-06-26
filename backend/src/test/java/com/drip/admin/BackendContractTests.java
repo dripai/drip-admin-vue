@@ -13,6 +13,7 @@ import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.service.AuthService;
+import com.drip.admin.modules.system.service.impl.AuthServiceImpl;
 import com.drip.admin.modules.system.controller.DatabaseBackupController;
 import com.drip.admin.modules.system.service.DatabaseBackupService;
 import com.drip.admin.modules.system.service.impl.DatabaseBackupServiceImpl;
@@ -66,6 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -79,11 +81,10 @@ class BackendContractTests {
     void loginFailureWritesLoginLogAndReturnsBusinessError() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         LogService logService = mock(LogService.class);
-        AdminService adminService = mock(AdminService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, loginAttemptService, 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, loginAttemptService, 1800, 28800);
 
         when(jdbc.queryForList(eq("select * from sys_user where username = ? and deleted = 0"), eq("missing"))).thenReturn(List.of());
 
@@ -100,37 +101,41 @@ class BackendContractTests {
     void currentUserResponseAggregatesUserRolesMenusAndPermissions() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         LogService logService = mock(LogService.class);
-        AdminService adminService = mock(AdminService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
 
-        when(adminService.detail("sys_user", 1L)).thenReturn(Map.of(
+        when(jdbc.queryForList(eq("select * from sys_user where id = ? and deleted = 0"), eq(1L))).thenReturn(List.of(Map.of(
             "id", 1L,
             "username", "admin",
             "real_name", "Administrator",
             "dept_id", 10L
-        ));
-        when(adminService.roleCodes(1L)).thenReturn(List.of("SUPER_ADMIN"));
-        when(adminService.permissionCodes(1L)).thenReturn(List.of("system:user:list"));
-        when(adminService.menuTree(1L)).thenReturn(List.of(Map.of("name", "System")));
+        )));
+        when(jdbc.queryForList(contains("select r.role_code"), eq(String.class), eq(1L))).thenReturn(List.of("SUPER_ADMIN"));
+        when(jdbc.queryForList(
+            eq("select permission_code from sys_menu where deleted = 0 and status = 1 and permission_code is not null"),
+            eq(String.class)
+        )).thenReturn(List.of("system:user:list"));
+        when(jdbc.queryForList(eq("select id, parent_id, name, type, path, component, permission_code, icon, sort, visible from sys_menu where deleted = 0 and status = 1 order by sort asc, id asc")))
+            .thenReturn(List.of(Map.of("id", 1L, "parent_id", 0L, "name", "System", "type", "MENU")));
 
         Map<String, Object> me = authService.me(1L);
 
         assertEquals("admin", me.get("username"));
         assertEquals(List.of("SUPER_ADMIN"), me.get("roles"));
         assertEquals(List.of("system:user:list"), me.get("permissions"));
-        assertEquals(List.of(Map.of("name", "System")), me.get("menus"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> menus = (List<Map<String, Object>>) me.get("menus");
+        assertEquals("System", menus.getFirst().get("name"));
     }
 
     @Test
     void lockedLoginAttemptStopsBeforeCredentialLookup() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         LogService logService = mock(LogService.class);
-        AdminService adminService = mock(AdminService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, loginAttemptService, 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, loginAttemptService, 1800, 28800);
 
         doThrow(new BusinessException(401000, "用户名或密码错误")).when(loginAttemptService).assertNotLocked("locked");
 
@@ -138,7 +143,7 @@ class BackendContractTests {
             () -> authService.login(new LoginRequest("locked", "bad-password", "web"), request));
 
         assertEquals(401000, error.code());
-        verifyNoInteractions(jdbc, logService, adminService, onlineSessionService);
+        verifyNoInteractions(jdbc, logService, onlineSessionService);
     }
 
     @Test

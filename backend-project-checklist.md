@@ -142,3 +142,4 @@
 - 2026-06-26：文件上传模块按 `FileService` 接口和 `FileServiceImpl` 实现类补齐，上传大小、类型限制和返回结构迁出通用 `AdminService`。
 - 2026-06-26：执行 `mvn test` 通过，39 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
+- 2026-06-26：认证模块按 `AuthService` 接口和 `AuthServiceImpl` 实现类拆分，登录、退出、当前用户、密码修改、角色权限查询和菜单树聚合迁出通用 `AdminService`。
