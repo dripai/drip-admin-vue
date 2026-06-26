@@ -8,6 +8,7 @@ import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
+import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.service.AuthService;
@@ -27,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +50,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 
@@ -56,8 +61,9 @@ class BackendContractTests {
         LogService logService = mock(LogService.class);
         AdminService adminService = mock(AdminService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
+        LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, 1800, 28800);
+        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, loginAttemptService, 1800, 28800);
 
         when(jdbc.queryForList(eq("select * from sys_user where username = ? and deleted = 0"), eq("missing"))).thenReturn(List.of());
 
@@ -66,6 +72,8 @@ class BackendContractTests {
 
         assertEquals(401000, error.code());
         verify(logService).login(null, "missing", null, "LOGIN", "FAIL", "用户名或密码错误", request, "web");
+        verify(loginAttemptService).assertNotLocked("missing");
+        verify(loginAttemptService).recordFailure("missing");
     }
 
     @Test
@@ -74,7 +82,7 @@ class BackendContractTests {
         LogService logService = mock(LogService.class);
         AdminService adminService = mock(AdminService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, 1800, 28800);
+        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
 
         when(adminService.detail("sys_user", 1L)).thenReturn(Map.of(
             "id", 1L,
@@ -92,6 +100,41 @@ class BackendContractTests {
         assertEquals(List.of("SUPER_ADMIN"), me.get("roles"));
         assertEquals(List.of("system:user:list"), me.get("permissions"));
         assertEquals(List.of(Map.of("name", "System")), me.get("menus"));
+    }
+
+    @Test
+    void lockedLoginAttemptStopsBeforeCredentialLookup() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        LogService logService = mock(LogService.class);
+        AdminService adminService = mock(AdminService.class);
+        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
+        LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        AuthService authService = new AuthService(jdbc, logService, adminService, onlineSessionService, loginAttemptService, 1800, 28800);
+
+        doThrow(new BusinessException(401000, "用户名或密码错误")).when(loginAttemptService).assertNotLocked("locked");
+
+        BusinessException error = assertThrows(BusinessException.class,
+            () -> authService.login(new LoginRequest("locked", "bad-password", "web"), request));
+
+        assertEquals(401000, error.code());
+        verifyNoInteractions(jdbc, logService, adminService, onlineSessionService);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void loginAttemptServiceLocksWhenFailureLimitReached() {
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ValueOperations<String, String> values = mock(ValueOperations.class);
+        LoginAttemptService service = new LoginAttemptService(redis, 5, 900);
+
+        when(redis.opsForValue()).thenReturn(values);
+        when(values.get("drip:login:fail:demo")).thenReturn("4", "5");
+
+        assertDoesNotThrow(() -> service.assertNotLocked("Demo"));
+        BusinessException error = assertThrows(BusinessException.class, () -> service.assertNotLocked("Demo"));
+
+        assertEquals(401000, error.code());
     }
 
     @Test

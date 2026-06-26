@@ -14,6 +14,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.dto.PasswordRequest;
@@ -71,36 +72,44 @@ public class AuthService {
     private final LogService logService;
     private final AdminService adminService;
     private final OnlineSessionService onlineSessionService;
+    private final LoginAttemptService loginAttemptService;
     private final long idleTimeout;
     private final long maxDuration;
 
     public AuthService(JdbcTemplate jdbc, LogService logService, AdminService adminService, OnlineSessionService onlineSessionService,
+                LoginAttemptService loginAttemptService,
                 @Value("${drip.session.idle-timeout-seconds}") long idleTimeout,
                 @Value("${drip.session.max-duration-seconds}") long maxDuration) {
         this.jdbc = jdbc;
         this.logService = logService;
         this.adminService = adminService;
         this.onlineSessionService = onlineSessionService;
+        this.loginAttemptService = loginAttemptService;
         this.idleTimeout = idleTimeout;
         this.maxDuration = maxDuration;
     }
 
     @Transactional
     public Map<String, Object> login(LoginRequest request, HttpServletRequest servletRequest) {
+        loginAttemptService.assertNotLocked(request.username());
         Map<String, Object> user = findUserByUsername(request.username());
     if (user.isEmpty()) {
             logService.login(null, request.username(), null, "LOGIN", "FAIL", "用户名或密码错误", servletRequest, request.deviceType());
+            loginAttemptService.recordFailure(request.username());
     throw new BusinessException(401000, "用户名或密码错误");
         }
     if (intOf(user.get("status")) != 1 || intOf(user.get("deleted")) == 1) {
             logService.login(longOf(user.get("id")), request.username(), stringOf(user.get("real_name")), "LOGIN", "FAIL", "用户已禁用或删除", servletRequest, request.deviceType());
+            loginAttemptService.recordFailure(request.username());
     throw new BusinessException(401000, "用户名或密码错误");
         }
         String expected = hashPassword(request.password(), stringOf(user.get("password_salt")));
     if (!expected.equals(stringOf(user.get("password_hash")))) {
             logService.login(longOf(user.get("id")), request.username(), stringOf(user.get("real_name")), "LOGIN", "FAIL", "用户名或密码错误", servletRequest, request.deviceType());
+            loginAttemptService.recordFailure(request.username());
     throw new BusinessException(401000, "用户名或密码错误");
         }
+        loginAttemptService.clear(request.username());
         Long userId = longOf(user.get("id"));
         StpUtil.login(userId);
         String token = StpUtil.getTokenValue();
