@@ -99,18 +99,19 @@
 
 | 状态 | 任务 | 验证标准 |
 |---|---|---|
-| 待校验 | 后端启动成功 | 本地服务可访问 |
-| 待校验 | Swagger 可访问 | 接口文档正常展示 |
-| 待校验 | Flyway 迁移成功 | 数据库表和初始化数据生成 |
-| 待校验 | 登录成功 | 返回 token 和会话字段 |
-| 待校验 | `GET /api/system/me` 可用 | 返回用户、角色、菜单树、权限码 |
-| 待校验 | 无 token 返回 401 | 前端可识别 |
-| 待校验 | 无权限返回 403 | 前端可识别 |
-| 待校验 | 登录日志写入成功 | 登录事件可查询 |
-| 待校验 | 业务操作日志写入成功 | 关键变更操作可查询 |
+| 已完成 | 后端启动成功 | 本地服务可访问 |
+| 已完成 | Swagger 可访问 | 接口文档正常展示 |
+| 已完成 | Flyway 迁移成功 | 数据库表和初始化数据生成 |
+| 已完成 | 登录成功 | 返回 token 和会话字段 |
+| 已完成 | `GET /api/system/me` 可用 | 返回用户、角色、菜单树、权限码 |
+| 已完成 | 无 token 返回 401 | 前端可识别 |
+| 已完成 | 无权限返回 403 | 前端可识别 |
+| 已完成 | 登录日志写入成功 | 登录事件可查询 |
+| 已完成 | 业务操作日志写入成功 | 关键变更操作可查询 |
 
 ## 最近验证记录
 
+- 2026-06-26：完成 9 个联调验收项：`/api/health` 返回 UP，Swagger 302 到 `/api/swagger-ui/index.html` 且 `/api/v3/api-docs` 可访问，服务已启动并完成 Flyway，admin 登录成功并获取 `/api/system/me`，无 token 返回 401，无权限用户返回 403，登录日志和新增角色操作日志可查询。
 - 2026-06-26：集中修复第一轮核对问题：补齐 DTO/Query 校验与 Controller `@Valid`，用户列表支持 `roleId/createdFrom/createdTo`，部门补齐详情接口，在线用户支持 username/ip/deviceType 过滤，清理业务异常中的乱码文案；`backend/start.sh build` 通过。
 - 2026-06-26：第一轮按 `backend-system-design-prompt-template.md` 核对清单；`backend/start.sh build` 通过，发现参数校验、用户查询条件/时间范围、部门详情接口、在线用户查询过滤、业务异常中文文案存在缺口，相关项标记为 `待开始`，联调验收项保留 `待校验`。
 - 2026-06-26：按 `backend-system-design-prompt-template.md` 目录结构完成拆包，后端 Java 源码从单文件拆分为 `common/`、`config/`、`modules/`、`infrastructure/`、`shared/`。
