@@ -185,6 +185,7 @@ public class AdminService {
 
     @Transactional
     public void assignUserRoles(long userId, List<Long> roleIds) {
+        assertExistingIds("sys_role", roleIds, "角色不存在");
     assertNotSuperAdminTarget(userId);
         jdbc.update("delete from sys_user_role where user_id = ?", userId);
     for (Long roleId : roleIds) jdbc.update("insert into sys_user_role (user_id, role_id) values (?, ?)", userId, roleId);
@@ -202,6 +203,7 @@ public class AdminService {
     @Transactional
     public void assignRoleMenus(long roleId, List<Long> menuIds) {
     detail("sys_role", roleId);
+        assertExistingIds("sys_menu", menuIds, "菜单权限不存在");
         jdbc.update("delete from sys_role_menu where role_id = ?", roleId);
     for (Long menuId : menuIds) jdbc.update("insert into sys_role_menu (role_id, menu_id) values (?, ?)", roleId, menuId);
     }
@@ -519,6 +521,20 @@ public class AdminService {
     else if ("is_sensitive".equals(col) && body.containsKey("sensitive")) values.put(col, body.get("sensitive"));
         }
         return values;
+    }
+
+   private void assertExistingIds(String table, List<Long> ids, String message) {
+        TableMeta.require(table);
+    if (ids == null || ids.isEmpty()) return;
+        List<Long> uniqueIds = ids.stream().filter(Objects::nonNull).distinct().toList();
+    if (uniqueIds.size() != ids.size()) throw new BusinessException(400000, message);
+        String placeholders = uniqueIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+        Long count = jdbc.queryForObject(
+            "select count(1) from " + table + " where id in (" + placeholders + ") and deleted = 0",
+            Long.class,
+            uniqueIds.toArray()
+        );
+    if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, message);
     }
 
    private void maskSensitiveConfig(Map<String, Object> row) {

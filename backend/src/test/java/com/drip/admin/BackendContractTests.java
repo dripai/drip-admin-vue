@@ -50,6 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -222,6 +223,60 @@ class BackendContractTests {
         assertEquals(null, AdminService.class.getMethod("runJob", long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
+    }
+
+    @Test
+    void roleAuthorizationRejectsUnknownMenuIdsBeforeReplacingPermissions() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        AdminService adminService = new AdminService(
+            jdbc,
+            mock(OnlineSessionService.class),
+            mock(JobExecutorRegistry.class),
+            1024,
+            "image/png",
+            "./backups",
+            "jdbc:mysql://localhost:3307/drip-manager",
+            "root",
+            "root",
+            "mysqldump",
+            "mysql"
+        );
+
+        when(jdbc.queryForList("select * from sys_role where id = ? and deleted = 0", 7L))
+            .thenReturn(List.of(Map.of("id", 7L)));
+        when(jdbc.queryForObject("select count(1) from sys_menu where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
+            .thenReturn(1L);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> adminService.assignRoleMenus(7L, List.of(1L, 99L)));
+
+        assertEquals(400000, error.code());
+        verify(jdbc, never()).update("delete from sys_role_menu where role_id = ?", 7L);
+    }
+
+    @Test
+    void userRoleAssignmentRejectsUnknownRoleIdsBeforeReplacingRoles() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        AdminService adminService = new AdminService(
+            jdbc,
+            mock(OnlineSessionService.class),
+            mock(JobExecutorRegistry.class),
+            1024,
+            "image/png",
+            "./backups",
+            "jdbc:mysql://localhost:3307/drip-manager",
+            "root",
+            "root",
+            "mysqldump",
+            "mysql"
+        );
+
+        when(jdbc.queryForObject("select count(1) from sys_role where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
+            .thenReturn(1L);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> adminService.assignUserRoles(10L, List.of(1L, 99L)));
+
+        assertEquals(400000, error.code());
+        verify(jdbc, never()).update("delete from sys_user_role where user_id = ?", 10L);
     }
 
     @Test
