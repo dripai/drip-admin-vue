@@ -85,7 +85,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> business(BusinessException ex) {
-        HttpStatus status = ex.code() == 401000 ? HttpStatus.UNAUTHORIZED : ex.code() == 403000 ? HttpStatus.FORBIDDEN : HttpStatus.BAD_REQUEST;
+        HttpStatus status = switch (ex.code()) {
+            case 401000 -> HttpStatus.UNAUTHORIZED;
+            case 403000 -> HttpStatus.FORBIDDEN;
+            case 404000 -> HttpStatus.NOT_FOUND;
+            case 409000 -> HttpStatus.CONFLICT;
+            default -> ex.code() >= 500000 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
+        };
         return ResponseEntity.status(status).body(ApiResponse.fail(ex.code(), ex.getMessage()));
     }
 

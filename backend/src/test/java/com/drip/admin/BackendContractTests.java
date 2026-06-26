@@ -1,6 +1,7 @@
 package com.drip.admin;
 
 import com.drip.admin.common.exception.BusinessException;
+import com.drip.admin.common.exception.GlobalExceptionHandler;
 import com.drip.admin.common.log.LogService;
 import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.log.OperationLogAspect;
@@ -24,6 +25,7 @@ import com.drip.admin.modules.system.user.controller.UserController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -200,6 +202,17 @@ class BackendContractTests {
         BusinessException error = assertThrows(BusinessException.class, () -> adminService.deleteDictItem(5L));
 
         assertEquals(400501, error.code());
+    }
+
+    @Test
+    void businessExceptionHttpStatusMatchesErrorCode() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        assertEquals(HttpStatus.UNAUTHORIZED, handler.business(new BusinessException(401000, "unauthorized")).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, handler.business(new BusinessException(403000, "forbidden")).getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, handler.business(new BusinessException(404000, "not found")).getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, handler.business(new BusinessException(409000, "conflict")).getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, handler.business(new BusinessException(500000, "system")).getStatusCode());
     }
 
     private static void assertOperationLogged(Class<?> type, String methodName, Class<?>... parameterTypes) throws Exception {
