@@ -40,6 +40,13 @@ import com.drip.admin.modules.system.service.impl.FileServiceImpl;
 import com.drip.admin.modules.system.controller.OnlineUserController;
 import com.drip.admin.modules.system.service.OnlineUserService;
 import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
+import com.drip.admin.modules.system.service.impl.ConfigServiceImpl;
+import com.drip.admin.modules.system.service.impl.DeptServiceImpl;
+import com.drip.admin.modules.system.service.impl.DictServiceImpl;
+import com.drip.admin.modules.system.service.impl.MenuServiceImpl;
+import com.drip.admin.modules.system.service.impl.SystemLogQueryServiceImpl;
+import com.drip.admin.modules.system.service.impl.RoleServiceImpl;
+import com.drip.admin.modules.system.service.impl.UserServiceImpl;
 import com.drip.admin.modules.system.controller.UserController;
 import com.drip.admin.modules.system.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -456,7 +463,7 @@ class BackendContractTests {
     @Test
     void userServiceRejectsUnknownRoleIdsBeforeReplacingRoles() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        UserService userService = new UserService(jdbc);
+        UserService userService = new UserServiceImpl(jdbc);
 
         when(jdbc.queryForObject("select count(1) from sys_role where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
             .thenReturn(1L);
@@ -470,7 +477,7 @@ class BackendContractTests {
     @Test
     void menuServiceRejectsDeletingParentMenu() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        MenuService menuService = new MenuService(jdbc);
+        MenuService menuService = new MenuServiceImpl(jdbc);
 
         when(jdbc.queryForObject("select count(1) from sys_menu where parent_id = ? and deleted = 0", Long.class, 15L))
             .thenReturn(1L);
@@ -484,7 +491,7 @@ class BackendContractTests {
     @Test
     void deptServiceRejectsMovingDeptUnderDescendant() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DeptService deptService = new DeptService(jdbc);
+        DeptService deptService = new DeptServiceImpl(jdbc);
 
         when(jdbc.queryForList("select * from sys_dept where id = ? and deleted = 0", 10L))
             .thenReturn(List.of(Map.of("id", 10L)));
@@ -503,7 +510,7 @@ class BackendContractTests {
     @Test
     void referencedCommonStatusDictItemCannotBeDeleted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DictService dictService = new DictService(jdbc);
+        DictService dictService = new DictServiceImpl(jdbc);
 
         when(jdbc.queryForList("select * from sys_dict_item where id = ? and deleted = 0", 5L))
             .thenReturn(List.of(Map.of("id", 5L, "dict_type_id", 1L, "value", "1")));
@@ -520,7 +527,7 @@ class BackendContractTests {
     @Test
     void configServiceMasksSensitiveConfigValues() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigService(jdbc);
+        ConfigService configService = new ConfigServiceImpl(jdbc);
 
         when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
             .thenReturn(List.of(Map.of("id", 8L, "config_value", "secret", "is_sensitive", 1)));
@@ -533,7 +540,7 @@ class BackendContractTests {
     @Test
     void builtinConfigCannotBeDeleted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigService(jdbc);
+        ConfigService configService = new ConfigServiceImpl(jdbc);
 
         when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
             .thenReturn(List.of(Map.of("id", 8L, "builtin", 1)));
@@ -547,7 +554,7 @@ class BackendContractTests {
     @Test
     void logQueryServiceAppliesOperationLogFilters() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        SystemLogQueryService logQueryService = new SystemLogQueryService(jdbc);
+        SystemLogQueryService logQueryService = new SystemLogQueryServiceImpl(jdbc);
 
         when(jdbc.queryForObject(
             "select count(1) from sys_operation_log where 1 = 1 and module like ? and response_status like ?",

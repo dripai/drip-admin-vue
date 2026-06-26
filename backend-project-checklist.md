@@ -143,3 +143,4 @@
 - 2026-06-26：执行 `mvn test` 通过，39 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
 - 2026-06-26：认证模块按 `AuthService` 接口和 `AuthServiceImpl` 实现类拆分，登录、退出、当前用户、密码修改、角色权限查询和菜单树聚合迁出通用 `AdminService`。
+- 2026-06-26：批量完成 `UserService`、`RoleService`、`MenuService`、`DeptService`、`DictService`、`ConfigService`、`SystemLogQueryService` 接口与 `service/impl/*Impl` 实现类拆分，Controller 统一注入接口。
