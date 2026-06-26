@@ -31,6 +31,8 @@ import com.drip.admin.modules.system.service.RoleService;
 import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.controller.FileController;
 import com.drip.admin.modules.system.controller.OnlineUserController;
+import com.drip.admin.modules.system.service.OnlineUserService;
+import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
 import com.drip.admin.modules.system.controller.UserController;
 import com.drip.admin.modules.system.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -216,6 +218,27 @@ class BackendContractTests {
         controller.operationLog(12L);
 
         verify(logQueryService).operationLog(12L);
+    }
+
+    @Test
+    void onlineUserControllerDelegatesKickoutToOnlineUserService() {
+        OnlineUserService onlineUserService = mock(OnlineUserService.class);
+        OnlineUserController controller = new OnlineUserController(onlineUserService);
+
+        controller.kickout("token-1");
+
+        verify(onlineUserService).kickout("token-1");
+    }
+
+    @Test
+    void onlineUserServiceReadsSessionsFromRedisBackedService() {
+        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
+        OnlineUserService onlineUserService = new OnlineUserServiceImpl(onlineSessionService);
+        PageResult<Map<String, Object>> page = new PageResult<>(List.of(Map.of("tokenId", "token-1")), 1, 1, 20);
+
+        when(onlineSessionService.page(Map.of("page", "1"))).thenReturn(page);
+
+        assertEquals(page, onlineUserService.page(Map.of("page", "1")));
     }
 
     @Test
