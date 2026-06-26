@@ -74,7 +74,7 @@ async function remove(row: DatabaseBackupItem) {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="数据库备份"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"

@@ -121,7 +121,7 @@ async function reloadItems() {
 onMounted(loadTypes);
 </script>
 <template>
-  <PageContainer title="字典管理"
+  <PageContainer
     ><a-row :gutter="16"
       ><a-col :span="8"
         ><div class="page-actions">
@@ -146,8 +146,7 @@ onMounted(loadTypes);
           @refresh="reloadItems"
           ><template #toolbarLeft>
             <a-space>
-              <a-button type="primary" :disabled="!currentType" @click="addItem"
-                >新增字典项</a-button
+              <a-button type="primary" :disabled="!currentType" @click="addItem">新增</a-button
               ><a-button :disabled="!currentType" @click="refresh">刷新缓存</a-button>
             </a-space>
           </template>
@@ -156,7 +155,7 @@ onMounted(loadTypes);
               ><StatusTag :status="record.status" /></template
             ><template v-else-if="column.dataIndex === 'action'"
               ><a-space
-                ><a-button type="link" @click="editItem(record)">新增字典项</a-button
+                ><a-button type="link" @click="editItem(record)">编辑</a-button
                 ><ConfirmAction title="删除字典项？" danger @confirm="removeItem(record)"
                   >删除</ConfirmAction
                 ></a-space

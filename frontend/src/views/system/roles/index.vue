@@ -119,7 +119,7 @@ async function savePerm() {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="角色管理"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"
@@ -136,7 +136,7 @@ onMounted(table.refresh);
       @refresh="table.refresh"
       ><template #toolbarLeft>
         <PermissionButton permission="system:role:create" type="primary" @click="openCreate"
-          >新增角色</PermissionButton
+          >新增</PermissionButton
         >
       </template>
       <template #bodyCell="{ column, record }"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, h, reactive, ref } from 'vue';
+import { computed, h, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
@@ -23,11 +23,32 @@ const passwordForm = reactive({
   confirmPassword: '',
 });
 
-const menuItems = computed(() => buildMenu(user.menus));
-const selectedKeys = computed(() => [route.path]);
-const breadcrumb = computed(() =>
-  route.matched.filter((item) => item.meta.title).map((item) => String(item.meta.title)),
-);
+const dashboardMenuItem = {
+  key: '/dashboard',
+  label: '首页',
+  icon: () => h(IconRenderer, { icon: 'AppstoreOutlined' }),
+};
+const menuItems = computed(() => [dashboardMenuItem, ...buildMenu(user.menus)]);
+const activeMenuTrail = computed(() => findActiveMenuTrail(user.menus, route.path));
+const selectedKeys = computed(() => {
+  const activeKey = activeMenuTrail.value.keys[activeMenuTrail.value.keys.length - 1];
+  return activeKey ? [activeKey] : [route.path];
+});
+const openKeys = ref<string[]>([]);
+const breadcrumb = computed(() => {
+  if (route.path === '/dashboard') return ['首页'];
+  if (activeMenuTrail.value.labels.length) return activeMenuTrail.value.labels;
+  return route.matched.filter((item) => item.meta.title).map((item) => String(item.meta.title));
+});
+
+function menuKey(item: MenuNode) {
+  return item.path || String(item.id);
+}
+
+function normalizePath(path?: string) {
+  if (!path || path === '/') return path || '';
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
 
 function buildMenu(nodes: MenuNode[]): any[] {
   return nodes
@@ -40,13 +61,62 @@ function buildMenu(nodes: MenuNode[]): any[] {
     )
     .sort((a, b) => a.sort - b.sort)
     .map((item) => ({
-      key: item.path || String(item.id),
+      key: menuKey(item),
       label: item.name,
       icon: item.icon ? () => h(IconRenderer, { icon: item.icon }) : undefined,
       children: item.children?.length ? buildMenu(item.children) : undefined,
       type: item.type,
     }));
 }
+
+function findActiveMenuTrail(nodes: MenuNode[], routePath: string) {
+  const targetPath = normalizePath(routePath);
+  let bestMatch = { keys: [] as string[], labels: [] as string[] };
+
+  function walk(
+    items: MenuNode[],
+    parentKeys: string[],
+    parentLabels: string[],
+  ): typeof bestMatch | undefined {
+    for (const item of items) {
+      if (
+        item.status !== 'ENABLED' ||
+        item.visible === false ||
+        item.hidden ||
+        item.type === 'BUTTON'
+      ) {
+        continue;
+      }
+      const key = menuKey(item);
+      const currentKeys = [...parentKeys, key];
+      const currentLabels = [...parentLabels, item.name];
+      const itemPath = normalizePath(item.path);
+      if (itemPath && targetPath === itemPath) return { keys: currentKeys, labels: currentLabels };
+      if (
+        itemPath &&
+        targetPath.startsWith(`${itemPath}/`) &&
+        currentKeys.length > bestMatch.keys.length
+      ) {
+        bestMatch = { keys: currentKeys, labels: currentLabels };
+      }
+      const childMatch = item.children?.length
+        ? walk(item.children, currentKeys, currentLabels)
+        : undefined;
+      if (childMatch) return childMatch;
+    }
+    return undefined;
+  }
+
+  return walk(nodes, [], []) || bestMatch;
+}
+
+watch(
+  activeMenuTrail,
+  (trail) => {
+    openKeys.value = trail.keys.slice(0, -1);
+  },
+  { immediate: true },
+);
 
 async function logout() {
   await auth.logout();
@@ -92,6 +162,7 @@ async function submitPassword() {
       <a-menu
         theme="dark"
         mode="inline"
+        v-model:openKeys="openKeys"
         :selected-keys="selectedKeys"
         :items="menuItems"
         @click="(info: any) => router.push(String(info.key))"

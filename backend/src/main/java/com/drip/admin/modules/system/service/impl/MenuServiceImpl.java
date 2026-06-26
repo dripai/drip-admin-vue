@@ -20,8 +20,8 @@ import java.util.Map;
 public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> implements MenuService {
     @Override
     public List<MenuTreeVo> tree() {
-        List<SysMenuEntity> rows = list(new QueryWrapper<SysMenuEntity>().eq("status", 1).orderByAsc("sort", "id"));
-        return buildTree(rows.stream().filter(row -> !"BUTTON".equals(row.getType())).map(this::toTreeVo).toList());
+        List<SysMenuEntity> rows = list(new QueryWrapper<SysMenuEntity>().eq("deleted", 0).orderByAsc("sort", "id"));
+        return buildTree(rows.stream().map(this::toTreeVo).toList());
     }
 
     @Override
@@ -29,11 +29,11 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
 
     @Override
     @Transactional
-    public Long create(MenuSaveRequest request) { requireText(request.getName(), "name"); requireText(request.getType(), "type"); SysMenuEntity entity = new SysMenuEntity(); apply(entity, request); save(entity); return entity.getId(); }
+    public Long create(MenuSaveRequest request) { requireText(request.getName(), "name"); requireText(request.getType(), "type"); assertExistingParent(request); SysMenuEntity entity = new SysMenuEntity(); apply(entity, request); save(entity); return entity.getId(); }
 
     @Override
     @Transactional
-    public void update(long id, MenuSaveRequest request) { detail(id); SysMenuEntity entity = new SysMenuEntity(); entity.setId(id); apply(entity, request); updateById(entity); }
+    public void update(long id, MenuSaveRequest request) { detail(id); assertExistingParent(request); assertValidParent(id, request); SysMenuEntity entity = new SysMenuEntity(); entity.setId(id); apply(entity, request); updateById(entity); }
 
     @Override
     @Transactional
@@ -51,7 +51,7 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
 
     private MenuTreeVo toTreeVo(SysMenuEntity entity) {
         MenuTreeVo vo = new MenuTreeVo(); vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setName(entity.getName()); vo.setType(entity.getType());
-        vo.setPath(entity.getPath()); vo.setComponent(entity.getComponent()); vo.setPermissionCode(entity.getPermissionCode()); vo.setIcon(entity.getIcon()); vo.setSort(entity.getSort()); vo.setVisible(entity.getVisible()); return vo;
+        vo.setPath(entity.getPath()); vo.setComponent(entity.getComponent()); vo.setPermissionCode(entity.getPermissionCode()); vo.setIcon(entity.getIcon()); vo.setSort(entity.getSort()); vo.setVisible(entity.getVisible()); vo.setStatus(entity.getStatus()); return vo;
     }
 
     private static List<MenuTreeVo> buildTree(List<MenuTreeVo> rows) {
@@ -61,4 +61,32 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
         return roots;
     }
     private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
+
+    private void assertValidParent(long id, MenuSaveRequest request) {
+        Long parentId = request.getParentId();
+        if (parentId == null || parentId == 0) return;
+        if (parentId == id || descendantMenuIds(id).contains(parentId)) throw new BusinessException(400000, "operation failed");
+    }
+
+    private List<Long> descendantMenuIds(long id) {
+        List<SysMenuEntity> rows = list(new QueryWrapper<SysMenuEntity>().select("id", "parent_id"));
+        List<Long> result = new ArrayList<>();
+        collectDescendants(id, rows, result);
+        return result;
+    }
+
+    private static void collectDescendants(long parentId, List<SysMenuEntity> rows, List<Long> result) {
+        for (SysMenuEntity row : rows) {
+            if (row.getParentId() != null && row.getParentId().equals(parentId)) {
+                result.add(row.getId());
+                collectDescendants(row.getId(), rows, result);
+            }
+        }
+    }
+
+    private void assertExistingParent(MenuSaveRequest request) {
+        Long parentId = request.getParentId();
+        if (parentId == null || parentId == 0) return;
+        detail(parentId);
+    }
 }

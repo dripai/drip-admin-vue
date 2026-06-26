@@ -39,7 +39,7 @@ async function kick(row: OnlineUserItem) {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="在线用户"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"

@@ -56,7 +56,12 @@ function normalizeResponseData(value: unknown): unknown {
   const source = value as Record<string, unknown>;
   const normalized: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(source)) {
-    normalized[key] = key === 'status' ? normalizeStatus(item) : normalizeResponseData(item);
+    normalized[key] =
+      key === 'status'
+        ? normalizeStatus(item)
+        : key === 'visible'
+          ? normalizeBoolean(item)
+          : normalizeResponseData(item);
   }
   return normalized;
 }
@@ -64,6 +69,12 @@ function normalizeResponseData(value: unknown): unknown {
 function normalizeStatus(value: unknown) {
   if (value === 1) return 'ENABLED';
   if (value === 0) return 'DISABLED';
+  return value;
+}
+
+function normalizeBoolean(value: unknown) {
+  if (value === 1) return true;
+  if (value === 0) return false;
   return value;
 }
 

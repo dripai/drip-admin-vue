@@ -13,7 +13,7 @@ public class MenuSaveRequest {
     @Pattern(regexp = "DIRECTORY|MENU|BUTTON", message = "type must be DIRECTORY, MENU or BUTTON")
     private String type;
     private String path; private String component;
-    @Pattern(regexp = "^$|^[a-z][a-zA-Z0-9]*:[a-z][a-zA-Z0-9]*:[a-z][a-zA-Z0-9]*$", message = "permissionCode format is invalid")
+    @Pattern(regexp = "^$|^[a-z][a-zA-Z0-9]*(?::[a-z][a-zA-Z0-9]*){0,2}$", message = "permissionCode format is invalid")
     private String permissionCode;
     private String icon; private Integer sort; private Integer visible; private Integer status;
     public Long getParentId() { return parentId; } public void setParentId(Long parentId) { this.parentId = parentId; }

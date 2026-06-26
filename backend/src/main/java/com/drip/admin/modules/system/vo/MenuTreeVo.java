@@ -14,6 +14,7 @@ public class MenuTreeVo {
     private String icon;
     private Integer sort;
     private Integer visible;
+    private Integer status;
     private List<MenuTreeVo> children = new ArrayList<>();
 
     public Long getId() { return id; }
@@ -36,6 +37,8 @@ public class MenuTreeVo {
     public void setSort(Integer sort) { this.sort = sort; }
     public Integer getVisible() { return visible; }
     public void setVisible(Integer visible) { this.visible = visible; }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
     public List<MenuTreeVo> getChildren() { return children; }
     public void setChildren(List<MenuTreeVo> children) { this.children = children; }
 }

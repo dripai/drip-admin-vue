@@ -99,7 +99,7 @@ async function status(row: ConfigItem) {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="系统配置"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"
@@ -115,7 +115,7 @@ onMounted(table.refresh);
       @change="table.handleTableChange"
       @refresh="table.refresh"
       ><template #toolbarLeft>
-        <a-button type="primary" @click="add">新增配置</a-button>
+        <a-button type="primary" @click="add">新增</a-button>
       </template>
       <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'configValue'">{{

@@ -12,6 +12,9 @@ const props = defineProps<{
   loading?: boolean;
   pagination?: TablePaginationConfig | false;
   tableKey?: string;
+  defaultExpandAllRows?: boolean;
+  expandedRowKeys?: Array<string | number>;
+  tableLayout?: 'auto' | 'fixed';
 }>();
 const emit = defineEmits<{ change: [pagination: TablePaginationConfig]; refresh: [] }>();
 const preferences = usePreferenceStore();
@@ -104,6 +107,9 @@ function updateDensity(info: { key: string }) {
     :loading="loading"
     :pagination="pagination"
     :size="preferences.tableSize"
+    :default-expand-all-rows="defaultExpandAllRows"
+    :expanded-row-keys="expandedRowKeys"
+    :table-layout="tableLayout"
     @change="(p: any) => emit('change', p)"
   >
     <template #bodyCell="scope"><slot name="bodyCell" v-bind="scope" /></template>

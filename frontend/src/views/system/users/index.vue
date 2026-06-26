@@ -149,7 +149,7 @@ onMounted(() => {
 });
 </script>
 <template>
-  <PageContainer title="用户管理">
+  <PageContainer>
     <SearchForm
       :model="table.query"
       :fields="fields"
@@ -168,7 +168,7 @@ onMounted(() => {
     >
       <template #toolbarLeft>
         <PermissionButton permission="system:user:create" type="primary" @click="openCreate"
-          >新增用户</PermissionButton
+          >新增</PermissionButton
         >
       </template>
       <template #bodyCell="{ column, record }">

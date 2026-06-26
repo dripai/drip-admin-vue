@@ -102,7 +102,7 @@ async function showRecords(row: JobItem) {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="定时任务"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"
@@ -118,7 +118,7 @@ onMounted(table.refresh);
       @change="table.handleTableChange"
       @refresh="table.refresh"
       ><template #toolbarLeft>
-        <a-button type="primary" @click="add">新增任务</a-button>
+        <a-button type="primary" @click="add">新增</a-button>
       </template>
       <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"

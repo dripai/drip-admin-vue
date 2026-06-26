@@ -77,7 +77,7 @@ async function status(row: DeptItem) {
 onMounted(load);
 </script>
 <template>
-  <PageContainer title="部门管理"
+  <PageContainer
     ><DataTable
       :columns="columns"
       :data-source="data"
@@ -86,7 +86,7 @@ onMounted(load);
       table-key="system-dept"
       @refresh="load"
       ><template #toolbarLeft>
-        <a-button type="primary" @click="add">新增部门</a-button>
+        <a-button type="primary" @click="add">新增</a-button>
       </template>
       <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"

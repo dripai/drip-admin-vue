@@ -44,7 +44,7 @@ async function openDetail(row: any) {
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="登录日志"
+  <PageContainer
     ><SearchForm
       :model="table.query"
       :fields="fields"
