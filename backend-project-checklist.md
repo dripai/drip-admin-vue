@@ -129,5 +129,6 @@
 - 2026-06-26：菜单管理写操作权限从 `system:menu:write` 拆分为 `system:menu:create/update/delete/status`，并通过 Flyway 给超级管理员补齐按钮权限。
 - 2026-06-26：角色授权和用户分配角色在替换旧关系前校验菜单/角色 ID 必须存在，避免写入无效授权关系。
 - 2026-06-26：角色模块补齐独立 `RoleService`，角色列表、详情、关联用户、增删改、状态变更和角色授权不再由 Controller 直接转发到通用 `AdminService`。
-- 2026-06-26：执行 `mvn test` 通过，20 个测试全部成功。
+- 2026-06-26：菜单模块补齐独立 `MenuService`，菜单树、增删改、状态变更和删除父级菜单校验不再由 Controller 直接转发到通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，22 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。

@@ -19,6 +19,7 @@ import com.drip.admin.modules.system.config.controller.ConfigController;
 import com.drip.admin.modules.system.dept.controller.DeptController;
 import com.drip.admin.modules.system.dict.controller.DictController;
 import com.drip.admin.modules.system.menu.controller.MenuController;
+import com.drip.admin.modules.system.menu.service.MenuService;
 import com.drip.admin.modules.system.role.controller.RoleController;
 import com.drip.admin.modules.system.role.service.RoleService;
 import com.drip.admin.modules.system.service.AdminService;
@@ -151,6 +152,16 @@ class BackendContractTests {
     }
 
     @Test
+    void menuControllerDelegatesWritesToMenuService() {
+        MenuService menuService = mock(MenuService.class);
+        MenuController controller = new MenuController(menuService);
+
+        controller.updateMenu(3L, Map.of("name", "菜单"));
+
+        verify(menuService).update(3L, Map.of("name", "菜单"));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -278,6 +289,20 @@ class BackendContractTests {
 
         assertEquals(400000, error.code());
         verify(jdbc, never()).update("delete from sys_user_role where user_id = ?", 10L);
+    }
+
+    @Test
+    void menuServiceRejectsDeletingParentMenu() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        MenuService menuService = new MenuService(jdbc);
+
+        when(jdbc.queryForObject("select count(1) from sys_menu where parent_id = ? and deleted = 0", Long.class, 15L))
+            .thenReturn(1L);
+
+        BusinessException error = assertThrows(BusinessException.class, () -> menuService.delete(15L));
+
+        assertEquals(400301, error.code());
+        verify(jdbc, never()).update("update sys_menu set deleted = 1 where id = ?", 15L);
     }
 
     @Test

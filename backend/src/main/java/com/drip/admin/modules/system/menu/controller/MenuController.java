@@ -17,7 +17,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.dto.PasswordRequest;
 import com.drip.admin.modules.auth.service.AuthService;
-import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.menu.service.MenuService;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -68,30 +68,30 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 @RestController
 @RequestMapping("/api/system")
 public class MenuController {
-    private final AdminService adminService;
+    private final MenuService menuService;
 
-   public MenuController(AdminService adminService) {
-        this.adminService = adminService;
+   public MenuController(MenuService menuService) {
+        this.menuService = menuService;
     }
 
     @GetMapping("/menus")
     @RequirePermission("system:menu:list")
     public ApiResponse<List<Map<String, Object>>> menus() {
-        return ApiResponse.success(adminService.menuTree(null));
+        return ApiResponse.success(menuService.tree());
     }
 
     @PostMapping("/menus")
     @RequirePermission("system:menu:create")
     @OperationLog(module = "菜单管理", action = "新增菜单")
     public ApiResponse<Long> createMenu(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(adminService.insert("sys_menu", body, Set.of("parent_id", "name", "type", "path", "component", "permission_code", "icon", "sort", "visible", "status")));
+        return ApiResponse.success(menuService.create(body));
     }
 
     @PutMapping("/menus/{id}")
     @RequirePermission("system:menu:update")
     @OperationLog(module = "菜单管理", action = "编辑菜单")
     public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.update("sys_menu", id, body, Set.of("parent_id", "name", "type", "path", "component", "permission_code", "icon", "sort", "visible", "status"));
+        menuService.update(id, body);
         return ApiResponse.success(null);
     }
 
@@ -99,7 +99,7 @@ public class MenuController {
     @RequirePermission("system:menu:delete")
     @OperationLog(module = "菜单管理", action = "删除菜单")
     public ApiResponse<Void> deleteMenu(@PathVariable long id) {
-        adminService.deleteMenu(id);
+        menuService.delete(id);
         return ApiResponse.success(null);
     }
 
@@ -107,7 +107,7 @@ public class MenuController {
     @RequirePermission("system:menu:status")
     @OperationLog(module = "菜单管理", action = "变更菜单状态")
     public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        adminService.updateStatus("sys_menu", id, intValue(body, "status", 1), true);
+        menuService.updateStatus(id, intValue(body, "status", 1));
         return ApiResponse.success(null);
     }
 }
