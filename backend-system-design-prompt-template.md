@@ -53,11 +53,11 @@
 本地开发数据库连接约定：
 - 数据库类型：MySQL 8.0。
 - 主机：localhost。
-- 端口：3007。
+- 端口：3307。
 - 数据库名：drip-manager。
 - 用户名：root。
 - 密码：root。
-- JDBC URL：`jdbc:mysql://localhost:3007/drip-manager?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true`。
+- JDBC URL：`jdbc:mysql://localhost:3307/drip-manager?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true`。
 - 本地开发环境 `application-dev.yml` 必须使用以上连接信息。
 - 该连接信息用于 AI 在本地开发阶段自动创建数据库表、执行 Flyway 迁移、写入初始化数据和验证表结构。
 - 数据库表结构必须通过 Flyway 迁移脚本管理，不允许绕过迁移脚本在业务代码中隐式建表或改表。
