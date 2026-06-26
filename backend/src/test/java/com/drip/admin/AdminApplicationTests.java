@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AdminApplicationTests {
     @Test
     void passwordHashIsDeterministicAndNotPlainText() {
-        String hash = AdminApplication.hashPassword("admin123", "drip");
+        String hash = com.drip.admin.shared.utils.AdminUtils.hashPassword("admin123", "drip");
         assertEquals("0e47ea190b930cfc52b06737a30930f9a3626c3f426edc679975e8112e996b4c", hash);
         assertNotEquals("admin123", hash);
     }
@@ -27,7 +27,7 @@ class AdminApplicationTests {
         child.put("id", 2L);
         child.put("parent_id", 1L);
 
-        List<Map<String, Object>> tree = AdminApplication.buildTree(List.of(root, child), "parent_id");
+        List<Map<String, Object>> tree = com.drip.admin.shared.utils.AdminUtils.buildTree(List.of(root, child), "parent_id");
 
         assertEquals(1, tree.size());
         assertTrue(((List<?>) tree.getFirst().get("children")).size() == 1);
@@ -35,7 +35,7 @@ class AdminApplicationTests {
 
     @Test
     void masksSensitiveOperationParams() {
-        String masked = AdminApplication.maskSensitive("{password=secret, token=abc}");
+        String masked = com.drip.admin.shared.utils.AdminUtils.maskSensitive("{password=secret, token=abc}");
         assertTrue(masked.contains("password=******"));
         assertTrue(masked.contains("token=******"));
     }

@@ -1,0 +1,45 @@
+package com.drip.admin.modules.system.controller;
+
+import com.drip.admin.common.log.OperationLog;
+import com.drip.admin.common.response.ApiResponse;
+import com.drip.admin.common.response.PageResult;
+import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.dto.OnlineUserQuery;
+import com.drip.admin.modules.system.service.OnlineUserService;
+import com.drip.admin.modules.system.vo.OnlineUserVo;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/system")
+public class OnlineUserController {
+    private final OnlineUserService onlineUserService;
+
+    public OnlineUserController(OnlineUserService onlineUserService) {
+        this.onlineUserService = onlineUserService;
+    }
+
+    @GetMapping("/onlineUsers")
+    @RequirePermission("system:online:list")
+    public ApiResponse<PageResult<OnlineUserVo>> onlineUsers(@Valid OnlineUserQuery query) {
+        return ApiResponse.success(onlineUserService.page(query));
+    }
+
+    @GetMapping("/onlineUsers/{tokenId}")
+    @RequirePermission("system:online:list")
+    public ApiResponse<OnlineUserVo> onlineUser(@PathVariable String tokenId) {
+        return ApiResponse.success(onlineUserService.detail(tokenId));
+    }
+
+    @PostMapping("/onlineUsers/{tokenId}/kickout")
+    @RequirePermission("system:online:kickout")
+    @OperationLog(module = "在线用户", action = "强制下线")
+    public ApiResponse<Void> kickout(@PathVariable String tokenId) {
+        onlineUserService.kickout(tokenId);
+        return ApiResponse.success(null);
+    }
+}

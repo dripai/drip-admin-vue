@@ -5,6 +5,7 @@
 状态只允许使用：
 - 待开始
 - 进行中
+- 待校验
 - 已完成
 
 执行规则：
@@ -45,12 +46,12 @@
 
 | 状态 | 任务 | 验证标准 |
 |---|---|---|
-| 已完成 | 实现登录接口 `POST /api/auth/login` | 正确账号返回 token 和会话字段 |
+| 已完成 | 实现登录接口 `POST /api/system/login` | 正确账号返回 token 和会话字段 |
 | 已完成 | 登录请求支持 `deviceType` | 后端校验非空、长度和字符安全 |
 | 已完成 | 实现单 token + 活跃续期 | 有效请求可刷新活跃时间 |
 | 已完成 | 实现最大会话时长 | 超过 `maxSessionDuration` 必须重新登录 |
-| 已完成 | 实现退出接口 `POST /api/auth/logout` | 退出后 token 失效 |
-| 已完成 | 实现当前用户接口 `GET /api/auth/me` | 返回用户、角色、菜单树、权限码 |
+| 已完成 | 实现退出接口 `POST /api/system/logout` | 退出后 token 失效 |
+| 已完成 | 实现当前用户接口 `GET /api/system/me` | 返回用户、角色、菜单树、权限码 |
 | 已完成 | 实现修改当前用户密码接口 | 密码修改后可重新登录 |
 | 已完成 | 实现登录失败记录 | 登录失败写入登录日志 |
 
@@ -102,8 +103,52 @@
 | 已完成 | Swagger 可访问 | 接口文档正常展示 |
 | 已完成 | Flyway 迁移成功 | 数据库表和初始化数据生成 |
 | 已完成 | 登录成功 | 返回 token 和会话字段 |
-| 已完成 | `GET /api/auth/me` 可用 | 返回用户、角色、菜单树、权限码 |
+| 已完成 | `GET /api/system/me` 可用 | 返回用户、角色、菜单树、权限码 |
 | 已完成 | 无 token 返回 401 | 前端可识别 |
 | 已完成 | 无权限返回 403 | 前端可识别 |
 | 已完成 | 登录日志写入成功 | 登录事件可查询 |
 | 已完成 | 业务操作日志写入成功 | 关键变更操作可查询 |
+
+## 最近验证记录
+
+- 2026-06-26：完成 9 个联调验收项：`/api/health` 返回 UP，Swagger 302 到 `/api/swagger-ui/index.html` 且 `/api/v3/api-docs` 可访问，服务已启动并完成 Flyway，admin 登录成功并获取 `/api/system/me`，无 token 返回 401，无权限用户返回 403，登录日志和新增角色操作日志可查询。
+- 2026-06-26：集中修复第一轮核对问题：补齐 DTO/Query 校验与 Controller `@Valid`，用户列表支持 `roleId/createdFrom/createdTo`，部门补齐详情接口，在线用户支持 username/ip/deviceType 过滤，清理业务异常中的乱码文案；`backend/start.sh build` 通过。
+- 2026-06-26：第一轮按 `backend-system-design-prompt-template.md` 核对清单；`backend/start.sh build` 通过，发现参数校验、用户查询条件/时间范围、部门详情接口、在线用户查询过滤、业务异常中文文案存在缺口，相关项标记为 `待开始`，联调验收项保留 `待校验`。
+- 2026-06-26：按 `backend-system-design-prompt-template.md` 目录结构完成拆包，后端 Java 源码从单文件拆分为 `common/`、`config/`、`modules/`、`infrastructure/`、`shared/`。
+- 2026-06-26：补齐在线用户 Redis 会话来源、请求活跃续期、退出/强制下线同步删除在线会话。
+- 2026-06-26：补齐定时任务白名单执行与成功/失败执行记录，不使用任意反射调用。
+- 2026-06-26：补齐数据库备份/恢复 `mysqldump`/`mysql` 命令执行；命令不可用或失败时返回明确错误，不生成 placeholder 备份。
+- 2026-06-26：补齐 `/api/health` 健康检查接口，并在认证拦截器中放行。
+- 2026-06-26：新增后端契约测试，覆盖登录失败日志、当前用户上下文、角色授权、健康检查和关键变更操作日志注解。
+- 2026-06-26：补齐文件上传权限点 `system:file:upload` 及 Flyway 初始化迁移。
+- 2026-06-26：业务操作日志写入失败时记录内部应用日志，不回滚主业务。
+- 2026-06-26：数据库备份/恢复命令使用 `MYSQL_PWD` 环境变量传递密码，避免在命令参数中暴露密码。
+- 2026-06-26：手动执行任务、数据库备份等耗时外部操作不放在声明式事务内执行。
+- 2026-06-26：Sa-Token 配置改为单 token 会话模式：`is-concurrent: false`、`is-share: false`。
+- 2026-06-26：P1 模块写操作补齐细粒度权限码，并通过 Flyway 给超级管理员补齐按钮权限。
+- 2026-06-26：字典类型和字典项删除改为专用业务方法；被业务状态引用的通用状态字典项返回 `400501`。
+- 2026-06-26：业务异常 HTTP 状态按错误码映射，覆盖 401、403、404、409、500。
+- 2026-06-26：统一异常处理器补齐 `@RestControllerAdvice` 注册，保证参数校验、认证、权限、业务和系统异常由全局处理器接管。
+- 2026-06-26：补齐 Redis 登录失败限制，失败计数达到阈值后在凭证查库前阻断，登录成功清理失败计数。
+- 2026-06-26：菜单管理写操作权限从 `system:menu:write` 拆分为 `system:menu:create/update/delete/status`，并通过 Flyway 给超级管理员补齐按钮权限。
+- 2026-06-26：角色授权和用户分配角色在替换旧关系前校验菜单/角色 ID 必须存在，避免写入无效授权关系。
+- 2026-06-26：角色模块补齐独立 `RoleService`，角色列表、详情、关联用户、增删改、状态变更和角色授权不再由 Controller 直接转发到通用 `AdminService`。
+- 2026-06-26：菜单模块补齐独立 `MenuService`，菜单树、增删改、状态变更和删除父级菜单校验不再由 Controller 直接转发到通用 `AdminService`。
+- 2026-06-26：用户模块补齐独立 `UserService`，用户分页、详情、增删改、状态、重置密码、分配角色和用户保护规则迁出通用 `AdminService`。
+- 2026-06-26：部门模块补齐独立 `DeptService`，部门树、增删改、状态变更、子部门和部门用户删除保护、父级移动防环规则迁出通用 `AdminService`。
+- 2026-06-26：字典模块补齐独立 `DictService`，字典类型、字典项、状态变更、缓存刷新和通用状态引用保护迁出通用 `AdminService`。
+- 2026-06-26：系统配置模块补齐独立 `ConfigService`，配置分页、详情脱敏、增删改、状态变更和内置配置删除保护迁出通用 `AdminService`。
+- 2026-06-26：日志查询模块补齐独立 `SystemLogQueryService`，登录日志和业务操作日志分页、详情查询迁出通用 `AdminService`。
+- 2026-06-26：按模块级共用分层目录调整 `modules/system`，系统模块统一使用 `controller/`、`service/`、`mapper/`、`entity/`、`dto/`，不再按菜单功能拆重复目录。
+- 2026-06-26：在线用户模块按 `OnlineUserService` 接口和 `OnlineUserServiceImpl` 实现类补齐，在线用户分页、详情、强制下线和 Redis 会话清理规则迁出通用 `AdminService`。
+- 2026-06-26：定时任务模块按 `JobService` 接口和 `JobServiceImpl` 实现类补齐，任务增删改查、状态变更、手动执行和执行记录查询迁出通用 `AdminService`。
+- 2026-06-26：数据库备份模块按 `DatabaseBackupService` 接口和 `DatabaseBackupServiceImpl` 实现类补齐，备份列表、创建、下载、恢复、删除记录迁出通用 `AdminService`。
+- 2026-06-26：文件上传模块按 `FileService` 接口和 `FileServiceImpl` 实现类补齐，上传大小、类型限制和返回结构迁出通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，39 个测试全部成功。
+- 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
+- 2026-06-26：认证模块按 `AuthService` 接口和 `AuthServiceImpl` 实现类拆分，登录、退出、当前用户、密码修改、角色权限查询和菜单树聚合迁出通用 `AdminService`。
+- 2026-06-26：批量完成 `UserService`、`RoleService`、`MenuService`、`DeptService`、`DictService`、`ConfigService`、`SystemLogQueryService` 接口与 `service/impl/*Impl` 实现类拆分，Controller 统一注入接口。
+- 2026-06-26：补齐 MyBatis-Plus `@MapperScan`、驼峰映射配置、14 张系统表 Entity 和对应 `BaseMapper`，实体字段与 Flyway `V1__init_schema.sql` 表结构对齐。
+- 2026-06-26：`service/impl` 采用显式 typed Mapper 注入规则，各业务实现类注入自身负责的 Entity Mapper 和必要关系表 Mapper，不使用统一表名分发式 Mapper 容器。
+- 2026-06-26：Service 接口按 MyBatis-Plus 第 2 种模式改造为 `IService<Entity>`，实现类继承 `ServiceImpl<Mapper, Entity>`；返回结果从 `Map<String,Object>` / `PageResult<Map<...>>` 改为 Entity、VO 或 `PageResult<Entity>`，删除遗留通用 `AdminService`。
+- 2026-06-26：Controller 和 Service 请求参数改为明确 Query/Request DTO，主源码不再使用 `@RequestBody Map`、`@RequestParam Map` 或 `Map` 穿透业务服务；执行 `mvn test` 与 `backend/start.sh build` 通过。

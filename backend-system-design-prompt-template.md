@@ -154,7 +154,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 超过 idleTimeout 未操作则会话过期。
 - 超过 maxSessionDuration 必须重新登录，不允许无限续期。
 - 前端收到 401 后清理登录态并跳转登录页。
-- `GET /api/auth/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
+- `GET /api/system/me` 一次性返回当前用户基础信息、角色编码列表、菜单树和权限码列表，作为前端初始化权限上下文的唯一接口。
 - 密码必须加密存储，不允许明文。
 - 登录失败要记录失败原因，但响应不能泄露敏感信息。
 - 禁用用户不能登录。
@@ -163,10 +163,10 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 无权限访问返回 403。
 
 接口示例：
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- PUT /api/auth/password
+- POST /api/system/login
+- POST /api/system/logout
+- GET /api/system/me
+- PUT /api/system/password
 
 2. 用户管理模块
 
@@ -210,8 +210,8 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - system:user:update
 - system:user:delete
 - system:user:disable
-- system:user:reset-password
-- system:user:assign-role
+- system:user:resetPassword
+- system:user:assignRole
 
 校验要求：
 - username 全局唯一。
@@ -687,10 +687,10 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - 业务规则
 
 接口路径规范：
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- PUT /api/auth/password
+- POST /api/system/login
+- POST /api/system/logout
+- GET /api/system/me
+- PUT /api/system/password
 - GET /api/system/users
 - GET /api/system/users/{id}
 - POST /api/system/users
@@ -729,13 +729,13 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - PUT /api/system/configs/{id}
 - DELETE /api/system/configs/{id}
 - PATCH /api/system/configs/{id}/status
-- GET /api/system/login-logs
-- GET /api/system/login-logs/{id}
-- GET /api/system/operation-logs
-- GET /api/system/operation-logs/{id}
-- GET /api/system/online-users
-- GET /api/system/online-users/{tokenId}
-- POST /api/system/online-users/{tokenId}/kickout
+- GET /api/system/loginLogs
+- GET /api/system/loginLogs/{id}
+- GET /api/system/operationLogs
+- GET /api/system/operationLogs/{id}
+- GET /api/system/onlineUsers
+- GET /api/system/onlineUsers/{tokenId}
+- POST /api/system/onlineUsers/{tokenId}/kickout
 - GET /api/system/jobs
 - GET /api/system/jobs/{id}
 - POST /api/system/jobs
@@ -743,7 +743,7 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - DELETE /api/system/jobs/{id}
 - PATCH /api/system/jobs/{id}/status
 - POST /api/system/jobs/{id}/run
-- GET /api/system/jobs/{id}/run-logs
+- GET /api/system/jobs/{id}/runLogs
 - GET /api/system/database/backups
 - POST /api/system/database/backups
 - GET /api/system/database/backups/{id}/download
@@ -848,22 +848,136 @@ src/main/java/com/drip/admin/
     log/
   config/
   modules/
-    auth/
-      controller/
-      service/
-      dto/
-      vo/
     system/
-      user/
-      role/
-      menu/
-      dept/
-      dict/
-      config/
-      log/
-      online/
-      job/
-      database/
+      controller/
+        AuthController
+        UserController
+        RoleController
+        MenuController
+        DeptController
+        DictController
+        ConfigController
+        LoginLogController
+        OperationLogController
+        OnlineUserController
+        JobController
+        DatabaseController
+      service/
+        impl/
+          AuthServiceImpl
+          UserServiceImpl
+          RoleServiceImpl
+          MenuServiceImpl
+          DeptServiceImpl
+          DictServiceImpl
+          ConfigServiceImpl
+          LoginLogServiceImpl
+          OperationLogServiceImpl
+          OnlineUserServiceImpl
+          JobServiceImpl
+          DatabaseServiceImpl
+        AuthService
+        UserService
+        RoleService
+        MenuService
+        DeptService
+        DictService
+        ConfigService
+        LoginLogService
+        OperationLogService
+        OnlineUserService
+        JobService
+        DatabaseService
+      mapper/
+        SysUserMapper
+        SysRoleMapper
+        SysUserRoleMapper
+        SysMenuMapper
+        SysRoleMenuMapper
+        SysDeptMapper
+        SysDictTypeMapper
+        SysDictItemMapper
+        SysLoginLogMapper
+        SysOperationLogMapper
+        SysJobMapper
+        SysJobRunLogMapper
+        SysDbBackupMapper
+        SysConfigMapper
+      entity/
+        SysUserEntity
+        SysRoleEntity
+        SysUserRoleEntity
+        SysMenuEntity
+        SysRoleMenuEntity
+        SysDeptEntity
+        SysDictTypeEntity
+        SysDictItemEntity
+        SysLoginLogEntity
+        SysOperationLogEntity
+        SysJobEntity
+        SysJobRunLogEntity
+        SysDbBackupEntity
+        SysConfigEntity
+      dto/
+        LoginRequest
+        PasswordUpdateRequest
+        UserQueryDTO
+        UserCreateDTO
+        UserUpdateDTO
+        UserStatusDTO
+        UserRoleAssignDTO
+        UserResetPasswordDTO
+        RoleQueryDTO
+        RoleCreateDTO
+        RoleUpdateDTO
+        RoleStatusDTO
+        RolePermissionAssignDTO
+        MenuCreateDTO
+        MenuUpdateDTO
+        MenuStatusDTO
+        MenuSortDTO
+        DeptCreateDTO
+        DeptUpdateDTO
+        DeptStatusDTO
+        DeptMoveDTO
+        DictTypeQueryDTO
+        DictTypeCreateDTO
+        DictTypeUpdateDTO
+        DictItemCreateDTO
+        DictItemUpdateDTO
+        DictItemStatusDTO
+        ConfigQueryDTO
+        ConfigCreateDTO
+        ConfigUpdateDTO
+        ConfigStatusDTO
+        LoginLogQueryDTO
+        OperationLogQueryDTO
+        OnlineUserQueryDTO
+        JobQueryDTO
+        JobCreateDTO
+        JobUpdateDTO
+        JobStatusDTO
+        JobRunLogQueryDTO
+        DatabaseBackupCreateDTO
+        DatabaseBackupQueryDTO
+      vo/
+        LoginVO
+        UserInfoVO
+        UserVO
+        RoleVO
+        MenuTreeVO
+        MenuVO
+        DeptTreeVO
+        DeptVO
+        DictTypeVO
+        DictItemVO
+        ConfigVO
+        LoginLogVO
+        OperationLogVO
+        OnlineUserVO
+        JobVO
+        JobRunLogVO
+        DatabaseBackupVO
   infrastructure/
     redis/
     storage/
@@ -877,6 +991,11 @@ src/main/resources/
   application.yml
   application-dev.yml
   application-prod.yml
+
+说明：
+- `modules/system/` 下按分层公用目录组织系统模块代码，不再为 `user`、`role`、`menu`、`dept`、`dict` 等每个功能单独建立重复的子目录。
+- `controller/`、`service/`、`service/impl/`、`mapper/`、`entity/`、`dto/`、`vo/` 是 system 模块共享目录；文件名体现具体业务能力边界。
+- `common/` 只放跨模块通用能力，`infrastructure/` 只放 Redis、存储、外部命令等基础设施适配，避免业务逻辑散落到公共层。
 
 十三、需要输出的最终内容
 
@@ -979,9 +1098,6 @@ src/main/resources/
 7. Swagger / OpenAPI 访问路径。
 8. 至少覆盖登录、当前用户、菜单权限、用户管理、角色授权、登录日志、业务操作日志的测试用例。
 
-第一版必须形成完整闭环：
-登录 -> 获取当前用户信息 -> 获取菜单权限 -> 用户管理 -> 角色授权 -> 权限生效 -> 登录日志和业务操作日志记录。
-
 十六、MVP 优先级
 
 请将功能拆为：
@@ -1038,7 +1154,7 @@ P1：常用增强
    - 不返回 refreshToken。
 
 2. 当前用户信息结构
-   - 接口：GET /api/auth/me。
+   - 接口：GET /api/system/me。
    - 用户 ID。
    - 用户名。
    - 姓名。

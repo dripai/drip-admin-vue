@@ -13,6 +13,8 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    context-path: /api
 
 management:
   endpoints:
@@ -24,11 +26,19 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+mybatis-plus:
+  type-aliases-package: com.drip.admin.modules.system.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
 sa-token:
   token-name: Authorization
   timeout: 7200
   active-timeout: 1800
-  is-concurrent: true
+  is-concurrent: false
   is-share: false
   token-style: uuid
   is-log: false
@@ -37,8 +47,13 @@ drip:
   session:
     idle-timeout-seconds: 1800
     max-duration-seconds: 28800
+  login:
+    max-failures: 5
+    lock-seconds: 900
   upload:
     max-size-bytes: 10485760
     allowed-types: image/png,image/jpeg,application/pdf
   database:
     backup-dir: ./backups
+    mysqldump-command: mysqldump
+    mysql-command: mysql
