@@ -5,6 +5,9 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.dto.DatabaseBackupCreateRequest;
+import com.drip.admin.modules.system.dto.DatabaseBackupQuery;
+import com.drip.admin.modules.system.dto.DatabaseRestoreRequest;
 import com.drip.admin.modules.system.entity.SysDbBackupEntity;
 import com.drip.admin.modules.system.service.DatabaseBackupService;
 import org.springframework.http.MediaType;
@@ -19,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
 
 import static com.drip.admin.shared.utils.AdminUtils.currentUserId;
 
@@ -35,15 +36,15 @@ public class DatabaseBackupController {
 
     @GetMapping("/database/backups")
     @RequirePermission("system:database:backup:list")
-    public ApiResponse<PageResult<SysDbBackupEntity>> backups(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(databaseBackupService.page(q));
+    public ApiResponse<PageResult<SysDbBackupEntity>> backups(DatabaseBackupQuery query) {
+        return ApiResponse.success(databaseBackupService.page(query));
     }
 
     @PostMapping("/database/backups")
     @RequirePermission("system:database:backup:create")
     @OperationLog(module = "数据库备份", action = "创建备份")
-    public ApiResponse<Long> createBackup(@RequestBody(required = false) Map<String, Object> body) {
-        return ApiResponse.success(databaseBackupService.create(Optional.ofNullable(body).orElseGet(Map::of), currentUserId()));
+    public ApiResponse<Long> createBackup(@RequestBody(required = false) DatabaseBackupCreateRequest request) {
+        return ApiResponse.success(databaseBackupService.create(request, currentUserId()));
     }
 
     @GetMapping(value = "/database/backups/{id}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -58,8 +59,8 @@ public class DatabaseBackupController {
     @PostMapping("/database/backups/{id}/restore")
     @RequirePermission("system:database:backup:restore")
     @OperationLog(module = "数据库备份", action = "恢复备份")
-    public ApiResponse<Void> restoreBackup(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        databaseBackupService.restore(id, body);
+    public ApiResponse<Void> restoreBackup(@PathVariable long id, @RequestBody DatabaseRestoreRequest request) {
+        databaseBackupService.restore(id, request);
         return ApiResponse.success(null);
     }
 

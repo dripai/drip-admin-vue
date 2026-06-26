@@ -14,8 +14,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
-import com.drip.admin.modules.system.dto.LoginRequest;
-import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.entity.SysRoleEntity;
 import com.drip.admin.modules.system.entity.SysUserEntity;
@@ -77,8 +76,8 @@ public class RoleController {
 
     @GetMapping("/roles")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<SysRoleEntity>> roles(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(roleService.page(q));
+    public ApiResponse<PageResult<SysRoleEntity>> roles(RoleQuery query) {
+        return ApiResponse.success(roleService.page(query));
     }
 
     @GetMapping("/roles/{id}")
@@ -89,22 +88,22 @@ public class RoleController {
 
     @GetMapping("/roles/{id}/users")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, @RequestParam Map<String, String> q) {
-        return ApiResponse.success(roleService.users(id, q));
+    public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, RoleQuery query) {
+        return ApiResponse.success(roleService.users(id, query));
     }
 
     @PostMapping("/roles")
     @RequirePermission("system:role:create")
     @OperationLog(module = "角色管理", action = "新增角色")
-    public ApiResponse<Long> createRole(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(roleService.create(body));
+    public ApiResponse<Long> createRole(@RequestBody RoleSaveRequest request) {
+        return ApiResponse.success(roleService.create(request));
     }
 
     @PutMapping("/roles/{id}")
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "编辑角色")
-    public ApiResponse<Void> updateRole(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        roleService.update(id, body);
+    public ApiResponse<Void> updateRole(@PathVariable long id, @RequestBody RoleSaveRequest request) {
+        roleService.update(id, request);
         return ApiResponse.success(null);
     }
 
@@ -119,16 +118,16 @@ public class RoleController {
     @PatchMapping("/roles/{id}/status")
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "变更角色状态")
-    public ApiResponse<Void> roleStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        roleService.updateStatus(id, intValue(body, "status", 1));
+    public ApiResponse<Void> roleStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+        roleService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
 
     @PutMapping("/roles/{id}/permissions")
     @RequirePermission("system:role:permission")
     @OperationLog(module = "角色管理", action = "角色授权")
-    public ApiResponse<Void> rolePermissions(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        roleService.assignMenus(id, longList(body.get("menuIds")));
+    public ApiResponse<Void> rolePermissions(@PathVariable long id, @RequestBody MenuAssignRequest request) {
+        roleService.assignMenus(id, request.getMenuIds());
         return ApiResponse.success(null);
     }
 }

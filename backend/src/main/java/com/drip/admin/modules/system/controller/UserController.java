@@ -14,8 +14,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
-import com.drip.admin.modules.system.dto.LoginRequest;
-import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.service.UserService;
@@ -76,8 +75,8 @@ public class UserController {
 
     @GetMapping("/users")
     @RequirePermission("system:user:list")
-    public ApiResponse<PageResult<SysUserEntity>> users(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(userService.page(q));
+    public ApiResponse<PageResult<SysUserEntity>> users(UserQuery query) {
+        return ApiResponse.success(userService.page(query));
     }
 
     @GetMapping("/users/{id}")
@@ -89,15 +88,15 @@ public class UserController {
     @PostMapping("/users")
     @RequirePermission("system:user:create")
     @OperationLog(module = "用户管理", action = "新增用户")
-    public ApiResponse<Long> createUser(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(userService.create(body));
+    public ApiResponse<Long> createUser(@RequestBody UserSaveRequest request) {
+        return ApiResponse.success(userService.create(request));
     }
 
     @PutMapping("/users/{id}")
     @RequirePermission("system:user:update")
     @OperationLog(module = "用户管理", action = "编辑用户")
-    public ApiResponse<Void> updateUser(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        userService.update(id, body);
+    public ApiResponse<Void> updateUser(@PathVariable long id, @RequestBody UserSaveRequest request) {
+        userService.update(id, request);
         return ApiResponse.success(null);
     }
 
@@ -112,25 +111,24 @@ public class UserController {
     @PatchMapping("/users/{id}/status")
     @RequirePermission("system:user:disable")
     @OperationLog(module = "用户管理", action = "变更用户状态")
-    public ApiResponse<Void> userStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        int status = intValue(body, "status", 1);
-        userService.updateStatus(id, status);
+    public ApiResponse<Void> userStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+        userService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
 
     @PutMapping("/users/{id}/roles")
     @RequirePermission("system:user:assign-role")
     @OperationLog(module = "用户管理", action = "分配角色")
-    public ApiResponse<Void> userRoles(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        userService.assignRoles(id, longList(body.get("roleIds")));
+    public ApiResponse<Void> userRoles(@PathVariable long id, @RequestBody RoleAssignRequest request) {
+        userService.assignRoles(id, request.getRoleIds());
         return ApiResponse.success(null);
     }
 
     @PostMapping("/users/{id}/reset-password")
     @RequirePermission("system:user:reset-password")
     @OperationLog(module = "用户管理", action = "重置密码")
-    public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        userService.resetPassword(id, stringValue(body, "password", "Admin@123456"));
+    public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody PasswordResetRequest request) {
+        userService.resetPassword(id, request.passwordOrDefault());
         return ApiResponse.success(null);
     }
 }

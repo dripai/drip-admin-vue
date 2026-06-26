@@ -4,6 +4,10 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.dto.JobQuery;
+import com.drip.admin.modules.system.dto.JobRunLogQuery;
+import com.drip.admin.modules.system.dto.JobSaveRequest;
+import com.drip.admin.modules.system.dto.StatusUpdateRequest;
 import com.drip.admin.modules.system.entity.SysJobEntity;
 import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
 import com.drip.admin.modules.system.service.JobService;
@@ -33,8 +37,8 @@ public class JobController {
 
     @GetMapping("/jobs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<SysJobEntity>> jobs(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(jobService.page(q));
+    public ApiResponse<PageResult<SysJobEntity>> jobs(JobQuery query) {
+        return ApiResponse.success(jobService.page(query));
     }
 
     @GetMapping("/jobs/{id}")
@@ -46,15 +50,15 @@ public class JobController {
     @PostMapping("/jobs")
     @RequirePermission("system:job:create")
     @OperationLog(module = "定时任务", action = "新增任务")
-    public ApiResponse<Long> createJob(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(jobService.create(body));
+    public ApiResponse<Long> createJob(@RequestBody JobSaveRequest request) {
+        return ApiResponse.success(jobService.create(request));
     }
 
     @PutMapping("/jobs/{id}")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "编辑任务")
-    public ApiResponse<Void> updateJob(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        jobService.update(id, body);
+    public ApiResponse<Void> updateJob(@PathVariable long id, @RequestBody JobSaveRequest request) {
+        jobService.update(id, request);
         return ApiResponse.success(null);
     }
 
@@ -69,8 +73,8 @@ public class JobController {
     @PatchMapping("/jobs/{id}/status")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "变更任务状态")
-    public ApiResponse<Void> jobStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        jobService.updateStatus(id, intValue(body, "status", 1));
+    public ApiResponse<Void> jobStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+        jobService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
 
@@ -84,7 +88,7 @@ public class JobController {
 
     @GetMapping("/jobs/{id}/run-logs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, @RequestParam Map<String, String> q) {
-        return ApiResponse.success(jobService.runLogs(id, q));
+    public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, JobRunLogQuery query) {
+        return ApiResponse.success(jobService.runLogs(id, query));
     }
 }

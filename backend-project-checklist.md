@@ -147,3 +147,4 @@
 - 2026-06-26：补齐 MyBatis-Plus `@MapperScan`、驼峰映射配置、14 张系统表 Entity 和对应 `BaseMapper`，实体字段与 Flyway `V1__init_schema.sql` 表结构对齐。
 - 2026-06-26：`service/impl` 采用显式 typed Mapper 注入规则，各业务实现类注入自身负责的 Entity Mapper 和必要关系表 Mapper，不使用统一表名分发式 Mapper 容器。
 - 2026-06-26：Service 接口按 MyBatis-Plus 第 2 种模式改造为 `IService<Entity>`，实现类继承 `ServiceImpl<Mapper, Entity>`；返回结果从 `Map<String,Object>` / `PageResult<Map<...>>` 改为 Entity、VO 或 `PageResult<Entity>`，删除遗留通用 `AdminService`。
+- 2026-06-26：Controller 和 Service 请求参数改为明确 Query/Request DTO，主源码不再使用 `@RequestBody Map`、`@RequestParam Map` 或 `Map` 穿透业务服务；执行 `mvn test` 与 `backend/start.sh build` 通过。

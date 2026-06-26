@@ -16,7 +16,7 @@ import com.drip.admin.config.MybatisPlusConfig;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
-import com.drip.admin.modules.system.dto.LoginRequest;
+import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.entity.SysConfigEntity;
 import com.drip.admin.modules.system.entity.SysDbBackupEntity;
 import com.drip.admin.modules.system.entity.SysDeptEntity;
@@ -108,6 +108,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -139,7 +140,10 @@ class BackendContractTests {
         RoleService roleService = mock(RoleService.class);
         RoleController controller = new RoleController(roleService);
 
-        controller.rolePermissions(7L, Map.of("menuIds", List.of(1, 2, 3)));
+        MenuAssignRequest request = new MenuAssignRequest();
+        request.setMenuIds(List.of(1L, 2L, 3L));
+
+        controller.rolePermissions(7L, request);
 
         verify(roleService).assignMenus(7L, List.of(1L, 2L, 3L));
     }
@@ -149,9 +153,12 @@ class BackendContractTests {
         MenuService menuService = mock(MenuService.class);
         MenuController controller = new MenuController(menuService);
 
-        controller.updateMenu(3L, Map.of("name", "菜单"));
+        MenuSaveRequest request = new MenuSaveRequest();
+        request.setName("Menu");
 
-        verify(menuService).update(3L, Map.of("name", "菜单"));
+        controller.updateMenu(3L, request);
+
+        verify(menuService).update(eq(3L), argThat(body -> "Menu".equals(body.getName())));
     }
 
     @Test
@@ -159,7 +166,10 @@ class BackendContractTests {
         UserService userService = mock(UserService.class);
         UserController controller = new UserController(userService);
 
-        controller.userRoles(10L, Map.of("roleIds", List.of(1, 2)));
+        RoleAssignRequest request = new RoleAssignRequest();
+        request.setRoleIds(List.of(1L, 2L));
+
+        controller.userRoles(10L, request);
 
         verify(userService).assignRoles(10L, List.of(1L, 2L));
     }
@@ -169,9 +179,12 @@ class BackendContractTests {
         DeptService deptService = mock(DeptService.class);
         DeptController controller = new DeptController(deptService);
 
-        controller.updateDept(3L, Map.of("deptName", "Research"));
+        DeptSaveRequest request = new DeptSaveRequest();
+        request.setDeptName("Research");
 
-        verify(deptService).update(3L, Map.of("deptName", "Research"));
+        controller.updateDept(3L, request);
+
+        verify(deptService).update(eq(3L), argThat(body -> "Research".equals(body.getDeptName())));
     }
 
     @Test
@@ -179,9 +192,12 @@ class BackendContractTests {
         DictService dictService = mock(DictService.class);
         DictController controller = new DictController(dictService);
 
-        controller.updateDictItem(9L, Map.of("label", "Enabled"));
+        DictItemSaveRequest request = new DictItemSaveRequest();
+        request.setLabel("Enabled");
 
-        verify(dictService).updateItem(9L, Map.of("label", "Enabled"));
+        controller.updateDictItem(9L, request);
+
+        verify(dictService).updateItem(eq(9L), argThat(body -> "Enabled".equals(body.getLabel())));
     }
 
     @Test
@@ -189,9 +205,12 @@ class BackendContractTests {
         ConfigService configService = mock(ConfigService.class);
         ConfigController controller = new ConfigController(configService);
 
-        controller.updateConfig(6L, Map.of("configValue", "demo"));
+        ConfigSaveRequest request = new ConfigSaveRequest();
+        request.setConfigValue("demo");
 
-        verify(configService).update(6L, Map.of("configValue", "demo"));
+        controller.updateConfig(6L, request);
+
+        verify(configService).update(eq(6L), argThat(body -> "demo".equals(body.getConfigValue())));
     }
 
     @Test
@@ -220,9 +239,11 @@ class BackendContractTests {
         OnlineUserService onlineUserService = new OnlineUserServiceImpl(onlineSessionService);
         var page = new PageResult<>(List.of(Map.<String, Object>of("tokenId", "token-1")), 1, 1, 20);
 
-        when(onlineSessionService.page(Map.of("page", "1"))).thenReturn(page);
+        when(onlineSessionService.page(Map.of("page", "1", "pageSize", "20"))).thenReturn(page);
 
-        assertEquals("token-1", onlineUserService.page(Map.of("page", "1")).list().getFirst().tokenId());
+        OnlineUserQuery query = new OnlineUserQuery();
+        query.setPage(1);
+        assertEquals("token-1", onlineUserService.page(query).list().getFirst().tokenId());
     }
 
     @Test
@@ -240,9 +261,12 @@ class BackendContractTests {
         DatabaseBackupService databaseBackupService = mock(DatabaseBackupService.class);
         DatabaseBackupController controller = new DatabaseBackupController(databaseBackupService);
 
-        controller.restoreBackup(21L, Map.of("confirmed", true));
+        DatabaseRestoreRequest request = new DatabaseRestoreRequest();
+        request.setConfirmed(true);
 
-        verify(databaseBackupService).restore(21L, Map.of("confirmed", true));
+        controller.restoreBackup(21L, request);
+
+        verify(databaseBackupService).restore(eq(21L), argThat(body -> Boolean.TRUE.equals(body.getConfirmed())));
     }
 
     @Test
@@ -266,10 +290,10 @@ class BackendContractTests {
 
     @Test
     void criticalWriteOperationsHaveBusinessOperationLogs() throws Exception {
-        assertOperationLogged(UserController.class, "createUser", Map.class);
-        assertOperationLogged(RoleController.class, "rolePermissions", long.class, Map.class);
+        assertOperationLogged(UserController.class, "createUser", UserSaveRequest.class);
+        assertOperationLogged(RoleController.class, "rolePermissions", long.class, MenuAssignRequest.class);
         assertOperationLogged(JobController.class, "runJob", long.class);
-        assertOperationLogged(DatabaseBackupController.class, "restoreBackup", long.class, Map.class);
+        assertOperationLogged(DatabaseBackupController.class, "restoreBackup", long.class, DatabaseRestoreRequest.class);
     }
 
     @Test
@@ -290,14 +314,14 @@ class BackendContractTests {
 
     @Test
     void p1WriteOperationsUseActionPermissions() throws Exception {
-        assertPermission(MenuController.class, "createMenu", "system:menu:create", Map.class);
-        assertPermission(MenuController.class, "updateMenu", "system:menu:update", long.class, Map.class);
+        assertPermission(MenuController.class, "createMenu", "system:menu:create", MenuSaveRequest.class);
+        assertPermission(MenuController.class, "updateMenu", "system:menu:update", long.class, MenuSaveRequest.class);
         assertPermission(MenuController.class, "deleteMenu", "system:menu:delete", long.class);
-        assertPermission(MenuController.class, "menuStatus", "system:menu:status", long.class, Map.class);
-        assertPermission(DeptController.class, "createDept", "system:dept:create", Map.class);
-        assertPermission(DictController.class, "createDictType", "system:dict:create", Map.class);
-        assertPermission(ConfigController.class, "createConfig", "system:config:create", Map.class);
-        assertPermission(JobController.class, "createJob", "system:job:create", Map.class);
+        assertPermission(MenuController.class, "menuStatus", "system:menu:status", long.class, StatusUpdateRequest.class);
+        assertPermission(DeptController.class, "createDept", "system:dept:create", DeptSaveRequest.class);
+        assertPermission(DictController.class, "createDictType", "system:dict:create", DictTypeSaveRequest.class);
+        assertPermission(ConfigController.class, "createConfig", "system:config:create", ConfigSaveRequest.class);
+        assertPermission(JobController.class, "createJob", "system:job:create", JobSaveRequest.class);
         assertPermission(JobController.class, "runJob", "system:job:run", long.class);
         assertPermission(OnlineUserController.class, "kickout", "system:online:kickout", String.class);
     }
@@ -308,10 +332,12 @@ class BackendContractTests {
         OperationLogAspect aspect = new OperationLogAspect(logService);
         ProceedingJoinPoint point = mock(ProceedingJoinPoint.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        OperationLog operationLog = UserController.class.getMethod("createUser", Map.class).getAnnotation(OperationLog.class);
+        OperationLog operationLog = UserController.class.getMethod("createUser", UserSaveRequest.class).getAnnotation(OperationLog.class);
 
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-        when(point.getArgs()).thenReturn(new Object[]{Map.of("username", "demo")});
+        UserSaveRequest createUserRequest = new UserSaveRequest();
+        createUserRequest.setUsername("demo");
+        when(point.getArgs()).thenReturn(new Object[]{createUserRequest});
         when(point.proceed()).thenReturn("ok");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/system/users");

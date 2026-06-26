@@ -14,8 +14,7 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
-import com.drip.admin.modules.system.dto.LoginRequest;
-import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.service.MenuService;
 import com.drip.admin.modules.system.vo.MenuTreeVo;
@@ -83,15 +82,15 @@ public class MenuController {
     @PostMapping("/menus")
     @RequirePermission("system:menu:create")
     @OperationLog(module = "菜单管理", action = "新增菜单")
-    public ApiResponse<Long> createMenu(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(menuService.create(body));
+    public ApiResponse<Long> createMenu(@RequestBody MenuSaveRequest request) {
+        return ApiResponse.success(menuService.create(request));
     }
 
     @PutMapping("/menus/{id}")
     @RequirePermission("system:menu:update")
     @OperationLog(module = "菜单管理", action = "编辑菜单")
-    public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        menuService.update(id, body);
+    public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody MenuSaveRequest request) {
+        menuService.update(id, request);
         return ApiResponse.success(null);
     }
 
@@ -106,8 +105,8 @@ public class MenuController {
     @PatchMapping("/menus/{id}/status")
     @RequirePermission("system:menu:status")
     @OperationLog(module = "菜单管理", action = "变更菜单状态")
-    public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        menuService.updateStatus(id, intValue(body, "status", 1));
+    public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+        menuService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
 }

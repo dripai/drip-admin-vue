@@ -4,6 +4,9 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.modules.system.dto.ConfigQuery;
+import com.drip.admin.modules.system.dto.ConfigSaveRequest;
+import com.drip.admin.modules.system.dto.StatusUpdateRequest;
 import com.drip.admin.modules.system.entity.SysConfigEntity;
 import com.drip.admin.modules.system.service.ConfigService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,22 +35,22 @@ public class ConfigController {
 
     @GetMapping("/configs")
     @RequirePermission("system:config:list")
-    public ApiResponse<PageResult<SysConfigEntity>> configs(@RequestParam Map<String, String> q) {
-        return ApiResponse.success(configService.page(q));
+    public ApiResponse<PageResult<SysConfigEntity>> configs(ConfigQuery query) {
+        return ApiResponse.success(configService.page(query));
     }
 
     @PostMapping("/configs")
     @RequirePermission("system:config:create")
     @OperationLog(module = "系统配置", action = "新增配置")
-    public ApiResponse<Long> createConfig(@RequestBody Map<String, Object> body) {
-        return ApiResponse.success(configService.create(body));
+    public ApiResponse<Long> createConfig(@RequestBody ConfigSaveRequest request) {
+        return ApiResponse.success(configService.create(request));
     }
 
     @PutMapping("/configs/{id}")
     @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "编辑配置")
-    public ApiResponse<Void> updateConfig(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        configService.update(id, body);
+    public ApiResponse<Void> updateConfig(@PathVariable long id, @RequestBody ConfigSaveRequest request) {
+        configService.update(id, request);
         return ApiResponse.success(null);
     }
 
@@ -62,8 +65,8 @@ public class ConfigController {
     @PatchMapping("/configs/{id}/status")
     @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "变更配置状态")
-    public ApiResponse<Void> configStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
-        configService.updateStatus(id, intValue(body, "status", 1));
+    public ApiResponse<Void> configStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+        configService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
 }
