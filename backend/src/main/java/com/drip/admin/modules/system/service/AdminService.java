@@ -378,7 +378,6 @@ public class AdminService {
         }
     }
 
-    @Transactional
     public void runJob(long id) {
         Map<String, Object> job = detail("sys_job", id);
         LocalDateTime started = LocalDateTime.now();
@@ -402,7 +401,6 @@ public class AdminService {
         return new PageResult<>(rows, total == null ? 0 : total, page, pageSize);
     }
 
-    @Transactional
     public Long createBackup(Map<String, Object> body, long userId) {
         try {
             Files.createDirectories(backupDir);
@@ -412,7 +410,7 @@ public class AdminService {
     if (!target.startsWith(normalizedDir)) throw new BusinessException(400000, "备份路径非法");
             MysqlTarget mysqlTarget = parseMysqlTarget();
             runProcess(List.of(mysqldumpCommand, "-h", mysqlTarget.host(), "-P", String.valueOf(mysqlTarget.port()),
-                "-u" + datasourceUsername, "-p" + datasourcePassword, "--single-transaction", "--routines",
+                "-u" + datasourceUsername, "--single-transaction", "--routines",
                 "--default-character-set=utf8mb4", mysqlTarget.database()), target, null);
     return insert("sys_db_backup", Map.of(
                 "backup_name", name,
@@ -441,7 +439,7 @@ public class AdminService {
     if (!Files.exists(path)) throw new BusinessException(404000, "备份文件不存在");
         MysqlTarget mysqlTarget = parseMysqlTarget();
         runProcess(List.of(mysqlCommand, "-h", mysqlTarget.host(), "-P", String.valueOf(mysqlTarget.port()),
-            "-u" + datasourceUsername, "-p" + datasourcePassword, "--default-character-set=utf8mb4",
+            "-u" + datasourceUsername, "--default-character-set=utf8mb4",
             mysqlTarget.database()), null, path);
     }
 
@@ -513,22 +511,47 @@ public class AdminService {
 
     private void runProcess(List<String> command, Path stdoutFile, Path stdinFile) {
         ProcessBuilder builder = new ProcessBuilder(command);
+        builder.environment().put("MYSQL_PWD", datasourcePassword);
+        Path tempStdout = null;
+        Path tempStderr = null;
+        Path actualStdout = stdoutFile;
+        Path actualStderr = null;
+        if (actualStdout == null) {
+            try {
+                tempStdout = Files.createTempFile("drip-db-command-", ".out");
+                actualStdout = tempStdout;
+            } catch (IOException ex) {
+                throw new BusinessException(500000, "database command temp output is not available");
+            }
+        }
+        try {
+            tempStderr = Files.createTempFile("drip-db-command-", ".err");
+            actualStderr = tempStderr;
+        } catch (IOException ex) {
+            throw new BusinessException(500000, "database command temp error output is not available");
+        }
         if (stdoutFile != null) {
             builder.redirectOutput(stdoutFile.toFile());
+        } else {
+            builder.redirectOutput(actualStdout.toFile());
         }
         if (stdinFile != null) {
             builder.redirectInput(stdinFile.toFile());
         }
+        builder.redirectError(actualStderr.toFile());
         builder.redirectErrorStream(false);
         try {
             if (stdoutFile != null) {
                 Files.deleteIfExists(stdoutFile);
             }
             Process process = builder.start();
-            String stdout = stdoutFile == null ? new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8) : "";
-            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
             int exit = process.waitFor();
+            String stdout = actualStdout == null || !Files.exists(actualStdout) ? "" : Files.readString(actualStdout, StandardCharsets.UTF_8);
+            String stderr = actualStderr == null || !Files.exists(actualStderr) ? "" : Files.readString(actualStderr, StandardCharsets.UTF_8);
             if (exit != 0) {
+                if (stdoutFile != null) {
+                    Files.deleteIfExists(stdoutFile);
+                }
                 throw new BusinessException(500000, "database command failed: " + (stderr.isBlank() ? stdout : stderr));
             }
         } catch (IOException ex) {
@@ -536,6 +559,13 @@ public class AdminService {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new BusinessException(500000, "database command interrupted");
+        } finally {
+            try {
+                if (tempStdout != null) Files.deleteIfExists(tempStdout);
+                if (tempStderr != null) Files.deleteIfExists(tempStderr);
+            } catch (IOException ignored) {
+                // Temporary command output cleanup must not mask the command result.
+            }
         }
     }
 

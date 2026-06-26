@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -138,6 +139,13 @@ class BackendContractTests {
         } finally {
             RequestContextHolder.resetRequestAttributes();
         }
+    }
+
+    @Test
+    void externalCommandOperationsDoNotRunInsideDeclarativeTransactions() throws Exception {
+        assertEquals(null, AdminService.class.getMethod("runJob", long.class).getAnnotation(Transactional.class));
+        assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
+        assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
     }
 
     private static void assertOperationLogged(Class<?> type, String methodName, Class<?>... parameterTypes) throws Exception {
