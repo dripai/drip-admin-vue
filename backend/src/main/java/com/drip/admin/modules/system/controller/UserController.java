@@ -18,6 +18,7 @@ import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.service.UserService;
+import com.drip.admin.modules.system.vo.UserListVo;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -75,7 +76,7 @@ public class UserController {
 
     @GetMapping("/user")
     @RequirePermission("system:user:list")
-    public ApiResponse<PageResult<SysUserEntity>> users(@Valid UserQuery query) {
+    public ApiResponse<PageResult<UserListVo>> users(@Valid UserQuery query) {
         return ApiResponse.success(userService.page(query));
     }
 

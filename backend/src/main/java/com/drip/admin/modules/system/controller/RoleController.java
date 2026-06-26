@@ -19,6 +19,7 @@ import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.entity.SysRoleEntity;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.service.RoleService;
+import com.drip.admin.modules.system.vo.RolePermissionVo;
 import com.drip.admin.shared.enums.TableMeta;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -90,6 +91,12 @@ public class RoleController {
     @RequirePermission("system:role:list")
     public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, @Valid RoleQuery query) {
         return ApiResponse.success(roleService.users(id, query));
+    }
+
+    @GetMapping("/role/{id}/permission")
+    @RequirePermission("system:role:permission")
+    public ApiResponse<RolePermissionVo> rolePermissions(@PathVariable long id) {
+        return ApiResponse.success(roleService.permissions(id));
     }
 
     @GetMapping("/role/option")

@@ -94,7 +94,7 @@ async function openPerm(row: RoleItem) {
   current.value = row;
   menus.value = await getMenuTree();
   const p = await getRolePermissions(row.id);
-  checkedKeys.value = [...p.menuIds, ...p.permissionCodes];
+  checkedKeys.value = p.menuIds;
   permOpen.value = true;
 }
 async function openUsers(row: RoleItem) {
@@ -108,7 +108,7 @@ async function savePerm() {
   try {
     await saveRolePermissions(current.value.id, {
       menuIds: checkedKeys.value.filter((k) => typeof k !== 'string'),
-      permissionCodes: checkedKeys.value.filter((k) => typeof k === 'string') as string[],
+      permissionCodes: [],
     });
     message.success('操作成功');
     permOpen.value = false;
@@ -198,6 +198,9 @@ onMounted(table.refresh);
           { title: '姓名', dataIndex: 'realName' },
           { title: '手机号', dataIndex: 'phone' },
           { title: '状态', dataIndex: 'status' },
-        ]" /></a-modal
+        ]"
+        ><template #bodyCell="{ column, record }"
+          ><template v-if="column.dataIndex === 'status'"
+            ><StatusTag :status="record.status" /></template></template></a-table></a-modal
   ></PageContainer>
 </template>

@@ -5,11 +5,12 @@ import com.drip.admin.common.response.PageResult;
 import com.drip.admin.modules.system.dto.UserQuery;
 import com.drip.admin.modules.system.dto.UserSaveRequest;
 import com.drip.admin.modules.system.entity.SysUserEntity;
+import com.drip.admin.modules.system.vo.UserListVo;
 
 import java.util.List;
 
 public interface UserService extends IService<SysUserEntity> {
-    PageResult<SysUserEntity> page(UserQuery query);
+    PageResult<UserListVo> page(UserQuery query);
     SysUserEntity detail(long id);
     Long create(UserSaveRequest request);
     void update(long id, UserSaveRequest request);

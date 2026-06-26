@@ -23,6 +23,9 @@ export function getRolePermissions(id: ID) {
 export function saveRolePermissions(id: ID, data: RolePermissionForm) {
   return put<void>(`/system/role/${id}/permission`, data);
 }
-export function getRoleUsers(id: ID) {
-  return get<UserItem[]>(`/system/role/${id}/user`);
+export async function getRoleUsers(id: ID) {
+  const page = await get<PageResult<UserItem>>(`/system/role/${id}/user`, {
+    params: { page: 1, pageSize: 100 },
+  });
+  return page.list;
 }

@@ -18,6 +18,7 @@ import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.RoleService;
+import com.drip.admin.modules.system.vo.RolePermissionVo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +56,16 @@ public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity> i
         if (userIds.isEmpty()) return new PageResult<>(List.of(), 0, page, pageSize);
         Page<SysUserEntity> result = userMapper.selectPage(new Page<>(page, pageSize), new QueryWrapper<SysUserEntity>().in("id", userIds).orderByDesc("created_at"));
         return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
+    }
+
+    @Override
+    public RolePermissionVo permissions(long roleId) {
+        detail(roleId);
+        List<Long> menuIds = roleMenuMapper.selectList(new QueryWrapper<SysRoleMenuEntity>().eq("role_id", roleId))
+            .stream()
+            .map(SysRoleMenuEntity::getMenuId)
+            .toList();
+        return new RolePermissionVo(menuIds, List.of());
     }
 
     @Override

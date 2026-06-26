@@ -14,11 +14,15 @@ import com.drip.admin.modules.system.mapper.SysRoleMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.UserService;
+import com.drip.admin.modules.system.vo.RoleSummaryVo;
+import com.drip.admin.modules.system.vo.UserListVo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.drip.admin.shared.utils.AdminUtils.currentUserId;
 import static com.drip.admin.shared.utils.AdminUtils.hashPassword;
@@ -34,7 +38,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     }
 
     @Override
-    public PageResult<SysUserEntity> page(UserQuery query) {
+    public PageResult<UserListVo> page(UserQuery query) {
         int page = query.pageOrDefault();
         int pageSize = query.pageSizeOrDefault();
         QueryWrapper<SysUserEntity> wrapper = new QueryWrapper<>();
@@ -53,7 +57,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         }
         wrapper.orderByDesc("created_at");
         Page<SysUserEntity> result = page(new Page<>(page, pageSize), wrapper);
-        return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
+        return new PageResult<>(toUserList(result.getRecords()), result.getTotal(), page, pageSize);
     }
 
     @Override
@@ -152,6 +156,45 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
             .filter(role -> Objects.equals(role.getDeleted(), 0) && Objects.equals(role.getStatus(), 1))
             .map(SysRoleEntity::getRoleCode)
             .toList();
+    }
+
+    private List<UserListVo> toUserList(List<SysUserEntity> users) {
+        if (users.isEmpty()) return List.of();
+        List<Long> userIds = users.stream().map(SysUserEntity::getId).toList();
+        List<SysUserRoleEntity> relations = userRoleMapper.selectList(new QueryWrapper<SysUserRoleEntity>().in("user_id", userIds));
+        Map<Long, SysRoleEntity> rolesById = rolesById(relations);
+        Map<Long, List<RoleSummaryVo>> rolesByUserId = relations.stream()
+            .filter(relation -> rolesById.containsKey(relation.getRoleId()))
+            .collect(Collectors.groupingBy(
+                SysUserRoleEntity::getUserId,
+                Collectors.mapping(relation -> toRoleSummary(rolesById.get(relation.getRoleId())), Collectors.toList())
+            ));
+        return users.stream()
+            .map(user -> new UserListVo(
+                user.getId(),
+                user.getUsername(),
+                user.getRealName(),
+                user.getPhone(),
+                user.getEmail(),
+                user.getStatus(),
+                user.getDeptId(),
+                rolesByUserId.getOrDefault(user.getId(), List.of()),
+                user.getCreatedAt(),
+                user.getLastLoginAt()
+            ))
+            .toList();
+    }
+
+    private Map<Long, SysRoleEntity> rolesById(List<SysUserRoleEntity> relations) {
+        List<Long> roleIds = relations.stream().map(SysUserRoleEntity::getRoleId).filter(Objects::nonNull).distinct().toList();
+        if (roleIds.isEmpty()) return Map.of();
+        return roleMapper.selectBatchIds(roleIds).stream()
+            .filter(role -> Objects.equals(role.getDeleted(), 0))
+            .collect(Collectors.toMap(SysRoleEntity::getId, role -> role));
+    }
+
+    private static RoleSummaryVo toRoleSummary(SysRoleEntity role) {
+        return new RoleSummaryVo(role.getId(), role.getRoleName(), role.getRoleCode());
     }
 
     private void assertExistingRoles(List<Long> roleIds) {
