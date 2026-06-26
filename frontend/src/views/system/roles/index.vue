@@ -126,11 +126,6 @@ onMounted(table.refresh);
       :loading="table.loading.value"
       @search="table.search"
       @reset="table.reset" />
-    <div class="page-actions">
-      <PermissionButton permission="system:role:create" type="primary" @click="openCreate"
-        >新增角色</PermissionButton
-      ><a-button @click="table.refresh">刷新</a-button>
-    </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
@@ -138,7 +133,13 @@ onMounted(table.refresh);
       :pagination="table.pagination.value"
       table-key="system-roles"
       @change="table.handleTableChange"
-      ><template #bodyCell="{ column, record }"
+      @refresh="table.refresh"
+      ><template #toolbarLeft>
+        <PermissionButton permission="system:role:create" type="primary" @click="openCreate"
+          >新增角色</PermissionButton
+        >
+      </template>
+      <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"

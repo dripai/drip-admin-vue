@@ -157,11 +157,6 @@ onMounted(() => {
       @search="table.search"
       @reset="table.reset"
     />
-    <div class="page-actions">
-      <PermissionButton permission="system:user:create" type="primary" @click="openCreate"
-        >新增用户</PermissionButton
-      ><a-button @click="table.refresh">刷新</a-button>
-    </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
@@ -169,7 +164,13 @@ onMounted(() => {
       :pagination="table.pagination.value"
       table-key="system-users"
       @change="table.handleTableChange"
+      @refresh="table.refresh"
     >
+      <template #toolbarLeft>
+        <PermissionButton permission="system:user:create" type="primary" @click="openCreate"
+          >新增用户</PermissionButton
+        >
+      </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status"

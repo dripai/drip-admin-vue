@@ -29,26 +29,26 @@ public class DeptController {
         this.deptService = deptService;
     }
 
-    @GetMapping("/depts")
+    @GetMapping("/dept")
     @RequirePermission("system:dept:list")
     public ApiResponse<List<DeptTreeVo>> depts() {
         return ApiResponse.success(deptService.tree());
     }
 
-    @GetMapping("/depts/{id}")
+    @GetMapping("/dept/{id}")
     @RequirePermission("system:dept:list")
     public ApiResponse<SysDeptEntity> dept(@PathVariable long id) {
         return ApiResponse.success(deptService.detail(id));
     }
 
-    @PostMapping("/depts")
+    @PostMapping("/dept")
     @RequirePermission("system:dept:create")
     @OperationLog(module = "部门管理", action = "新增部门")
     public ApiResponse<Long> createDept(@Valid @RequestBody DeptSaveRequest request) {
         return ApiResponse.success(deptService.create(request));
     }
 
-    @PutMapping("/depts/{id}")
+    @PutMapping("/dept/{id}")
     @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "编辑部门")
     public ApiResponse<Void> updateDept(@PathVariable long id, @Valid @RequestBody DeptSaveRequest request) {
@@ -56,7 +56,7 @@ public class DeptController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/depts/{id}")
+    @DeleteMapping("/dept/{id}")
     @RequirePermission("system:dept:delete")
     @OperationLog(module = "部门管理", action = "删除部门")
     public ApiResponse<Void> deleteDept(@PathVariable long id) {
@@ -64,7 +64,7 @@ public class DeptController {
         return ApiResponse.success(null);
     }
 
-    @PatchMapping("/depts/{id}/status")
+    @PutMapping("/dept/{id}/status")
     @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "变更部门状态")
     public ApiResponse<Void> deptStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {

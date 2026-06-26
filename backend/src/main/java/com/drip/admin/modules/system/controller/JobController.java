@@ -36,26 +36,26 @@ public class JobController {
         this.jobService = jobService;
     }
 
-    @GetMapping("/jobs")
+    @GetMapping("/job")
     @RequirePermission("system:job:list")
     public ApiResponse<PageResult<SysJobEntity>> jobs(@Valid JobQuery query) {
         return ApiResponse.success(jobService.page(query));
     }
 
-    @GetMapping("/jobs/{id}")
+    @GetMapping("/job/{id}")
     @RequirePermission("system:job:list")
     public ApiResponse<SysJobEntity> job(@PathVariable long id) {
         return ApiResponse.success(jobService.detail(id));
     }
 
-    @PostMapping("/jobs")
+    @PostMapping("/job")
     @RequirePermission("system:job:create")
     @OperationLog(module = "定时任务", action = "新增任务")
     public ApiResponse<Long> createJob(@Valid @RequestBody JobSaveRequest request) {
         return ApiResponse.success(jobService.create(request));
     }
 
-    @PutMapping("/jobs/{id}")
+    @PutMapping("/job/{id}")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "编辑任务")
     public ApiResponse<Void> updateJob(@PathVariable long id, @Valid @RequestBody JobSaveRequest request) {
@@ -63,7 +63,7 @@ public class JobController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/jobs/{id}")
+    @DeleteMapping("/job/{id}")
     @RequirePermission("system:job:delete")
     @OperationLog(module = "定时任务", action = "删除任务")
     public ApiResponse<Void> deleteJob(@PathVariable long id) {
@@ -71,7 +71,7 @@ public class JobController {
         return ApiResponse.success(null);
     }
 
-    @PatchMapping("/jobs/{id}/status")
+    @PutMapping("/job/{id}/status")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "变更任务状态")
     public ApiResponse<Void> jobStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
@@ -79,7 +79,7 @@ public class JobController {
         return ApiResponse.success(null);
     }
 
-    @PostMapping("/jobs/{id}/run")
+    @PostMapping("/job/{id}/run")
     @RequirePermission("system:job:run")
     @OperationLog(module = "定时任务", action = "手动执行任务")
     public ApiResponse<Void> runJob(@PathVariable long id) {
@@ -87,7 +87,7 @@ public class JobController {
         return ApiResponse.success(null);
     }
 
-    @GetMapping("/jobs/{id}/runLogs")
+    @GetMapping("/job/{id}/runLog")
     @RequirePermission("system:job:list")
     public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, @Valid JobRunLogQuery query) {
         return ApiResponse.success(jobService.runLogs(id, query));

@@ -34,20 +34,20 @@ public class ConfigController {
         this.configService = configService;
     }
 
-    @GetMapping("/configs")
+    @GetMapping("/config")
     @RequirePermission("system:config:list")
     public ApiResponse<PageResult<SysConfigEntity>> configs(@Valid ConfigQuery query) {
         return ApiResponse.success(configService.page(query));
     }
 
-    @PostMapping("/configs")
+    @PostMapping("/config")
     @RequirePermission("system:config:create")
     @OperationLog(module = "系统配置", action = "新增配置")
     public ApiResponse<Long> createConfig(@Valid @RequestBody ConfigSaveRequest request) {
         return ApiResponse.success(configService.create(request));
     }
 
-    @PutMapping("/configs/{id}")
+    @PutMapping("/config/{id}")
     @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "编辑配置")
     public ApiResponse<Void> updateConfig(@PathVariable long id, @Valid @RequestBody ConfigSaveRequest request) {
@@ -55,7 +55,7 @@ public class ConfigController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/configs/{id}")
+    @DeleteMapping("/config/{id}")
     @RequirePermission("system:config:delete")
     @OperationLog(module = "系统配置", action = "删除配置")
     public ApiResponse<Void> deleteConfig(@PathVariable long id) {
@@ -63,7 +63,7 @@ public class ConfigController {
         return ApiResponse.success(null);
     }
 
-    @PatchMapping("/configs/{id}/status")
+    @PutMapping("/config/{id}/status")
     @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "变更配置状态")
     public ApiResponse<Void> configStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {

@@ -1,30 +1,31 @@
 import { del, get, post, put } from '@/utils/request';
 import type { ID } from '@/types/api';
 import type { DictItem, DictTypeItem } from '@/types/system';
+import { statusValue, withNumericStatus } from './serialize';
 export function queryDictTypes() {
-  return get<DictTypeItem[]>('/system/dicts/types');
+  return get<DictTypeItem[]>('/system/dict/type');
 }
 export function createDictType(data: Partial<DictTypeItem>) {
-  return post<void>('/system/dicts/types', data);
+  return post<void>('/system/dict/type', withNumericStatus(data as Record<string, unknown>));
 }
 export function updateDictType(id: ID, data: Partial<DictTypeItem>) {
-  return put<void>(`/system/dicts/types/${id}`, data);
+  return put<void>(`/system/dict/type/${id}`, withNumericStatus(data as Record<string, unknown>));
 }
 export function deleteDictType(id: ID) {
-  return del<void>(`/system/dicts/types/${id}`);
+  return del<void>(`/system/dict/type/${id}`);
 }
 export function queryDictItems(typeCode: string) {
-  return get<DictItem[]>(`/system/dicts/types/${typeCode}/items`);
+  return get<DictItem[]>(`/system/dict/type/${typeCode}/item`);
 }
 export function createDictItem(data: Partial<DictItem>) {
-  return post<void>('/system/dicts/items', data);
+  return post<void>('/system/dict/item', withNumericStatus(data as Record<string, unknown>));
 }
 export function updateDictItem(id: ID, data: Partial<DictItem>) {
-  return put<void>(`/system/dicts/items/${id}`, data);
+  return put<void>(`/system/dict/item/${id}`, withNumericStatus(data as Record<string, unknown>));
 }
 export function deleteDictItem(id: ID) {
-  return del<void>(`/system/dicts/items/${id}`);
+  return del<void>(`/system/dict/item/${id}`);
 }
 export function refreshDictCache(typeCode?: string) {
-  return post<void>('/system/dicts/cache/refresh', { typeCode });
+  return post<void>('/system/dict/cache/refresh', { typeCode });
 }

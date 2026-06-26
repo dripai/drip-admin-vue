@@ -38,7 +38,7 @@ function normalizeMenus(items: AuthMenuNode[]): MenuNode[] {
     permissionCode: item.permissionCode,
     icon: item.icon,
     sort: item.sort ?? 0,
-    status: item.status ?? 'ENABLED',
+    status: item.status === 0 || item.status === 'DISABLED' ? 'DISABLED' : 'ENABLED',
     visible: typeof item.visible === 'number' ? item.visible === 1 : item.visible,
     children: item.children?.length ? normalizeMenus(item.children) : [],
   }));

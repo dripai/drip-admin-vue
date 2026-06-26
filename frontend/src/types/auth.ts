@@ -36,7 +36,7 @@ export interface MenuNode {
   permissionCode?: string;
   icon?: string;
   sort?: number;
-  status?: Status;
+  status?: Status | number;
   visible?: boolean | number;
   children?: MenuNode[];
 }

@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
+import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
@@ -94,19 +95,21 @@ onMounted(load);
 </script>
 <template>
   <PageContainer title="菜单权限"
-    ><div class="page-actions">
-      <a-button type="primary" @click="openCreate('DIRECTORY')">新增目录</a-button
-      ><a-button @click="openCreate('MENU')">新增菜单</a-button
-      ><a-button @click="openCreate('BUTTON')">新增按钮</a-button
-      ><a-button @click="load">刷新</a-button>
-    </div>
-    <a-table
-      row-key="id"
+    ><DataTable
       :columns="columns"
       :data-source="data"
       :loading="loading"
       :pagination="false"
-      ><template #bodyCell="{ column, record }"
+      table-key="system-menu"
+      @refresh="load"
+      ><template #toolbarLeft>
+        <a-space>
+          <a-button type="primary" @click="openCreate('DIRECTORY')">新增目录</a-button
+          ><a-button @click="openCreate('MENU')">新增菜单</a-button
+          ><a-button @click="openCreate('BUTTON')">新增按钮</a-button>
+        </a-space>
+      </template>
+      <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'type'"
           ><a-tag>{{ record.type }}</a-tag></template
         ><template v-else-if="column.dataIndex === 'icon'"
@@ -125,7 +128,7 @@ onMounted(load);
             ></a-space
           ></template
         ></template
-      ></a-table
+      ></DataTable
     ><FormModal
       v-model:open="open"
       :title="current ? '编辑菜单' : '新增菜单'"
@@ -146,7 +149,7 @@ onMounted(load);
         ><a-form-item v-if="form.type === 'MENU'" label="路由路径" required
           ><a-input v-model:value="form.path" /></a-form-item
         ><a-form-item v-if="form.type === 'MENU'" label="组件路径" required
-          ><a-input v-model:value="form.component" placeholder="system/users/index" /></a-form-item
+          ><a-input v-model:value="form.component" placeholder="system/user/index" /></a-form-item
         ><a-form-item v-if="form.type === 'BUTTON'" label="权限标识" required
           ><a-input v-model:value="form.permissionCode" /></a-form-item
         ><a-form-item label="排序"

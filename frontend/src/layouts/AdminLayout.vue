@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, h, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
@@ -42,7 +42,7 @@ function buildMenu(nodes: MenuNode[]): any[] {
     .map((item) => ({
       key: item.path || String(item.id),
       label: item.name,
-      icon: item.icon,
+      icon: item.icon ? () => h(IconRenderer, { icon: item.icon }) : undefined,
       children: item.children?.length ? buildMenu(item.children) : undefined,
       type: item.type,
     }));
@@ -95,9 +95,7 @@ async function submitPassword() {
         :selected-keys="selectedKeys"
         :items="menuItems"
         @click="(info: any) => router.push(String(info.key))"
-      >
-        <template #icon="item"><IconRenderer :icon="item.icon" /></template>
-      </a-menu>
+      />
     </a-layout-sider>
     <a-layout>
       <a-layout-header class="header">
@@ -115,7 +113,7 @@ async function submitPassword() {
           }}</a>
           <template #overlay
             ><a-menu
-              ><a-menu-item @click="router.push('/system/users')">当前用户</a-menu-item
+              ><a-menu-item @click="router.push('/system/user')">当前用户</a-menu-item
               ><a-menu-item @click="openPassword">修改密码</a-menu-item
               ><a-menu-item @click="logout">退出登录</a-menu-item></a-menu
             ></template

@@ -81,10 +81,6 @@ onMounted(table.refresh);
       :loading="table.loading.value"
       @search="table.search"
       @reset="table.reset" />
-    <div class="page-actions">
-      <a-button type="primary" @click="open = true">创建备份</a-button
-      ><a-button @click="table.refresh">刷新</a-button>
-    </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
@@ -92,7 +88,11 @@ onMounted(table.refresh);
       :pagination="table.pagination.value"
       table-key="system-database"
       @change="table.handleTableChange"
-      ><template #bodyCell="{ column, record }"
+      @refresh="table.refresh"
+      ><template #toolbarLeft>
+        <a-button type="primary" @click="open = true">创建备份</a-button>
+      </template>
+      <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'action'"
           ><a-space
             ><ConfirmAction title="下载" @confirm="download(record)">删除</ConfirmAction

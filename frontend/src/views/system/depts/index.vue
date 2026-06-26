@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
+import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
@@ -77,17 +78,17 @@ onMounted(load);
 </script>
 <template>
   <PageContainer title="部门管理"
-    ><div class="page-actions">
-      <a-button type="primary" @click="add">新增部门</a-button
-      ><a-button @click="load">刷新</a-button>
-    </div>
-    <a-table
-      row-key="id"
+    ><DataTable
       :columns="columns"
       :data-source="data"
       :loading="loading"
       :pagination="false"
-      ><template #bodyCell="{ column, record }"
+      table-key="system-dept"
+      @refresh="load"
+      ><template #toolbarLeft>
+        <a-button type="primary" @click="add">新增部门</a-button>
+      </template>
+      <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"
@@ -102,7 +103,7 @@ onMounted(load);
             ></a-space
           ></template
         ></template
-      ></a-table
+      ></DataTable
     ><FormModal
       v-model:open="open"
       :title="current ? '禁用' : '启用'"

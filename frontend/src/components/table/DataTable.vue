@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { SettingOutlined } from '@ant-design/icons-vue';
+import { ColumnHeightOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons-vue';
 import type { TableColumnType, TablePaginationConfig } from 'ant-design-vue';
 import { loadJson, saveJson } from '@/utils/storage';
+import { usePreferenceStore } from '@/stores/preferences';
+import type { PreferenceState } from '@/types/system';
 
 const props = defineProps<{
   columns: TableColumnType[];
   dataSource: unknown[];
   loading?: boolean;
-  pagination: TablePaginationConfig;
+  pagination?: TablePaginationConfig | false;
   tableKey?: string;
 }>();
-const emit = defineEmits<{ change: [pagination: TablePaginationConfig] }>();
+const emit = defineEmits<{ change: [pagination: TablePaginationConfig]; refresh: [] }>();
+const preferences = usePreferenceStore();
 const allColumnKeys = computed(() =>
   props.columns.map((column) => String(column.dataIndex || column.key)),
 );
@@ -39,21 +42,60 @@ const columnOptions = computed(() =>
     value: String(column.dataIndex || column.key),
   })),
 );
+const densityItems = [
+  { key: 'small', label: '紧凑' },
+  { key: 'middle', label: '默认' },
+  { key: 'large', label: '宽松' },
+];
 function updateColumns(values: Array<string | number | boolean>) {
   checkedKeys.value = values.map(String);
   if (storageKey.value) saveJson(storageKey.value, checkedKeys.value);
 }
+function updateDensity(info: { key: string }) {
+  preferences.setTableSize(info.key as PreferenceState['tableSize']);
+}
 </script>
 <template>
   <div v-if="tableKey" class="table-tools">
-    <a-dropdown trigger="click">
-      <a-button><SettingOutlined />列设置</a-button>
-      <template #overlay>
-        <div class="column-panel">
-          <a-checkbox-group :value="checkedKeys" :options="columnOptions" @change="updateColumns" />
-        </div>
-      </template>
-    </a-dropdown>
+    <div class="table-tools-left"><slot name="toolbarLeft" /></div>
+    <a-space :size="4">
+      <a-tooltip title="刷新">
+        <a-button
+          class="tool-button"
+          :aria-label="'刷新'"
+          :loading="loading"
+          @click="emit('refresh')"
+        >
+          <ReloadOutlined />
+        </a-button>
+      </a-tooltip>
+      <a-tooltip title="密度">
+        <a-dropdown trigger="click">
+          <a-button class="tool-button" :aria-label="'密度'"><ColumnHeightOutlined /></a-button>
+          <template #overlay>
+            <a-menu
+              :selected-keys="[preferences.tableSize]"
+              :items="densityItems"
+              @click="updateDensity"
+            />
+          </template>
+        </a-dropdown>
+      </a-tooltip>
+      <a-tooltip title="列设置">
+        <a-dropdown trigger="click">
+          <a-button class="tool-button" :aria-label="'列设置'"><SettingOutlined /></a-button>
+          <template #overlay>
+            <div class="column-panel">
+              <a-checkbox-group
+                :value="checkedKeys"
+                :options="columnOptions"
+                @change="updateColumns"
+              />
+            </div>
+          </template>
+        </a-dropdown>
+      </a-tooltip>
+    </a-space>
   </div>
   <a-table
     row-key="id"
@@ -61,7 +103,7 @@ function updateColumns(values: Array<string | number | boolean>) {
     :data-source="dataSource"
     :loading="loading"
     :pagination="pagination"
-    size="middle"
+    :size="preferences.tableSize"
     @change="(p: any) => emit('change', p)"
   >
     <template #bodyCell="scope"><slot name="bodyCell" v-bind="scope" /></template>
@@ -71,8 +113,17 @@ function updateColumns(values: Array<string | number | boolean>) {
 <style scoped lang="scss">
 .table-tools {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 8px;
+}
+.table-tools-left {
+  min-width: 0;
+}
+.tool-button {
+  width: 32px;
+  padding: 0;
 }
 .column-panel {
   max-width: 220px;

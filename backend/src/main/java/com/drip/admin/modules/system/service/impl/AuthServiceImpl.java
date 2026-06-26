@@ -41,6 +41,9 @@ import static com.drip.admin.shared.utils.AdminUtils.hashPassword;
 
 @Service
 public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> implements AuthService {
+    private static final String LOGIN_FAILED_MESSAGE = "用户名或密码错误";
+    private static final String ACCOUNT_DISABLED_MESSAGE = "账号已禁用";
+
     private final SysRoleMapper roleMapper;
     private final SysUserRoleMapper userRoleMapper;
     private final SysMenuMapper menuMapper;
@@ -60,10 +63,10 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     public AuthLoginVo login(LoginRequest request, HttpServletRequest servletRequest) {
         loginAttemptService.assertNotLocked(request.username());
         SysUserEntity user = getOne(new QueryWrapper<SysUserEntity>().eq("username", request.username()), false);
-        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
-        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
+        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
+        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", ACCOUNT_DISABLED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, ACCOUNT_DISABLED_MESSAGE); }
         String expected = hashPassword(request.password(), user.getPasswordSalt());
-        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
+        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
         loginAttemptService.clear(request.username()); Long userId = user.getId(); StpUtil.login(userId); String token = StpUtil.getTokenValue(); LocalDateTime now = LocalDateTime.now();
         StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token);
         SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setLastLoginAt(now); updateById(update);
@@ -89,7 +92,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Transactional
     public void changePassword(long userId, PasswordRequest request) {
         SysUserEntity user = userDetail(userId); String currentHash = hashPassword(request.oldPassword(), user.getPasswordSalt());
-        if (!currentHash.equals(user.getPasswordHash())) throw new BusinessException(400000, "operation failed");
+        if (!currentHash.equals(user.getPasswordHash())) throw new BusinessException(400000, "旧密码错误");
         String salt = "salt" + System.nanoTime(); SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setPasswordSalt(salt); update.setPasswordHash(hashPassword(request.newPassword(), salt)); updateById(update);
     }
 

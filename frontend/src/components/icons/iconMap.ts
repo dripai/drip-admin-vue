@@ -28,6 +28,20 @@ export const iconMap = {
   SettingOutlined,
   TeamOutlined,
   UserOutlined,
+  book: BookOutlined,
+  building: TeamOutlined,
+  clock: ClockCircleOutlined,
+  database: DatabaseOutlined,
+  fileClock: FileTextOutlined,
+  'file-clock': FileTextOutlined,
+  logIn: AuditOutlined,
+  'log-in': AuditOutlined,
+  menu: MenuOutlined,
+  monitor: CloudServerOutlined,
+  settings: SettingOutlined,
+  shield: LockOutlined,
+  sliders: AppstoreOutlined,
+  user: UserOutlined,
 };
 export type IconKey = keyof typeof iconMap;
 export const iconOptions = Object.keys(iconMap).map((key) => ({ label: key, value: key }));

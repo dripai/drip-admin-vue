@@ -37,20 +37,20 @@ public class DictController {
         this.dictService = dictService;
     }
 
-    @GetMapping("/dicts/types")
+    @GetMapping("/dict/type")
     @RequirePermission("system:dict:list")
     public ApiResponse<PageResult<SysDictTypeEntity>> dictTypes(@Valid DictTypeQuery query) {
         return ApiResponse.success(dictService.types(query));
     }
 
-    @PostMapping("/dicts/types")
+    @PostMapping("/dict/type")
     @RequirePermission("system:dict:create")
     @OperationLog(module = "字典管理", action = "新增字典类型")
     public ApiResponse<Long> createDictType(@Valid @RequestBody DictTypeSaveRequest request) {
         return ApiResponse.success(dictService.createType(request));
     }
 
-    @PutMapping("/dicts/types/{id}")
+    @PutMapping("/dict/type/{id}")
     @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "编辑字典类型")
     public ApiResponse<Void> updateDictType(@PathVariable long id, @Valid @RequestBody DictTypeSaveRequest request) {
@@ -58,7 +58,7 @@ public class DictController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/dicts/types/{id}")
+    @DeleteMapping("/dict/type/{id}")
     @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典类型")
     public ApiResponse<Void> deleteDictType(@PathVariable long id) {
@@ -66,20 +66,20 @@ public class DictController {
         return ApiResponse.success(null);
     }
 
-    @GetMapping("/dicts/types/{id}/items")
+    @GetMapping("/dict/type/{id}/item")
     @RequirePermission("system:dict:list")
     public ApiResponse<List<SysDictItemEntity>> dictItems(@PathVariable long id) {
         return ApiResponse.success(dictService.items(id));
     }
 
-    @PostMapping("/dicts/items")
+    @PostMapping("/dict/item")
     @RequirePermission("system:dict:create")
     @OperationLog(module = "字典管理", action = "新增字典项")
     public ApiResponse<Long> createDictItem(@Valid @RequestBody DictItemSaveRequest request) {
         return ApiResponse.success(dictService.createItem(request));
     }
 
-    @PutMapping("/dicts/items/{id}")
+    @PutMapping("/dict/item/{id}")
     @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "编辑字典项")
     public ApiResponse<Void> updateDictItem(@PathVariable long id, @Valid @RequestBody DictItemSaveRequest request) {
@@ -87,7 +87,7 @@ public class DictController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/dicts/items/{id}")
+    @DeleteMapping("/dict/item/{id}")
     @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典项")
     public ApiResponse<Void> deleteDictItem(@PathVariable long id) {
@@ -95,7 +95,7 @@ public class DictController {
         return ApiResponse.success(null);
     }
 
-    @PatchMapping("/dicts/items/{id}/status")
+    @PutMapping("/dict/item/{id}/status")
     @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "变更字典项状态")
     public ApiResponse<Void> dictItemStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
@@ -103,7 +103,7 @@ public class DictController {
         return ApiResponse.success(null);
     }
 
-    @PostMapping("/dicts/cache/refresh")
+    @PostMapping("/dict/cache/refresh")
     @RequirePermission("system:dict:update")
     public ApiResponse<Void> refreshDictCache() {
         dictService.refreshCache();

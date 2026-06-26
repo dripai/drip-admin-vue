@@ -24,7 +24,7 @@ request.interceptors.response.use(
       message.error(body.message || '请求处理失败');
       return Promise.reject(new Error(body.message || '业务错误'));
     }
-    return body?.data ?? response.data;
+    return normalizeResponseData(body?.data ?? response.data) as any;
   },
   async (error: AxiosError<ApiResponse<unknown>>) => {
     const status = error.response?.status;
@@ -49,6 +49,23 @@ request.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+function normalizeResponseData(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeResponseData);
+  if (!value || typeof value !== 'object' || value instanceof Blob) return value;
+  const source = value as Record<string, unknown>;
+  const normalized: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(source)) {
+    normalized[key] = key === 'status' ? normalizeStatus(item) : normalizeResponseData(item);
+  }
+  return normalized;
+}
+
+function normalizeStatus(value: unknown) {
+  if (value === 1) return 'ENABLED';
+  if (value === 0) return 'DISABLED';
+  return value;
+}
 
 export function createRequestController() {
   return new AbortController();

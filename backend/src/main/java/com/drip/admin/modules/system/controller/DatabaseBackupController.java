@@ -35,20 +35,20 @@ public class DatabaseBackupController {
         this.databaseBackupService = databaseBackupService;
     }
 
-    @GetMapping("/database/backups")
+    @GetMapping("/databaseBackup")
     @RequirePermission("system:database:backup:list")
     public ApiResponse<PageResult<SysDbBackupEntity>> backups(@Valid DatabaseBackupQuery query) {
         return ApiResponse.success(databaseBackupService.page(query));
     }
 
-    @PostMapping("/database/backups")
+    @PostMapping("/databaseBackup")
     @RequirePermission("system:database:backup:create")
     @OperationLog(module = "数据库备份", action = "创建备份")
     public ApiResponse<Long> createBackup(@Valid @RequestBody(required = false) DatabaseBackupCreateRequest request) {
         return ApiResponse.success(databaseBackupService.create(request, currentUserId()));
     }
 
-    @GetMapping(value = "/database/backups/{id}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/databaseBackup/{id}/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @RequirePermission("system:database:backup:download")
     public ResponseEntity<byte[]> downloadBackup(@PathVariable long id) throws IOException {
         BackupFile file = databaseBackupService.download(id);
@@ -57,7 +57,7 @@ public class DatabaseBackupController {
             .body(file.content());
     }
 
-    @PostMapping("/database/backups/{id}/restore")
+    @PostMapping("/databaseBackup/{id}/restore")
     @RequirePermission("system:database:backup:restore")
     @OperationLog(module = "数据库备份", action = "恢复备份")
     public ApiResponse<Void> restoreBackup(@PathVariable long id, @Valid @RequestBody DatabaseRestoreRequest request) {
@@ -65,7 +65,7 @@ public class DatabaseBackupController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/database/backups/{id}")
+    @DeleteMapping("/databaseBackup/{id}")
     @RequirePermission("system:database:backup:delete")
     @OperationLog(module = "数据库备份", action = "删除备份记录")
     public ApiResponse<Void> deleteBackup(@PathVariable long id) {

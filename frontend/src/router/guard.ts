@@ -1,15 +1,20 @@
-import router from './index';
+import router, { notFoundRoute } from './index';
 import { useAuthStore } from '@/stores/auth';
 import { usePermissionStore } from '@/stores/permission';
 import { useUserStore } from '@/stores/user';
 
 let dynamicAdded = false;
 let routeToken = '';
+let notFoundAdded = false;
 
 function addDynamicRoutes() {
   if (dynamicAdded) return;
   const permission = usePermissionStore();
-  for (const route of permission.routes) router.addRoute('/', route);
+  for (const route of permission.routes) router.addRoute('root', route);
+  if (!notFoundAdded) {
+    router.addRoute(notFoundRoute);
+    notFoundAdded = true;
+  }
   dynamicAdded = true;
 }
 
@@ -26,6 +31,7 @@ router.beforeEach(async (to) => {
     addDynamicRoutes();
     return to.fullPath;
   }
+  if (!to.matched.length) return '/404';
   const code = to.meta.permissionCode as string | undefined;
   if (code && !usePermissionStore().can(code)) return '/403';
   return true;

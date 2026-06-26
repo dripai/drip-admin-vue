@@ -35,7 +35,7 @@ const detail = ref<any>();
 const table = useTable<any, Record<string, unknown>>(
   queryLoginLogs as any,
   {},
-  { storageKey: 'system.login-logs.query' },
+  { storageKey: 'system.loginLog.query' },
 );
 async function openDetail(row: any) {
   detail.value = await getLoginLog(row.id);
@@ -56,8 +56,9 @@ onMounted(table.refresh);
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
       :pagination="table.pagination.value"
-      table-key="system-login-logs"
+      table-key="system-loginLog"
       @change="table.handleTableChange"
+      @refresh="table.refresh"
       ><template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'action'"
           ><a-button type="link" @click="openDetail(record)">详情</a-button></template

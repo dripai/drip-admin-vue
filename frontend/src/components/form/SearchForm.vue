@@ -55,7 +55,9 @@ const canToggle = computed(() => props.fields.length > (props.defaultVisibleCoun
 </template>
 <style scoped lang="scss">
 .search-form {
+  padding-bottom: 16px;
   margin-bottom: 12px;
+  border-bottom: 1px solid #edf0f5;
   row-gap: 8px;
 }
 </style>

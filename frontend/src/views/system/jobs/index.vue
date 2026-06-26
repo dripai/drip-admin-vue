@@ -109,10 +109,6 @@ onMounted(table.refresh);
       :loading="table.loading.value"
       @search="table.search"
       @reset="table.reset" />
-    <div class="page-actions">
-      <a-button type="primary" @click="add">新增任务</a-button
-      ><a-button @click="table.refresh">刷新</a-button>
-    </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
@@ -120,7 +116,11 @@ onMounted(table.refresh);
       :pagination="table.pagination.value"
       table-key="system-jobs"
       @change="table.handleTableChange"
-      ><template #bodyCell="{ column, record }"
+      @refresh="table.refresh"
+      ><template #toolbarLeft>
+        <a-button type="primary" @click="add">新增任务</a-button>
+      </template>
+      <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"

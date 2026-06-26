@@ -29,7 +29,7 @@ const columns: TableColumnType[] = [
 const table = useTable<OnlineUserItem, Record<string, unknown>>(
   queryOnlineUsers as any,
   {},
-  { storageKey: 'system.online-users.query' },
+  { storageKey: 'system.onlineUser.query' },
 );
 async function kick(row: OnlineUserItem) {
   await forceOffline(row.id);
@@ -51,8 +51,9 @@ onMounted(table.refresh);
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
       :pagination="table.pagination.value"
-      table-key="system-online-users"
+      table-key="system-onlineUser"
       @change="table.handleTableChange"
+      @refresh="table.refresh"
       ><template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'action'"
           ><ConfirmAction

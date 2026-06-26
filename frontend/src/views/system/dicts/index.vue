@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
+import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
@@ -32,6 +33,14 @@ const itemForm = reactive<Partial<DictItem>>({
   sort: 0,
   status: 'ENABLED',
 });
+const itemColumns = [
+  { title: '标签', dataIndex: 'label' },
+  { title: '字典值', dataIndex: 'value' },
+  { title: '颜色', dataIndex: 'color' },
+  { title: '排序', dataIndex: 'sort' },
+  { title: '状态', dataIndex: 'status' },
+  { title: '操作', dataIndex: 'action' },
+];
 async function loadTypes() {
   types.value = await queryDictTypes();
   if (!currentType.value && types.value[0]) selectType(types.value[0]);
@@ -105,6 +114,10 @@ async function refresh() {
   await refreshDictCache(currentType.value?.dictCode);
   message.success('操作成功');
 }
+async function reloadItems() {
+  if (!currentType.value) return;
+  items.value = await queryDictItems(currentType.value.dictCode);
+}
 onMounted(loadTypes);
 </script>
 <template>
@@ -125,34 +138,31 @@ onMounted(loadTypes);
           ></a-list
         ></a-col
       ><a-col :span="16"
-        ><div class="page-actions">
-          <a-button type="primary" :disabled="!currentType" @click="addItem">新增字典项</a-button
-          ><a-button :disabled="!currentType" @click="refresh">刷新</a-button>
-        </div>
-        <a-table
-          row-key="id"
+        ><DataTable
           :data-source="items"
-          :columns="[
-            { title: '标签', dataIndex: 'label' },
-            { title: '字典值', dataIndex: 'value' },
-            { title: '颜色', dataIndex: 'color' },
-            { title: '排序', dataIndex: 'sort' },
-            { title: '状态', dataIndex: 'status' },
-            { title: '操作', dataIndex: 'action' },
-          ]"
+          :columns="itemColumns"
           :pagination="false"
-          ><template #bodyCell="{ column, record }"
+          table-key="system-dict-item"
+          @refresh="reloadItems"
+          ><template #toolbarLeft>
+            <a-space>
+              <a-button type="primary" :disabled="!currentType" @click="addItem"
+                >新增字典项</a-button
+              ><a-button :disabled="!currentType" @click="refresh">刷新缓存</a-button>
+            </a-space>
+          </template>
+          <template #bodyCell="{ column, record }"
             ><template v-if="column.dataIndex === 'status'"
               ><StatusTag :status="record.status" /></template
             ><template v-else-if="column.dataIndex === 'action'"
               ><a-space
-                ><a-button type="link" @click="editItem(record)">编辑字典项</a-button
-                ><ConfirmAction title="删除字典项" danger @confirm="removeItem(record)"
+                ><a-button type="link" @click="editItem(record)">新增字典项</a-button
+                ><ConfirmAction title="删除字典项？" danger @confirm="removeItem(record)"
                   >删除</ConfirmAction
                 ></a-space
               ></template
             ></template
-          ></a-table
+          ></DataTable
         ></a-col
       ></a-row
     ><FormModal

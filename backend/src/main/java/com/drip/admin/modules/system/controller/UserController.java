@@ -73,26 +73,26 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/users")
+    @GetMapping("/user")
     @RequirePermission("system:user:list")
     public ApiResponse<PageResult<SysUserEntity>> users(@Valid UserQuery query) {
         return ApiResponse.success(userService.page(query));
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/user/{id}")
     @RequirePermission("system:user:detail")
     public ApiResponse<SysUserEntity> user(@PathVariable long id) {
         return ApiResponse.success(userService.detail(id));
     }
 
-    @PostMapping("/users")
+    @PostMapping("/user")
     @RequirePermission("system:user:create")
     @OperationLog(module = "用户管理", action = "新增用户")
     public ApiResponse<Long> createUser(@Valid @RequestBody UserSaveRequest request) {
         return ApiResponse.success(userService.create(request));
     }
 
-    @PutMapping("/users/{id}")
+    @PutMapping("/user/{id}")
     @RequirePermission("system:user:update")
     @OperationLog(module = "用户管理", action = "编辑用户")
     public ApiResponse<Void> updateUser(@PathVariable long id, @Valid @RequestBody UserSaveRequest request) {
@@ -100,7 +100,7 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/user/{id}")
     @RequirePermission("system:user:delete")
     @OperationLog(module = "用户管理", action = "删除用户")
     public ApiResponse<Void> deleteUser(@PathVariable long id) {
@@ -108,7 +108,7 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
-    @PatchMapping("/users/{id}/status")
+    @PutMapping("/user/{id}/status")
     @RequirePermission("system:user:disable")
     @OperationLog(module = "用户管理", action = "变更用户状态")
     public ApiResponse<Void> userStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
@@ -116,7 +116,7 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
-    @PutMapping("/users/{id}/roles")
+    @PutMapping("/user/{id}/role")
     @RequirePermission("system:user:assignRole")
     @OperationLog(module = "用户管理", action = "分配角色")
     public ApiResponse<Void> userRoles(@PathVariable long id, @Valid @RequestBody RoleAssignRequest request) {
@@ -124,7 +124,7 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
-    @PostMapping("/users/{id}/resetPassword")
+    @PostMapping("/user/{id}/resetPassword")
     @RequirePermission("system:user:resetPassword")
     @OperationLog(module = "用户管理", action = "重置密码")
     public ApiResponse<Void> resetPassword(@PathVariable long id, @Valid @RequestBody PasswordResetRequest request) {

@@ -10,6 +10,7 @@ export const staticRoutes: RouteRecordRaw[] = [
   },
   {
     path: '/',
+    name: 'root',
     component: AppLayout,
     redirect: '/dashboard',
     children: [
@@ -33,8 +34,9 @@ export const staticRoutes: RouteRecordRaw[] = [
       },
     ],
   },
-  { path: '/:pathMatch(.*)*', redirect: '/404' },
 ];
+
+export const notFoundRoute: RouteRecordRaw = { path: '/:pathMatch(.*)*', redirect: '/404' };
 
 const router = createRouter({ history: createWebHistory(), routes: staticRoutes });
 export default router;
