@@ -65,8 +65,8 @@ const childSelectedKeys = computed(() => {
 });
 const showChildSider = computed(
   () =>
-    (preferences.layoutMode === 'doubleSide' || preferences.layoutMode === 'mix') &&
-    childMenuItems.value.length > 0,
+    preferences.layoutMode === 'mix' ||
+    (preferences.layoutMode === 'doubleSide' && childMenuItems.value.length > 0),
 );
 const openKeys = ref<string[]>([]);
 const childOpenKeys = ref<string[]>([]);
@@ -239,7 +239,7 @@ async function submitPassword() {
       :collapsed="preferences.layoutMode === 'side' && preferences.collapsed"
       collapsible
       :trigger="null"
-      :width="preferences.layoutMode === 'doubleSide' ? 88 : 224"
+      :width="preferences.layoutMode === 'doubleSide' ? 84 : 224"
       :collapsed-width="72"
       class="sider root-sider"
     >
@@ -263,7 +263,9 @@ async function submitPassword() {
       class="child-sider"
       theme="light"
     >
-      <div class="child-title">{{ activeMenuTrail.labels[0] || '菜单' }}</div>
+      <div class="child-title">
+        {{ preferences.layoutMode === 'mix' ? 'Drip Admin' : activeMenuTrail.labels[0] || '菜单' }}
+      </div>
       <a-menu
         mode="inline"
         v-model:openKeys="childOpenKeys"
@@ -281,7 +283,6 @@ async function submitPassword() {
         >
           <MenuUnfoldOutlined v-if="preferences.collapsed" /><MenuFoldOutlined v-else />
         </a-button>
-        <div v-if="preferences.layoutMode === 'mix'" class="top-brand">Drip Admin</div>
         <a-menu
           v-if="preferences.layoutMode === 'mix'"
           class="top-menu"
@@ -290,7 +291,7 @@ async function submitPassword() {
           :items="rootMenuItems"
           @click="handleRootClick($event as any)"
         />
-        <a-breadcrumb class="breadcrumb"
+        <a-breadcrumb v-if="preferences.layoutMode !== 'mix'" class="breadcrumb"
           ><a-breadcrumb-item v-for="item in breadcrumb" :key="item">{{
             item
           }}</a-breadcrumb-item></a-breadcrumb
@@ -328,6 +329,13 @@ async function submitPassword() {
           >
         </a-dropdown>
       </a-layout-header>
+      <div v-if="preferences.layoutMode === 'mix'" class="breadcrumb-bar">
+        <a-breadcrumb class="breadcrumb"
+          ><a-breadcrumb-item v-for="item in breadcrumb" :key="item">{{
+            item
+          }}</a-breadcrumb-item></a-breadcrumb
+        >
+      </div>
       <a-layout-content class="content"><router-view /></a-layout-content>
     </a-layout>
     <a-modal
@@ -368,32 +376,54 @@ async function submitPassword() {
   min-width: 0;
 }
 
+.layout-doubleSide .root-sider {
+  background: #001529;
+}
+
+.layout-doubleSide .root-sider :deep(.ant-menu) {
+  padding: 4px 6px;
+  background: transparent;
+}
+
 .layout-doubleSide .root-sider :deep(.ant-menu-title-content) {
   display: block;
+  flex: 0 0 16px;
+  width: 100%;
+  height: 16px;
   overflow: hidden;
   font-size: 12px;
-  line-height: 18px;
+  line-height: 16px !important;
   text-align: center;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: nowrap !important;
 }
 
 .layout-doubleSide .root-sider :deep(.ant-menu-item),
 .layout-doubleSide .root-sider :deep(.ant-menu-submenu-title) {
+  width: 72px;
   height: 58px;
-  padding-inline: 8px !important;
+  margin: 4px 0;
+  padding-inline: 0 !important;
+  display: flex !important;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
-  line-height: 18px;
+  line-height: 16px;
+  border-radius: 6px;
 }
 
 .layout-doubleSide .root-sider :deep(.ant-menu-item-icon) {
   margin-inline-end: 0;
   font-size: 18px;
+  line-height: 18px;
+}
+
+.layout-doubleSide .root-sider :deep(.ant-menu-item-selected) {
+  background: #1677ff;
 }
 
 .brand,
-.top-brand,
 .child-title {
   height: 48px;
   display: flex;
@@ -407,7 +437,11 @@ async function submitPassword() {
   color: #fff;
 }
 
-.top-brand,
+.layout-doubleSide .brand {
+  justify-content: center;
+  padding: 0;
+}
+
 .child-title {
   color: #1f2937;
 }
@@ -418,7 +452,29 @@ async function submitPassword() {
 }
 
 .child-title {
+  padding: 0 18px;
+  font-weight: 700;
   border-bottom: 1px solid #eef2f7;
+}
+
+.child-sider :deep(.ant-menu) {
+  padding: 8px;
+  border-inline-end: 0 !important;
+}
+
+.child-sider :deep(.ant-menu-item) {
+  height: 40px;
+  margin: 4px 0;
+  padding-inline: 14px !important;
+  border-radius: 6px;
+}
+
+.child-sider :deep(.ant-menu-item .ant-menu-item-icon) {
+  margin-inline-end: 10px;
+}
+
+.child-sider :deep(.ant-menu-item-selected) {
+  background: #e6f4ff;
 }
 
 .header {
@@ -442,6 +498,15 @@ async function submitPassword() {
   min-width: 120px;
 }
 
+.breadcrumb-bar {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid #eef2f7;
+}
+
 .content {
   padding: 16px;
 }
@@ -450,6 +515,10 @@ async function submitPassword() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.layout-mix .layout-switch {
+  margin-left: auto;
 }
 
 .layout-panel {
