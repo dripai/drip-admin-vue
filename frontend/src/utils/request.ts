@@ -28,6 +28,12 @@ request.interceptors.response.use(
   },
   async (error: AxiosError<ApiResponse<unknown>>) => {
     const status = error.response?.status;
+    const requestUrl = error.config?.url || '';
+    const backendMessage = error.response?.data?.message;
+    if (status === 401 && requestUrl === '/system/login') {
+      message.error(backendMessage || '用户名或密码错误');
+      return Promise.reject(error);
+    }
     if (status === 401) {
       const auth = useAuthStore();
       auth.clearSession();
@@ -39,7 +45,6 @@ request.interceptors.response.use(
       message.error('没有权限执行该操作');
       return Promise.reject(error);
     }
-    const backendMessage = error.response?.data?.message;
     message.error(backendMessage || '网络或服务异常，请稍后重试');
     return Promise.reject(error);
   },

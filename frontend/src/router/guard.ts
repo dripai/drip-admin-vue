@@ -1,8 +1,10 @@
 import router from './index';
 import { useAuthStore } from '@/stores/auth';
 import { usePermissionStore } from '@/stores/permission';
+import { useUserStore } from '@/stores/user';
 
 let dynamicAdded = false;
+let routeToken = '';
 
 function addDynamicRoutes() {
   if (dynamicAdded) return;
@@ -15,8 +17,12 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore();
   if (to.meta.public) return auth.isLoggedIn && to.path === '/login' ? '/' : true;
   if (!auth.isLoggedIn) return { path: '/login', query: { redirect: to.fullPath } };
+  if (auth.token !== routeToken) {
+    dynamicAdded = false;
+    routeToken = auth.token;
+  }
   if (!dynamicAdded) {
-    await auth.refreshCurrentUser();
+    if (!useUserStore().profile) await auth.refreshCurrentUser();
     addDynamicRoutes();
     return to.fullPath;
   }

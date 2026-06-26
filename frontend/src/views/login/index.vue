@@ -15,6 +15,8 @@ async function submit() {
     await auth.login(form.username, form.password);
     message.success('登录成功');
     router.replace((route.query.redirect as string) || '/');
+  } catch {
+    // 登录失败提示由请求层使用后端 message 统一展示。
   } finally {
     loading.value = false;
   }
