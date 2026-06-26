@@ -65,6 +65,7 @@ import com.drip.admin.modules.system.service.MenuService;
 import com.drip.admin.modules.system.controller.SystemLogController;
 import com.drip.admin.modules.system.service.SystemLogQueryService;
 import com.drip.admin.modules.system.controller.RoleController;
+import com.drip.admin.modules.system.controller.RootController;
 import com.drip.admin.modules.system.service.RoleService;
 import com.drip.admin.modules.system.controller.FileController;
 import com.drip.admin.modules.system.service.FileService;
@@ -286,6 +287,15 @@ class BackendContractTests {
 
         assertEquals(0, response.code());
         assertEquals("UP", response.data().status());
+    }
+
+    @Test
+    void rootEndpointRedirectsToSwaggerAndFaviconReturnsNoContent() {
+        RootController controller = new RootController();
+
+        assertEquals(HttpStatus.FOUND, controller.root().getStatusCode());
+        assertEquals("/swagger-ui/index.html", controller.root().getHeaders().getFirst("Location"));
+        assertEquals(HttpStatus.NO_CONTENT, controller.favicon().getStatusCode());
     }
 
     @Test
