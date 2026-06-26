@@ -1,15 +1,15 @@
-import { get, post } from '@/utils/request';
+import { get, post, put } from '@/utils/request';
 import type { CurrentUserResult, LoginRequest, LoginResult } from '@/types/auth';
 
 export function loginApi(data: LoginRequest) {
-  return post<LoginResult>('/auth/login', data);
+  return post<LoginResult>('/system/login', data);
 }
 export function logoutApi() {
-  return post<void>('/auth/logout');
+  return post<void>('/system/logout');
 }
 export function getCurrentUserApi() {
-  return get<CurrentUserResult>('/auth/me');
+  return get<CurrentUserResult>('/system/me');
 }
 export function changePasswordApi(data: { oldPassword: string; newPassword: string }) {
-  return post<void>('/auth/password', data);
+  return put<void>('/system/password', data);
 }

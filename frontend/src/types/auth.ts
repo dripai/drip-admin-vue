@@ -1,4 +1,5 @@
-import type { MenuNode, RoleSummary, UserProfile } from './system';
+import type { ID, Status } from './api';
+import type { MenuType } from './system';
 
 export interface LoginRequest {
   username: string;
@@ -15,8 +16,27 @@ export interface LoginResult {
 }
 
 export interface CurrentUserResult {
-  user: UserProfile;
-  roles: RoleSummary[];
+  userId: ID;
+  username: string;
+  realName: string;
+  avatar?: string;
+  deptId?: ID;
+  roles: string[];
   menus: MenuNode[];
   permissions: string[];
+}
+
+export interface MenuNode {
+  id: ID;
+  parentId?: ID | null;
+  name: string;
+  type: MenuType;
+  path?: string;
+  component?: string;
+  permissionCode?: string;
+  icon?: string;
+  sort?: number;
+  status?: Status;
+  visible?: boolean | number;
+  children?: MenuNode[];
 }
