@@ -1,0 +1,14 @@
+{
+  "name": "移动端后台入口",
+  "appid": "__UNI__DRIPMOBILE",
+  "description": "移动端后台轻量入口框架",
+  "versionName": "0.1.0",
+  "versionCode": "1",
+  "transformPx": false,
+  "h5": {
+    "title": "移动端后台入口",
+    "router": {
+      "mode": "hash"
+    }
+  }
+}
