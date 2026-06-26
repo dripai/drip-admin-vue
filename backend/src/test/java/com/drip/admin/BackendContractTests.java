@@ -6,6 +6,7 @@ import com.drip.admin.common.log.LogService;
 import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
+import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
@@ -23,6 +24,8 @@ import com.drip.admin.modules.system.dict.controller.DictController;
 import com.drip.admin.modules.system.dict.service.DictService;
 import com.drip.admin.modules.system.menu.controller.MenuController;
 import com.drip.admin.modules.system.menu.service.MenuService;
+import com.drip.admin.modules.system.log.controller.SystemLogController;
+import com.drip.admin.modules.system.log.service.SystemLogQueryService;
 import com.drip.admin.modules.system.role.controller.RoleController;
 import com.drip.admin.modules.system.role.service.RoleService;
 import com.drip.admin.modules.system.service.AdminService;
@@ -203,6 +206,16 @@ class BackendContractTests {
         controller.updateConfig(6L, Map.of("configValue", "demo"));
 
         verify(configService).update(6L, Map.of("configValue", "demo"));
+    }
+
+    @Test
+    void logControllerDelegatesQueriesToLogQueryService() {
+        SystemLogQueryService logQueryService = mock(SystemLogQueryService.class);
+        SystemLogController controller = new SystemLogController(logQueryService);
+
+        controller.operationLog(12L);
+
+        verify(logQueryService).operationLog(12L);
     }
 
     @Test
@@ -398,6 +411,33 @@ class BackendContractTests {
 
         assertEquals(400000, error.code());
         verify(jdbc, never()).update("update sys_config set deleted = 1 where id = ?", 8L);
+    }
+
+    @Test
+    void logQueryServiceAppliesOperationLogFilters() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        SystemLogQueryService logQueryService = new SystemLogQueryService(jdbc);
+
+        when(jdbc.queryForObject(
+            "select count(1) from sys_operation_log where 1 = 1 and module like ? and response_status like ?",
+            Long.class,
+            "%用户管理%",
+            "%SUCCESS%"
+        )).thenReturn(1L);
+        when(jdbc.queryForList(
+            "select * from sys_operation_log where 1 = 1 and module like ? and response_status like ? order by created_at desc limit ?, ?",
+            "%用户管理%",
+            "%SUCCESS%",
+            0,
+            20
+        )).thenReturn(List.of(Map.of("id", 1L)));
+
+        PageResult<Map<String, Object>> result = logQueryService.operationLogs(Map.of(
+            "module", "用户管理",
+            "responseStatus", "SUCCESS"
+        ));
+
+        assertEquals(1, result.total());
     }
 
     @Test
