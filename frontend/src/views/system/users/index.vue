@@ -14,44 +14,50 @@ import {
   assignUserRoles,
   createUser,
   deleteUser,
+  listRoleOptions,
   queryUsers,
   resetUserPassword,
   updateUser,
   updateUserStatus,
 } from '@/api/system/user';
-import type { UserForm, UserItem } from '@/types/system';
+import type { OptionItem, UserForm, UserItem } from '@/types/system';
 
 const fields = [
-  { label: '操作', field: 'username', component: 'input' as const },
-  { label: '操作', field: 'realName', component: 'input' as const },
-  { label: '操作', field: 'phone', component: 'input' as const },
+  { label: '用户名', field: 'username', component: 'input' as const },
+  { label: '姓名', field: 'realName', component: 'input' as const },
+  { label: '手机号', field: 'phone', component: 'input' as const },
   {
-    label: '操作',
+    label: '状态',
     field: 'status',
     component: 'select' as const,
     options: [
-      { label: '操作', value: 'ENABLED' },
-      { label: '操作', value: 'DISABLED' },
+      { label: '启用', value: 'ENABLED' },
+      { label: '禁用', value: 'DISABLED' },
     ],
   },
 ];
 const columns: TableColumnType[] = [
-  { title: '操作', dataIndex: 'username' },
-  { title: '操作', dataIndex: 'realName' },
-  { title: '操作', dataIndex: 'phone' },
-  { title: '操作', dataIndex: 'email' },
-  { title: '操作', dataIndex: ['dept', 'deptName'] },
-  { title: '操作', dataIndex: 'status' },
-  { title: '操作', dataIndex: 'roles' },
-  { title: '操作', dataIndex: 'createdAt' },
-  { title: '操作', dataIndex: 'lastLoginAt' },
+  { title: '用户名', dataIndex: 'username' },
+  { title: '姓名', dataIndex: 'realName' },
+  { title: '手机号', dataIndex: 'phone' },
+  { title: '邮箱', dataIndex: 'email' },
+  { title: '部门', dataIndex: ['dept', 'deptName'] },
+  { title: '状态', dataIndex: 'status' },
+  { title: '角色', dataIndex: 'roles' },
+  { title: '创建时间', dataIndex: 'createdAt' },
+  { title: '最后登录时间', dataIndex: 'lastLoginAt' },
   { title: '操作', dataIndex: 'action', width: 260 },
 ];
-const table = useTable<UserItem, Record<string, unknown>>(queryUsers as any, {});
+const table = useTable<UserItem, Record<string, unknown>>(
+  queryUsers as any,
+  {},
+  { storageKey: 'system.users.query' },
+);
 const modalOpen = ref(false);
 const assignOpen = ref(false);
 const submitting = ref(false);
 const current = ref<UserItem>();
+const roleOptions = ref<OptionItem[]>([]);
 const form = reactive<UserForm>({
   username: '',
   realName: '',
@@ -89,12 +95,16 @@ function openEdit(row: UserItem) {
   });
   modalOpen.value = true;
 }
+async function loadRoleOptions() {
+  const roles = await listRoleOptions();
+  roleOptions.value = roles.map((role) => ({ label: role.roleName, value: role.id }));
+}
 async function submit() {
   submitting.value = true;
   try {
     if (current.value) await updateUser(current.value.id, form);
     else await createUser(form);
-    message.success('操作');
+    message.success('操作成功');
     modalOpen.value = false;
     table.refresh();
   } finally {
@@ -103,21 +113,22 @@ async function submit() {
 }
 async function remove(row: UserItem) {
   await deleteUser(row.id);
-  message.success('操作');
+  message.success('操作成功');
   table.refresh();
 }
 async function status(row: UserItem) {
   await updateUserStatus(row.id, row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED');
-  message.success('操作');
+  message.success('操作成功');
   table.refresh();
 }
 async function reset(row: UserItem) {
   await resetUserPassword(row.id);
-  message.success('操作');
+  message.success('操作成功');
 }
 function openAssign(row: UserItem) {
   current.value = row;
   form.roleIds = row.roles.map((r) => r.id);
+  loadRoleOptions();
   assignOpen.value = true;
 }
 async function saveAssign() {
@@ -125,17 +136,20 @@ async function saveAssign() {
   submitting.value = true;
   try {
     await assignUserRoles(current.value.id, form.roleIds);
-    message.success('操作');
+    message.success('操作成功');
     assignOpen.value = false;
     table.refresh();
   } finally {
     submitting.value = false;
   }
 }
-onMounted(table.refresh);
+onMounted(() => {
+  table.refresh();
+  loadRoleOptions();
+});
 </script>
 <template>
-  <PageContainer title="操作">
+  <PageContainer title="用户管理">
     <SearchForm
       :model="table.query"
       :fields="fields"
@@ -145,14 +159,15 @@ onMounted(table.refresh);
     />
     <div class="page-actions">
       <PermissionButton permission="system:user:create" type="primary" @click="openCreate"
-        >操作</PermissionButton
-      ><a-button @click="table.refresh">操作</a-button>
+        >新增用户</PermissionButton
+      ><a-button @click="table.refresh">刷新</a-button>
     </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
       :pagination="table.pagination.value"
+      table-key="system-users"
       @change="table.handleTableChange"
     >
       <template #bodyCell="{ column, record }">
@@ -160,44 +175,52 @@ onMounted(table.refresh);
           ><StatusTag :status="record.status"
         /></template>
         <template v-else-if="column.dataIndex === 'roles'">{{
-          record.roles?.map((r: any) => r.roleName).join('?') || '-'
+          record.roles?.map((r: any) => r.roleName).join('，') || '-'
         }}</template>
         <template v-else-if="column.dataIndex === 'action'"
           ><a-space>
-            <a-button type="link" @click="openEdit(record)">操作</a-button
-            ><a-button type="link" @click="openAssign(record)">操作</a-button>
+            <a-button type="link" @click="openEdit(record)">编辑</a-button
+            ><a-button type="link" @click="openAssign(record)">分配角色</a-button>
             <ConfirmAction
-              :title="record.status === 'ENABLED' ? '操作' : '操作'"
+              :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
-              >{{ record.status === 'ENABLED' ? '操作' : '操作' }}</ConfirmAction
+              >{{ record.status === 'ENABLED' ? '禁用' : '启用' }}</ConfirmAction
             >
-            <ConfirmAction title="操作" @confirm="reset(record)">操作</ConfirmAction
-            ><ConfirmAction title="操作" danger @confirm="remove(record)">操作</ConfirmAction>
+            <ConfirmAction title="确认重置该用户密码？" @confirm="reset(record)"
+              >重置密码</ConfirmAction
+            ><ConfirmAction title="确认删除该用户？" danger @confirm="remove(record)"
+              >删除</ConfirmAction
+            >
           </a-space></template
         >
       </template>
     </DataTable>
     <FormModal
       v-model:open="modalOpen"
-      :title="current ? '操作' : '操作'"
+      :title="current ? '编辑用户' : '新增用户'"
       :submitting="submitting"
       @submit="submit"
     >
       <a-form :model="form" layout="vertical"
-        ><a-form-item label="操作" required><a-input v-model:value="form.username" /></a-form-item
-        ><a-form-item label="操作" required><a-input v-model:value="form.realName" /></a-form-item
-        ><a-form-item label="操作"><a-input v-model:value="form.phone" /></a-form-item
-        ><a-form-item label="操作"><a-input v-model:value="form.email" /></a-form-item
-        ><a-form-item v-if="!current" label="操作" required
+        ><a-form-item label="用户名" required><a-input v-model:value="form.username" /></a-form-item
+        ><a-form-item label="姓名" required><a-input v-model:value="form.realName" /></a-form-item
+        ><a-form-item label="手机号"><a-input v-model:value="form.phone" /></a-form-item
+        ><a-form-item label="邮箱"><a-input v-model:value="form.email" /></a-form-item
+        ><a-form-item v-if="!current" label="密码" required
           ><a-input-password v-model:value="form.password" /></a-form-item
       ></a-form>
     </FormModal>
-    <FormModal v-model:open="assignOpen" title="操作" :submitting="submitting" @submit="saveAssign"
+    <FormModal
+      v-model:open="assignOpen"
+      title="分配角色"
+      :submitting="submitting"
+      @submit="saveAssign"
       ><a-select
         v-model:value="form.roleIds"
         mode="multiple"
+        :options="roleOptions"
         style="width: 100%"
-        placeholder="操作"
+        placeholder="请选择角色"
     /></FormModal>
   </PageContainer>
 </template>

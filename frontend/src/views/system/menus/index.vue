@@ -31,14 +31,14 @@ const form = reactive<Partial<MenuNode>>({
   status: 'ENABLED',
 });
 const columns = [
-  { title: '操作', dataIndex: 'name' },
-  { title: '操作', dataIndex: 'type' },
-  { title: '操作', dataIndex: 'permissionCode' },
-  { title: '操作', dataIndex: 'path' },
-  { title: '操作', dataIndex: 'component' },
-  { title: '操作', dataIndex: 'icon' },
-  { title: '操作', dataIndex: 'sort' },
-  { title: '操作', dataIndex: 'status' },
+  { title: '名称', dataIndex: 'name' },
+  { title: '类型', dataIndex: 'type' },
+  { title: '权限码', dataIndex: 'permissionCode' },
+  { title: '请求路径', dataIndex: 'path' },
+  { title: '组件路径', dataIndex: 'component' },
+  { title: '图标', dataIndex: 'icon' },
+  { title: '排序', dataIndex: 'sort' },
+  { title: '状态', dataIndex: 'status' },
   { title: '操作', dataIndex: 'action', width: 220 },
 ];
 async function load() {
@@ -73,7 +73,7 @@ async function submit() {
   try {
     if (current.value) await updateMenu(current.value.id, form);
     else await createMenu(form);
-    message.success('操作');
+    message.success('操作成功');
     open.value = false;
     load();
   } finally {
@@ -82,23 +82,23 @@ async function submit() {
 }
 async function remove(row: MenuNode) {
   await deleteMenu(row.id);
-  message.success('操作');
+  message.success('操作成功');
   load();
 }
 async function status(row: MenuNode) {
   await updateMenuStatus(row.id, row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED');
-  message.success('操作');
+  message.success('操作成功');
   load();
 }
 onMounted(load);
 </script>
 <template>
-  <PageContainer title="操作"
+  <PageContainer title="菜单权限"
     ><div class="page-actions">
-      <a-button type="primary" @click="openCreate('DIRECTORY')">操作</a-button
-      ><a-button @click="openCreate('MENU')">操作</a-button
-      ><a-button @click="openCreate('BUTTON')">操作</a-button
-      ><a-button @click="load">操作</a-button>
+      <a-button type="primary" @click="openCreate('DIRECTORY')">新增目录</a-button
+      ><a-button @click="openCreate('MENU')">新增菜单</a-button
+      ><a-button @click="openCreate('BUTTON')">新增按钮</a-button
+      ><a-button @click="load">刷新</a-button>
     </div>
     <a-table
       row-key="id"
@@ -115,41 +115,41 @@ onMounted(load);
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
-            ><a-button type="link" @click="openEdit(record)">操作</a-button
+            ><a-button type="link" @click="openEdit(record)">编辑</a-button
             ><ConfirmAction
-              :title="record.status === 'ENABLED' ? '操作' : '操作'"
+              :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
-              >{{ record.status === 'ENABLED' ? '操作' : '操作' }}</ConfirmAction
-            ><ConfirmAction title="操作" danger @confirm="remove(record)"
-              >操作</ConfirmAction
+              >{{ record.status === 'ENABLED' ? '禁用' : '启用' }}</ConfirmAction
+            ><ConfirmAction title="确认删除该菜单？" danger @confirm="remove(record)"
+              >删除</ConfirmAction
             ></a-space
           ></template
         ></template
       ></a-table
     ><FormModal
       v-model:open="open"
-      :title="current ? '操作' : '操作'"
+      :title="current ? '编辑菜单' : '新增菜单'"
       :submitting="submitting"
       @submit="submit"
       ><a-form :model="form" layout="vertical"
-        ><a-form-item label="操作" required><a-input v-model:value="form.name" /></a-form-item
-        ><a-form-item label="操作" required
+        ><a-form-item label="名称" required><a-input v-model:value="form.name" /></a-form-item
+        ><a-form-item label="类型" required
           ><a-select
             v-model:value="form.type"
             :options="[
-              { label: '操作', value: 'DIRECTORY' },
-              { label: '操作', value: 'MENU' },
-              { label: '操作', value: 'BUTTON' },
+              { label: '目录', value: 'DIRECTORY' },
+              { label: '菜单', value: 'MENU' },
+              { label: '按钮', value: 'BUTTON' },
             ]" /></a-form-item
-        ><a-form-item v-if="form.type !== 'BUTTON'" label="操作"
+        ><a-form-item v-if="form.type !== 'BUTTON'" label="图标"
           ><IconSelect v-model:value="form.icon" /></a-form-item
-        ><a-form-item v-if="form.type === 'MENU'" label="操作" required
+        ><a-form-item v-if="form.type === 'MENU'" label="路由路径" required
           ><a-input v-model:value="form.path" /></a-form-item
-        ><a-form-item v-if="form.type === 'MENU'" label="操作" required
+        ><a-form-item v-if="form.type === 'MENU'" label="组件路径" required
           ><a-input v-model:value="form.component" placeholder="system/users/index" /></a-form-item
-        ><a-form-item v-if="form.type === 'BUTTON'" label="操作" required
+        ><a-form-item v-if="form.type === 'BUTTON'" label="权限标识" required
           ><a-input v-model:value="form.permissionCode" /></a-form-item
-        ><a-form-item label="操作"
+        ><a-form-item label="排序"
           ><a-input-number
             v-model:value="form.sort"
             style="width: 100%" /></a-form-item></a-form></FormModal

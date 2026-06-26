@@ -16,7 +16,7 @@ const filtered = computed(() =>
     show-search
     :value="props.value"
     :options="filtered"
-    placeholder="操作"
+    placeholder="请选择图标"
     @search="keyword = $event"
     @change="emit('update:value', $event as string | undefined)"
   >

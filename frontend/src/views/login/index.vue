@@ -13,7 +13,7 @@ async function submit() {
   loading.value = true;
   try {
     await auth.login(form.username, form.password);
-    message.success('操作');
+    message.success('登录成功');
     router.replace((route.query.redirect as string) || '/');
   } finally {
     loading.value = false;
@@ -23,14 +23,20 @@ async function submit() {
 <template>
   <main class="login-page">
     <a-form class="login-form" :model="form" layout="vertical" @finish="submit">
-      <h1>操作</h1>
-      <a-form-item label="操作" name="username" :rules="[{ required: true, message: '操作' }]"
+      <h1>后台管理系统</h1>
+      <a-form-item
+        label="用户名"
+        name="username"
+        :rules="[{ required: true, message: '请填写必填项' }]"
         ><a-input v-model:value="form.username" autocomplete="username"
       /></a-form-item>
-      <a-form-item label="操作" name="password" :rules="[{ required: true, message: '操作' }]"
+      <a-form-item
+        label="密码"
+        name="password"
+        :rules="[{ required: true, message: '请填写必填项' }]"
         ><a-input-password v-model:value="form.password" autocomplete="current-password"
       /></a-form-item>
-      <a-button type="primary" html-type="submit" block :loading="loading">操作</a-button>
+      <a-button type="primary" html-type="submit" block :loading="loading">登录</a-button>
     </a-form>
   </main>
 </template>

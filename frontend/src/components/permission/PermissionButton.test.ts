@@ -10,7 +10,7 @@ describe('PermissionButton', () => {
     usePermissionStore().permissions = [];
     const wrapper = mount(PermissionButton, {
       props: { permission: 'x:y:z' },
-      slots: { default: '操作' },
+      slots: { default: '保存' },
     });
     expect(wrapper.text()).toBe('');
   });

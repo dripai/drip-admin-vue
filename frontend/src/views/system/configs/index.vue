@@ -18,30 +18,34 @@ import {
 } from '@/api/system/config';
 import type { ConfigItem } from '@/types/system';
 const fields = [
-  { label: '操作', field: 'configName', component: 'input' as const },
-  { label: '操作', field: 'configKey', component: 'input' as const },
-  { label: '操作', field: 'groupName', component: 'input' as const },
+  { label: '配置名称', field: 'configName', component: 'input' as const },
+  { label: '配置键', field: 'configKey', component: 'input' as const },
+  { label: '分组', field: 'groupName', component: 'input' as const },
   {
-    label: '操作',
+    label: '状态',
     field: 'status',
     component: 'select' as const,
     options: [
-      { label: '操作', value: 'ENABLED' },
-      { label: '操作', value: 'DISABLED' },
+      { label: '启用', value: 'ENABLED' },
+      { label: '禁用', value: 'DISABLED' },
     ],
   },
 ];
 const columns: TableColumnType[] = [
-  { title: '操作', dataIndex: 'configName' },
-  { title: '操作', dataIndex: 'configKey' },
-  { title: '操作', dataIndex: 'configValue' },
-  { title: '操作', dataIndex: 'groupName' },
-  { title: '操作', dataIndex: 'sensitive' },
-  { title: '操作', dataIndex: 'status' },
-  { title: '操作', dataIndex: 'updatedAt' },
+  { title: '配置名称', dataIndex: 'configName' },
+  { title: '配置键', dataIndex: 'configKey' },
+  { title: '配置值', dataIndex: 'configValue' },
+  { title: '分组', dataIndex: 'groupName' },
+  { title: '是否敏感', dataIndex: 'sensitive' },
+  { title: '状态', dataIndex: 'status' },
+  { title: '更新时间', dataIndex: 'updatedAt' },
   { title: '操作', dataIndex: 'action' },
 ];
-const table = useTable<ConfigItem, Record<string, unknown>>(queryConfigs as any, {});
+const table = useTable<ConfigItem, Record<string, unknown>>(
+  queryConfigs as any,
+  {},
+  { storageKey: 'system.configs.query' },
+);
 const open = ref(false);
 const submitting = ref(false);
 const current = ref<ConfigItem>();
@@ -75,7 +79,7 @@ async function submit() {
   try {
     if (current.value) await updateConfig(current.value.id, form);
     else await createConfig(form);
-    message.success('操作');
+    message.success('操作成功');
     open.value = false;
     table.refresh();
   } finally {
@@ -84,18 +88,18 @@ async function submit() {
 }
 async function remove(row: ConfigItem) {
   await deleteConfig(row.id);
-  message.success('操作');
+  message.success('操作成功');
   table.refresh();
 }
 async function status(row: ConfigItem) {
   await updateConfigStatus(row.id, row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED');
-  message.success('操作');
+  message.success('操作成功');
   table.refresh();
 }
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="操作"
+  <PageContainer title="系统配置"
     ><SearchForm
       :model="table.query"
       :fields="fields"
@@ -103,44 +107,51 @@ onMounted(table.refresh);
       @search="table.search"
       @reset="table.reset" />
     <div class="page-actions">
-      <a-button type="primary" @click="add">操作</a-button
-      ><a-button @click="table.refresh">操作</a-button>
+      <a-button type="primary" @click="add">新增配置</a-button
+      ><a-button @click="table.refresh">刷新</a-button>
     </div>
     <DataTable
       :columns="columns"
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
       :pagination="table.pagination.value"
+      table-key="system-configs"
       @change="table.handleTableChange"
       ><template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'configValue'">{{
           record.sensitive ? '******' : record.configValue
         }}</template
         ><template v-else-if="column.dataIndex === 'sensitive'"
-          ><a-tag>{{ record.sensitive ? '?' : '?' }}</a-tag></template
+          ><a-tag>{{ record.sensitive ? '是' : '否' }}</a-tag></template
         ><template v-else-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
-            ><a-button type="link" @click="edit(record)">操作</a-button
+            ><a-button type="link" @click="edit(record)">编辑</a-button
             ><ConfirmAction
-              :title="record.status === 'ENABLED' ? '操作' : '操作'"
+              :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
-              >{{ record.status === 'ENABLED' ? '操作' : '操作' }}</ConfirmAction
-            ><ConfirmAction title="操作" danger @confirm="remove(record)"
-              >操作</ConfirmAction
+              >{{ record.status === 'ENABLED' ? '禁用' : '启用' }}</ConfirmAction
+            ><ConfirmAction title="确认删除该配置？" danger @confirm="remove(record)"
+              >删除</ConfirmAction
             ></a-space
           ></template
         ></template
       ></DataTable
-    ><FormModal v-model:open="open" title="操作" :submitting="submitting" @submit="submit"
+    ><FormModal
+      v-model:open="open"
+      :title="current ? '编辑配置' : '新增配置'"
+      :submitting="submitting"
+      @submit="submit"
       ><a-form layout="vertical" :model="form"
-        ><a-form-item label="操作" required><a-input v-model:value="form.configName" /></a-form-item
-        ><a-form-item label="操作" required><a-input v-model:value="form.configKey" /></a-form-item
-        ><a-form-item label="操作" required
+        ><a-form-item label="配置名称" required
+          ><a-input v-model:value="form.configName" /></a-form-item
+        ><a-form-item label="配置键" required
+          ><a-input v-model:value="form.configKey" /></a-form-item
+        ><a-form-item label="配置值" required
           ><a-input v-model:value="form.configValue" /></a-form-item
-        ><a-form-item label="操作"><a-input v-model:value="form.groupName" /></a-form-item
-        ><a-form-item label="操作"
+        ><a-form-item label="分组"><a-input v-model:value="form.groupName" /></a-form-item
+        ><a-form-item label="敏感配置"
           ><a-switch v-model:checked="form.sensitive" /></a-form-item></a-form></FormModal
   ></PageContainer>
 </template>
