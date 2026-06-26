@@ -81,14 +81,14 @@ public class DeptController {
     }
 
     @PostMapping("/depts")
-    @RequirePermission("system:dept:list")
+    @RequirePermission("system:dept:create")
     @OperationLog(module = "部门管理", action = "新增部门")
     public ApiResponse<Long> createDept(@RequestBody Map<String, Object> body) {
         return ApiResponse.success(adminService.insert("sys_dept", body, Set.of("parent_id", "dept_name", "dept_code", "leader_user_id", "sort", "status")));
     }
 
     @PutMapping("/depts/{id}")
-    @RequirePermission("system:dept:list")
+    @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "编辑部门")
     public ApiResponse<Void> updateDept(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateDept(id, body);
@@ -96,7 +96,7 @@ public class DeptController {
     }
 
     @DeleteMapping("/depts/{id}")
-    @RequirePermission("system:dept:list")
+    @RequirePermission("system:dept:delete")
     @OperationLog(module = "部门管理", action = "删除部门")
     public ApiResponse<Void> deleteDept(@PathVariable long id) {
         adminService.deleteDept(id);
@@ -104,7 +104,7 @@ public class DeptController {
     }
 
     @PatchMapping("/depts/{id}/status")
-    @RequirePermission("system:dept:list")
+    @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "变更部门状态")
     public ApiResponse<Void> deptStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateStatus("sys_dept", id, intValue(body, "status", 1), true);

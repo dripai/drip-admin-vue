@@ -105,7 +105,7 @@ public class DatabaseBackupController {
     }
 
     @DeleteMapping("/database/backups/{id}")
-    @RequirePermission("system:database:backup:create")
+    @RequirePermission("system:database:backup:delete")
     @OperationLog(module = "数据库备份", action = "删除备份记录")
     public ApiResponse<Void> deleteBackup(@PathVariable long id) {
         adminService.deleteBackup(id);

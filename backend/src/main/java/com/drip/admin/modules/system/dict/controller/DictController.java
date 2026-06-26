@@ -81,14 +81,14 @@ public class DictController {
     }
 
     @PostMapping("/dicts/types")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:create")
     @OperationLog(module = "字典管理", action = "新增字典类型")
     public ApiResponse<Long> createDictType(@RequestBody Map<String, Object> body) {
         return ApiResponse.success(adminService.insert("sys_dict_type", body, Set.of("dict_name", "dict_code", "status", "remark")));
     }
 
     @PutMapping("/dicts/types/{id}")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "编辑字典类型")
     public ApiResponse<Void> updateDictType(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.update("sys_dict_type", id, body, Set.of("dict_name", "dict_code", "status", "remark"));
@@ -97,7 +97,7 @@ public class DictController {
     }
 
     @DeleteMapping("/dicts/types/{id}")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典类型")
     public ApiResponse<Void> deleteDictType(@PathVariable long id) {
         adminService.softDelete("sys_dict_type", id);
@@ -112,7 +112,7 @@ public class DictController {
     }
 
     @PostMapping("/dicts/items")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:create")
     @OperationLog(module = "字典管理", action = "新增字典项")
     public ApiResponse<Long> createDictItem(@RequestBody Map<String, Object> body) {
         Long id = adminService.insert("sys_dict_item", body, Set.of("dict_type_id", "label", "value", "color", "sort", "status"));
@@ -121,7 +121,7 @@ public class DictController {
     }
 
     @PutMapping("/dicts/items/{id}")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "编辑字典项")
     public ApiResponse<Void> updateDictItem(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.update("sys_dict_item", id, body, Set.of("dict_type_id", "label", "value", "color", "sort", "status"));
@@ -130,7 +130,7 @@ public class DictController {
     }
 
     @DeleteMapping("/dicts/items/{id}")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:delete")
     @OperationLog(module = "字典管理", action = "删除字典项")
     public ApiResponse<Void> deleteDictItem(@PathVariable long id) {
         adminService.softDelete("sys_dict_item", id);
@@ -139,7 +139,7 @@ public class DictController {
     }
 
     @PatchMapping("/dicts/items/{id}/status")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:update")
     @OperationLog(module = "字典管理", action = "变更字典项状态")
     public ApiResponse<Void> dictItemStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateStatus("sys_dict_item", id, intValue(body, "status", 1), true);
@@ -148,7 +148,7 @@ public class DictController {
     }
 
     @PostMapping("/dicts/cache/refresh")
-    @RequirePermission("system:dict:list")
+    @RequirePermission("system:dict:update")
     public ApiResponse<Void> refreshDictCache() {
         adminService.refreshDictCache();
         return ApiResponse.success(null);

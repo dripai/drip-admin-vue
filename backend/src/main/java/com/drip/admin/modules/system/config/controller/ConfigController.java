@@ -81,14 +81,14 @@ public class ConfigController {
     }
 
     @PostMapping("/configs")
-    @RequirePermission("system:config:list")
+    @RequirePermission("system:config:create")
     @OperationLog(module = "系统配置", action = "新增配置")
     public ApiResponse<Long> createConfig(@RequestBody Map<String, Object> body) {
         return ApiResponse.success(adminService.insert("sys_config", body, Set.of("config_name", "config_key", "config_value", "group_code", "is_sensitive", "builtin", "status", "remark")));
     }
 
     @PutMapping("/configs/{id}")
-    @RequirePermission("system:config:list")
+    @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "编辑配置")
     public ApiResponse<Void> updateConfig(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.update("sys_config", id, body, Set.of("config_name", "config_key", "config_value", "group_code", "is_sensitive", "status", "remark"));
@@ -96,7 +96,7 @@ public class ConfigController {
     }
 
     @DeleteMapping("/configs/{id}")
-    @RequirePermission("system:config:list")
+    @RequirePermission("system:config:delete")
     @OperationLog(module = "系统配置", action = "删除配置")
     public ApiResponse<Void> deleteConfig(@PathVariable long id) {
         adminService.deleteConfig(id);
@@ -104,7 +104,7 @@ public class ConfigController {
     }
 
     @PatchMapping("/configs/{id}/status")
-    @RequirePermission("system:config:list")
+    @RequirePermission("system:config:update")
     @OperationLog(module = "系统配置", action = "变更配置状态")
     public ApiResponse<Void> configStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateStatus("sys_config", id, intValue(body, "status", 1), true);

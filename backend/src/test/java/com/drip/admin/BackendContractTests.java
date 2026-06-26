@@ -12,9 +12,13 @@ import com.drip.admin.modules.auth.service.AuthService;
 import com.drip.admin.modules.system.database.controller.DatabaseBackupController;
 import com.drip.admin.modules.system.health.controller.HealthController;
 import com.drip.admin.modules.system.job.controller.JobController;
+import com.drip.admin.modules.system.config.controller.ConfigController;
+import com.drip.admin.modules.system.dept.controller.DeptController;
+import com.drip.admin.modules.system.dict.controller.DictController;
 import com.drip.admin.modules.system.role.controller.RoleController;
 import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.file.controller.FileController;
+import com.drip.admin.modules.system.online.controller.OnlineUserController;
 import com.drip.admin.modules.system.user.controller.UserController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -119,6 +125,24 @@ class BackendContractTests {
     }
 
     @Test
+    void saTokenUsesSingleTokenSessionMode() throws Exception {
+        String application = Files.readString(Path.of("src/main/resources/application.yml"));
+
+        assertTrue(application.contains("is-concurrent: false"));
+        assertTrue(application.contains("is-share: false"));
+    }
+
+    @Test
+    void p1WriteOperationsUseActionPermissions() throws Exception {
+        assertPermission(DeptController.class, "createDept", "system:dept:create", Map.class);
+        assertPermission(DictController.class, "createDictType", "system:dict:create", Map.class);
+        assertPermission(ConfigController.class, "createConfig", "system:config:create", Map.class);
+        assertPermission(JobController.class, "createJob", "system:job:create", Map.class);
+        assertPermission(JobController.class, "runJob", "system:job:run", long.class);
+        assertPermission(OnlineUserController.class, "kickout", "system:online:kickout", String.class);
+    }
+
+    @Test
     void operationLogFailureDoesNotRollbackBusinessResult() throws Throwable {
         LogService logService = mock(LogService.class);
         OperationLogAspect aspect = new OperationLogAspect(logService);
@@ -153,5 +177,12 @@ class BackendContractTests {
         OperationLog operationLog = method.getAnnotation(OperationLog.class);
 
         assertTrue(operationLog != null && !operationLog.module().isBlank() && !operationLog.action().isBlank());
+    }
+
+    private static void assertPermission(Class<?> type, String methodName, String permissionCode, Class<?>... parameterTypes) throws Exception {
+        Method method = type.getMethod(methodName, parameterTypes);
+        RequirePermission permission = method.getAnnotation(RequirePermission.class);
+
+        assertEquals(permissionCode, permission.value());
     }
 }

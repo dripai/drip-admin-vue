@@ -87,7 +87,7 @@ public class OnlineUserController {
     }
 
     @PostMapping("/online-users/{tokenId}/kickout")
-    @RequirePermission("system:online:list")
+    @RequirePermission("system:online:kickout")
     @OperationLog(module = "在线用户", action = "强制下线")
     public ApiResponse<Void> kickout(@PathVariable String tokenId) {
         adminService.kickout(tokenId);

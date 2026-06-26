@@ -87,7 +87,7 @@ public class JobController {
     }
 
     @PostMapping("/jobs")
-    @RequirePermission("system:job:list")
+    @RequirePermission("system:job:create")
     @OperationLog(module = "定时任务", action = "新增任务")
     public ApiResponse<Long> createJob(@RequestBody Map<String, Object> body) {
         adminService.validateCron(stringValue(body, "cron_expression", ""));
@@ -95,7 +95,7 @@ public class JobController {
     }
 
     @PutMapping("/jobs/{id}")
-    @RequirePermission("system:job:list")
+    @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "编辑任务")
     public ApiResponse<Void> updateJob(@PathVariable long id, @RequestBody Map<String, Object> body) {
     if (body.containsKey("cron_expression")) adminService.validateCron(String.valueOf(body.get("cron_expression")));
@@ -104,7 +104,7 @@ public class JobController {
     }
 
     @DeleteMapping("/jobs/{id}")
-    @RequirePermission("system:job:list")
+    @RequirePermission("system:job:delete")
     @OperationLog(module = "定时任务", action = "删除任务")
     public ApiResponse<Void> deleteJob(@PathVariable long id) {
         adminService.softDelete("sys_job", id);
@@ -112,7 +112,7 @@ public class JobController {
     }
 
     @PatchMapping("/jobs/{id}/status")
-    @RequirePermission("system:job:list")
+    @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "变更任务状态")
     public ApiResponse<Void> jobStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateStatus("sys_job", id, intValue(body, "status", 1), true);
@@ -120,7 +120,7 @@ public class JobController {
     }
 
     @PostMapping("/jobs/{id}/run")
-    @RequirePermission("system:job:list")
+    @RequirePermission("system:job:run")
     @OperationLog(module = "定时任务", action = "手动执行任务")
     public ApiResponse<Void> runJob(@PathVariable long id) {
         adminService.runJob(id);
