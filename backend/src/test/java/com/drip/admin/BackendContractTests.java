@@ -329,9 +329,13 @@ class BackendContractTests {
         assertPermission(MenuController.class, "updateMenu", "system:menu:update", long.class, MenuSaveRequest.class);
         assertPermission(MenuController.class, "deleteMenu", "system:menu:delete", long.class);
         assertPermission(MenuController.class, "menuStatus", "system:menu:status", long.class, StatusUpdateRequest.class);
+        assertPermission(UserController.class, "resetPassword", "system:user:resetPassword", long.class, PasswordResetRequest.class);
+        assertPermission(UserController.class, "userRoles", "system:user:assignRole", long.class, RoleAssignRequest.class);
         assertPermission(DeptController.class, "createDept", "system:dept:create", DeptSaveRequest.class);
         assertPermission(DictController.class, "createDictType", "system:dict:create", DictTypeSaveRequest.class);
         assertPermission(ConfigController.class, "createConfig", "system:config:create", ConfigSaveRequest.class);
+        assertPermission(SystemLogController.class, "loginLogs", "system:loginLog:list", LoginLogQuery.class);
+        assertPermission(SystemLogController.class, "operationLogs", "system:operationLog:list", OperationLogQuery.class);
         assertPermission(JobController.class, "createJob", "system:job:create", JobSaveRequest.class);
         assertPermission(JobController.class, "runJob", "system:job:run", long.class);
         assertPermission(OnlineUserController.class, "kickout", "system:online:kickout", String.class);

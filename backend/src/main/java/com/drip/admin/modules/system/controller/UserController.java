@@ -117,7 +117,7 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}/roles")
-    @RequirePermission("system:user:assign-role")
+    @RequirePermission("system:user:assignRole")
     @OperationLog(module = "用户管理", action = "分配角色")
     public ApiResponse<Void> userRoles(@PathVariable long id, @RequestBody RoleAssignRequest request) {
         userService.assignRoles(id, request.getRoleIds());
@@ -125,7 +125,7 @@ public class UserController {
     }
 
     @PostMapping("/users/{id}/resetPassword")
-    @RequirePermission("system:user:reset-password")
+    @RequirePermission("system:user:resetPassword")
     @OperationLog(module = "用户管理", action = "重置密码")
     public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody PasswordResetRequest request) {
         userService.resetPassword(id, request.passwordOrDefault());

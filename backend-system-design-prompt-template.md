@@ -210,8 +210,8 @@ UserEntity findActiveByUsername(@Param("username") String username);
 - system:user:update
 - system:user:delete
 - system:user:disable
-- system:user:reset-password
-- system:user:assign-role
+- system:user:resetPassword
+- system:user:assignRole
 
 校验要求：
 - username 全局唯一。
