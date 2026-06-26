@@ -1,5 +1,8 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysRoleMapper;
+import com.drip.admin.modules.system.mapper.SysUserMapper;
+import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.UserService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -31,9 +34,15 @@ public class UserServiceImpl implements UserService {
     );
 
     private final JdbcTemplate jdbc;
+    private final SysUserMapper userMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysUserRoleMapper userRoleMapper;
 
-    public UserServiceImpl(JdbcTemplate jdbc) {
+    public UserServiceImpl(JdbcTemplate jdbc, SysUserMapper userMapper, SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper) {
         this.jdbc = jdbc;
+        this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
     }
 
     public PageResult<Map<String, Object>> page(Map<String, String> q) {

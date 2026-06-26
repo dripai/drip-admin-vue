@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysLoginLogMapper;
+import com.drip.admin.modules.system.mapper.SysOperationLogMapper;
 import com.drip.admin.modules.system.service.SystemLogQueryService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -18,9 +20,13 @@ import static com.drip.admin.shared.utils.AdminUtils.snakeToCamel;
 @Service
 public class SystemLogQueryServiceImpl implements SystemLogQueryService {
     private final JdbcTemplate jdbc;
+    private final SysLoginLogMapper loginLogMapper;
+    private final SysOperationLogMapper operationLogMapper;
 
-    public SystemLogQueryServiceImpl(JdbcTemplate jdbc) {
+    public SystemLogQueryServiceImpl(JdbcTemplate jdbc, SysLoginLogMapper loginLogMapper, SysOperationLogMapper operationLogMapper) {
         this.jdbc = jdbc;
+        this.loginLogMapper = loginLogMapper;
+        this.operationLogMapper = operationLogMapper;
     }
 
     public PageResult<Map<String, Object>> loginLogs(Map<String, String> q) {

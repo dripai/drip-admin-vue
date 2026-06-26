@@ -1,5 +1,10 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysMenuMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
+import com.drip.admin.modules.system.mapper.SysUserMapper;
+import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.RoleService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -25,9 +30,26 @@ import static com.drip.admin.shared.utils.AdminUtils.snakeToCamel;
 public class RoleServiceImpl implements RoleService {
     private static final Set<String> ROLE_COLUMNS = Set.of("role_name", "role_code", "status", "remark");
     private final JdbcTemplate jdbc;
+    private final SysRoleMapper roleMapper;
+    private final SysUserMapper userMapper;
+    private final SysUserRoleMapper userRoleMapper;
+    private final SysMenuMapper menuMapper;
+    private final SysRoleMenuMapper roleMenuMapper;
 
-    public RoleServiceImpl(JdbcTemplate jdbc) {
+    public RoleServiceImpl(
+        JdbcTemplate jdbc,
+        SysRoleMapper roleMapper,
+        SysUserMapper userMapper,
+        SysUserRoleMapper userRoleMapper,
+        SysMenuMapper menuMapper,
+        SysRoleMenuMapper roleMenuMapper
+    ) {
         this.jdbc = jdbc;
+        this.roleMapper = roleMapper;
+        this.userMapper = userMapper;
+        this.userRoleMapper = userRoleMapper;
+        this.menuMapper = menuMapper;
+        this.roleMenuMapper = roleMenuMapper;
     }
 
     public PageResult<Map<String, Object>> page(Map<String, String> q) {

@@ -127,7 +127,7 @@ class BackendContractTests {
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, loginAttemptService, 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, loginAttemptService, 1800, 28800);
 
         when(jdbc.queryForList(eq("select * from sys_user where username = ? and deleted = 0"), eq("missing"))).thenReturn(List.of());
 
@@ -145,7 +145,7 @@ class BackendContractTests {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         LogService logService = mock(LogService.class);
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, mock(LoginAttemptService.class), 1800, 28800);
 
         when(jdbc.queryForList(eq("select * from sys_user where id = ? and deleted = 0"), eq(1L))).thenReturn(List.of(Map.of(
             "id", 1L,
@@ -178,7 +178,7 @@ class BackendContractTests {
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         LoginAttemptService loginAttemptService = mock(LoginAttemptService.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
-        AuthService authService = new AuthServiceImpl(jdbc, logService, onlineSessionService, loginAttemptService, 1800, 28800);
+        AuthService authService = new AuthServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class), mock(SysMenuMapper.class), mock(SysRoleMenuMapper.class), logService, onlineSessionService, loginAttemptService, 1800, 28800);
 
         doThrow(new BusinessException(401000, "用户名或密码错误")).when(loginAttemptService).assertNotLocked("locked");
 
@@ -410,7 +410,7 @@ class BackendContractTests {
     void jobServiceWritesSuccessRunLogAfterWhitelistedExecution() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         JobExecutorRegistry registry = mock(JobExecutorRegistry.class);
-        JobServiceImpl jobService = new JobServiceImpl(jdbc, registry);
+        JobServiceImpl jobService = new JobServiceImpl(jdbc, mock(SysJobMapper.class), mock(SysJobRunLogMapper.class), registry);
 
         when(jdbc.queryForList("select * from sys_job where id = ? and deleted = 0", 9L))
             .thenReturn(List.of(Map.of(
@@ -438,6 +438,7 @@ class BackendContractTests {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         DatabaseBackupServiceImpl service = new DatabaseBackupServiceImpl(
             jdbc,
+            mock(SysDbBackupMapper.class),
             "./backups",
             "jdbc:mysql://localhost:3307/drip-manager",
             "root",
@@ -499,7 +500,7 @@ class BackendContractTests {
     @Test
     void userServiceRejectsUnknownRoleIdsBeforeReplacingRoles() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        UserService userService = new UserServiceImpl(jdbc);
+        UserService userService = new UserServiceImpl(jdbc, mock(SysUserMapper.class), mock(SysRoleMapper.class), mock(SysUserRoleMapper.class));
 
         when(jdbc.queryForObject("select count(1) from sys_role where id in (?, ?) and deleted = 0", Long.class, 1L, 99L))
             .thenReturn(1L);
@@ -513,7 +514,7 @@ class BackendContractTests {
     @Test
     void menuServiceRejectsDeletingParentMenu() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        MenuService menuService = new MenuServiceImpl(jdbc);
+        MenuService menuService = new MenuServiceImpl(jdbc, mock(SysMenuMapper.class));
 
         when(jdbc.queryForObject("select count(1) from sys_menu where parent_id = ? and deleted = 0", Long.class, 15L))
             .thenReturn(1L);
@@ -527,7 +528,7 @@ class BackendContractTests {
     @Test
     void deptServiceRejectsMovingDeptUnderDescendant() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DeptService deptService = new DeptServiceImpl(jdbc);
+        DeptService deptService = new DeptServiceImpl(jdbc, mock(SysDeptMapper.class), mock(SysUserMapper.class));
 
         when(jdbc.queryForList("select * from sys_dept where id = ? and deleted = 0", 10L))
             .thenReturn(List.of(Map.of("id", 10L)));
@@ -546,7 +547,7 @@ class BackendContractTests {
     @Test
     void referencedCommonStatusDictItemCannotBeDeleted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        DictService dictService = new DictServiceImpl(jdbc);
+        DictService dictService = new DictServiceImpl(jdbc, mock(SysDictTypeMapper.class), mock(SysDictItemMapper.class));
 
         when(jdbc.queryForList("select * from sys_dict_item where id = ? and deleted = 0", 5L))
             .thenReturn(List.of(Map.of("id", 5L, "dict_type_id", 1L, "value", "1")));
@@ -563,7 +564,7 @@ class BackendContractTests {
     @Test
     void configServiceMasksSensitiveConfigValues() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigServiceImpl(jdbc);
+        ConfigService configService = new ConfigServiceImpl(jdbc, mock(SysConfigMapper.class));
 
         when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
             .thenReturn(List.of(Map.of("id", 8L, "config_value", "secret", "is_sensitive", 1)));
@@ -576,7 +577,7 @@ class BackendContractTests {
     @Test
     void builtinConfigCannotBeDeleted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        ConfigService configService = new ConfigServiceImpl(jdbc);
+        ConfigService configService = new ConfigServiceImpl(jdbc, mock(SysConfigMapper.class));
 
         when(jdbc.queryForList("select * from sys_config where id = ? and deleted = 0", 8L))
             .thenReturn(List.of(Map.of("id", 8L, "builtin", 1)));
@@ -590,7 +591,7 @@ class BackendContractTests {
     @Test
     void logQueryServiceAppliesOperationLogFilters() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        SystemLogQueryService logQueryService = new SystemLogQueryServiceImpl(jdbc);
+        SystemLogQueryService logQueryService = new SystemLogQueryServiceImpl(jdbc, mock(SysLoginLogMapper.class), mock(SysOperationLogMapper.class));
 
         when(jdbc.queryForObject(
             "select count(1) from sys_operation_log where 1 = 1 and module like ? and response_status like ?",

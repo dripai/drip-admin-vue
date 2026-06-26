@@ -1,5 +1,6 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysDbBackupMapper;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.response.BackupFile;
 import com.drip.admin.common.response.PageResult;
@@ -25,6 +26,7 @@ import static com.drip.admin.shared.utils.AdminUtils.stringValue;
 @Service
 public class DatabaseBackupServiceImpl implements DatabaseBackupService {
     private final JdbcTemplate jdbc;
+    private final SysDbBackupMapper dbBackupMapper;
     private final Path backupDir;
     private final String datasourceUrl;
     private final String datasourceUsername;
@@ -34,6 +36,7 @@ public class DatabaseBackupServiceImpl implements DatabaseBackupService {
 
     public DatabaseBackupServiceImpl(
         JdbcTemplate jdbc,
+        SysDbBackupMapper dbBackupMapper,
         @Value("${drip.database.backup-dir}") String backupDir,
         @Value("${spring.datasource.url}") String datasourceUrl,
         @Value("${spring.datasource.username}") String datasourceUsername,
@@ -42,6 +45,7 @@ public class DatabaseBackupServiceImpl implements DatabaseBackupService {
         @Value("${drip.database.mysql-command:mysql}") String mysqlCommand
     ) {
         this.jdbc = jdbc;
+        this.dbBackupMapper = dbBackupMapper;
         this.backupDir = Path.of(backupDir);
         this.datasourceUrl = datasourceUrl;
         this.datasourceUsername = datasourceUsername;

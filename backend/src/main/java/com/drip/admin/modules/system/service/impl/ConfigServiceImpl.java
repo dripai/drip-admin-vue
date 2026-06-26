@@ -1,5 +1,6 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysConfigMapper;
 import com.drip.admin.modules.system.service.ConfigService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -30,9 +31,11 @@ public class ConfigServiceImpl implements ConfigService {
     );
 
     private final JdbcTemplate jdbc;
+    private final SysConfigMapper configMapper;
 
-    public ConfigServiceImpl(JdbcTemplate jdbc) {
+    public ConfigServiceImpl(JdbcTemplate jdbc, SysConfigMapper configMapper) {
         this.jdbc = jdbc;
+        this.configMapper = configMapper;
     }
 
     public PageResult<Map<String, Object>> page(Map<String, String> q) {

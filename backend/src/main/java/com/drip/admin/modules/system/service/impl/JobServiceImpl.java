@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysJobMapper;
+import com.drip.admin.modules.system.mapper.SysJobRunLogMapper;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
@@ -28,10 +30,14 @@ public class JobServiceImpl implements JobService {
     );
 
     private final JdbcTemplate jdbc;
+    private final SysJobMapper jobMapper;
+    private final SysJobRunLogMapper jobRunLogMapper;
     private final JobExecutorRegistry jobExecutorRegistry;
 
-    public JobServiceImpl(JdbcTemplate jdbc, JobExecutorRegistry jobExecutorRegistry) {
+    public JobServiceImpl(JdbcTemplate jdbc, SysJobMapper jobMapper, SysJobRunLogMapper jobRunLogMapper, JobExecutorRegistry jobExecutorRegistry) {
         this.jdbc = jdbc;
+        this.jobMapper = jobMapper;
+        this.jobRunLogMapper = jobRunLogMapper;
         this.jobExecutorRegistry = jobExecutorRegistry;
     }
 

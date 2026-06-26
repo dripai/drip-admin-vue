@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysDictItemMapper;
+import com.drip.admin.modules.system.mapper.SysDictTypeMapper;
 import com.drip.admin.modules.system.service.DictService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -27,10 +29,14 @@ public class DictServiceImpl implements DictService {
     private static final Set<String> TYPE_COLUMNS = Set.of("dict_name", "dict_code", "status", "remark");
     private static final Set<String> ITEM_COLUMNS = Set.of("dict_type_id", "label", "value", "color", "sort", "status");
     private final JdbcTemplate jdbc;
+    private final SysDictTypeMapper dictTypeMapper;
+    private final SysDictItemMapper dictItemMapper;
     private final Map<String, List<Map<String, Object>>> dictCache = new HashMap<>();
 
-    public DictServiceImpl(JdbcTemplate jdbc) {
+    public DictServiceImpl(JdbcTemplate jdbc, SysDictTypeMapper dictTypeMapper, SysDictItemMapper dictItemMapper) {
         this.jdbc = jdbc;
+        this.dictTypeMapper = dictTypeMapper;
+        this.dictItemMapper = dictItemMapper;
     }
 
     public PageResult<Map<String, Object>> types(Map<String, String> q) {

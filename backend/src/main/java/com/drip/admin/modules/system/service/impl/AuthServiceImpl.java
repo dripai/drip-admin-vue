@@ -7,6 +7,11 @@ import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.mapper.SysMenuMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
+import com.drip.admin.modules.system.mapper.SysUserMapper;
+import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +36,11 @@ import static com.drip.admin.shared.utils.AdminUtils.stringOf;
 @Service
 public class AuthServiceImpl implements AuthService {
     private final JdbcTemplate jdbc;
+    private final SysUserMapper userMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysUserRoleMapper userRoleMapper;
+    private final SysMenuMapper menuMapper;
+    private final SysRoleMenuMapper roleMenuMapper;
     private final LogService logService;
     private final OnlineSessionService onlineSessionService;
     private final LoginAttemptService loginAttemptService;
@@ -39,6 +49,11 @@ public class AuthServiceImpl implements AuthService {
 
     public AuthServiceImpl(
         JdbcTemplate jdbc,
+        SysUserMapper userMapper,
+        SysRoleMapper roleMapper,
+        SysUserRoleMapper userRoleMapper,
+        SysMenuMapper menuMapper,
+        SysRoleMenuMapper roleMenuMapper,
         LogService logService,
         OnlineSessionService onlineSessionService,
         LoginAttemptService loginAttemptService,
@@ -46,6 +61,11 @@ public class AuthServiceImpl implements AuthService {
         @Value("${drip.session.max-duration-seconds}") long maxDuration
     ) {
         this.jdbc = jdbc;
+        this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
+        this.menuMapper = menuMapper;
+        this.roleMenuMapper = roleMenuMapper;
         this.logService = logService;
         this.onlineSessionService = onlineSessionService;
         this.loginAttemptService = loginAttemptService;

@@ -1,5 +1,6 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysMenuMapper;
 import com.drip.admin.modules.system.service.MenuService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -25,9 +26,11 @@ public class MenuServiceImpl implements MenuService {
     );
 
     private final JdbcTemplate jdbc;
+    private final SysMenuMapper menuMapper;
 
-    public MenuServiceImpl(JdbcTemplate jdbc) {
+    public MenuServiceImpl(JdbcTemplate jdbc, SysMenuMapper menuMapper) {
         this.jdbc = jdbc;
+        this.menuMapper = menuMapper;
     }
 
     public List<Map<String, Object>> tree() {

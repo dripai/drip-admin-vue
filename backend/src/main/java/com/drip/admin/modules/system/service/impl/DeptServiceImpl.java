@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.service.impl;
 
+import com.drip.admin.modules.system.mapper.SysDeptMapper;
+import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.service.DeptService;
 
 import com.drip.admin.common.exception.BusinessException;
@@ -27,9 +29,13 @@ public class DeptServiceImpl implements DeptService {
     );
 
     private final JdbcTemplate jdbc;
+    private final SysDeptMapper deptMapper;
+    private final SysUserMapper userMapper;
 
-    public DeptServiceImpl(JdbcTemplate jdbc) {
+    public DeptServiceImpl(JdbcTemplate jdbc, SysDeptMapper deptMapper, SysUserMapper userMapper) {
         this.jdbc = jdbc;
+        this.deptMapper = deptMapper;
+        this.userMapper = userMapper;
     }
 
     public List<Map<String, Object>> tree() {
