@@ -137,5 +137,6 @@
 - 2026-06-26：日志查询模块补齐独立 `SystemLogQueryService`，登录日志和业务操作日志分页、详情查询迁出通用 `AdminService`。
 - 2026-06-26：按模块级共用分层目录调整 `modules/system`，系统模块统一使用 `controller/`、`service/`、`mapper/`、`entity/`、`dto/`，不再按菜单功能拆重复目录。
 - 2026-06-26：在线用户模块按 `OnlineUserService` 接口和 `OnlineUserServiceImpl` 实现类补齐，在线用户分页、详情、强制下线和 Redis 会话清理规则迁出通用 `AdminService`。
-- 2026-06-26：执行 `mvn test` 通过，33 个测试全部成功。
+- 2026-06-26：定时任务模块按 `JobService` 接口和 `JobServiceImpl` 实现类补齐，任务增删改查、状态变更、手动执行和执行记录查询迁出通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，35 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。

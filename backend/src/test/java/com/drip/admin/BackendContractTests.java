@@ -16,6 +16,8 @@ import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.controller.DatabaseBackupController;
 import com.drip.admin.modules.system.controller.HealthController;
 import com.drip.admin.modules.system.controller.JobController;
+import com.drip.admin.modules.system.service.JobService;
+import com.drip.admin.modules.system.service.impl.JobServiceImpl;
 import com.drip.admin.modules.system.controller.ConfigController;
 import com.drip.admin.modules.system.service.ConfigService;
 import com.drip.admin.modules.system.controller.DeptController;
@@ -242,6 +244,16 @@ class BackendContractTests {
     }
 
     @Test
+    void jobControllerDelegatesManualRunToJobService() {
+        JobService jobService = mock(JobService.class);
+        JobController controller = new JobController(jobService);
+
+        controller.runJob(15L);
+
+        verify(jobService).run(15L);
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -313,8 +325,36 @@ class BackendContractTests {
     @Test
     void externalCommandOperationsDoNotRunInsideDeclarativeTransactions() throws Exception {
         assertEquals(null, AdminService.class.getMethod("runJob", long.class).getAnnotation(Transactional.class));
+        assertEquals(null, JobServiceImpl.class.getMethod("run", long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
+    }
+
+    @Test
+    void jobServiceWritesSuccessRunLogAfterWhitelistedExecution() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        JobExecutorRegistry registry = mock(JobExecutorRegistry.class);
+        JobServiceImpl jobService = new JobServiceImpl(jdbc, registry);
+
+        when(jdbc.queryForList("select * from sys_job where id = ? and deleted = 0", 9L))
+            .thenReturn(List.of(Map.of(
+                "id", 9L,
+                "job_name", "health",
+                "bean_name", "systemHealthJob",
+                "method_name", "run"
+            )));
+
+        jobService.run(9L);
+
+        verify(registry).execute("systemHealthJob", "run");
+        verify(jdbc).update(
+            eq("insert into sys_job_run_log (job_id, job_name, status, started_at, finished_at, cost_ms) values (?, ?, 'SUCCESS', ?, ?, ?)"),
+            eq(9L),
+            eq("health"),
+            any(),
+            any(),
+            any()
+        );
     }
 
     @Test
