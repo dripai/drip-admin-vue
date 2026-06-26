@@ -14,6 +14,8 @@ import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.controller.DatabaseBackupController;
+import com.drip.admin.modules.system.service.DatabaseBackupService;
+import com.drip.admin.modules.system.service.impl.DatabaseBackupServiceImpl;
 import com.drip.admin.modules.system.controller.HealthController;
 import com.drip.admin.modules.system.controller.JobController;
 import com.drip.admin.modules.system.service.JobService;
@@ -254,6 +256,16 @@ class BackendContractTests {
     }
 
     @Test
+    void databaseBackupControllerDelegatesRestoreToDatabaseBackupService() {
+        DatabaseBackupService databaseBackupService = mock(DatabaseBackupService.class);
+        DatabaseBackupController controller = new DatabaseBackupController(databaseBackupService);
+
+        controller.restoreBackup(21L, Map.of("confirmed", true));
+
+        verify(databaseBackupService).restore(21L, Map.of("confirmed", true));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -328,6 +340,8 @@ class BackendContractTests {
         assertEquals(null, JobServiceImpl.class.getMethod("run", long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("createBackup", Map.class, long.class).getAnnotation(Transactional.class));
         assertEquals(null, AdminService.class.getMethod("restoreBackup", long.class, Map.class).getAnnotation(Transactional.class));
+        assertEquals(null, DatabaseBackupServiceImpl.class.getMethod("create", Map.class, long.class).getAnnotation(Transactional.class));
+        assertEquals(null, DatabaseBackupServiceImpl.class.getMethod("restore", long.class, Map.class).getAnnotation(Transactional.class));
     }
 
     @Test
@@ -355,6 +369,27 @@ class BackendContractTests {
             any(),
             any()
         );
+    }
+
+    @Test
+    void databaseBackupServiceRequiresRestoreConfirmationBeforeRunningCommand() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        DatabaseBackupServiceImpl service = new DatabaseBackupServiceImpl(
+            jdbc,
+            "./backups",
+            "jdbc:mysql://localhost:3307/drip-manager",
+            "root",
+            "root",
+            "mysqldump",
+            "mysql"
+        );
+
+        when(jdbc.queryForList("select * from sys_db_backup where id = ?", 3L))
+            .thenReturn(List.of(Map.of("id", 3L, "file_path", "./backups/demo.sql", "backup_name", "demo.sql")));
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.restore(3L, Map.of("confirmed", false)));
+
+        assertEquals(400000, error.code());
     }
 
     @Test
