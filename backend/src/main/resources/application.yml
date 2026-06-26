@@ -42,3 +42,5 @@ drip:
     allowed-types: image/png,image/jpeg,application/pdf
   database:
     backup-dir: ./backups
+    mysqldump-command: mysqldump
+    mysql-command: mysql

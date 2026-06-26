@@ -107,3 +107,12 @@
 | 已完成 | 无权限返回 403 | 前端可识别 |
 | 已完成 | 登录日志写入成功 | 登录事件可查询 |
 | 已完成 | 业务操作日志写入成功 | 关键变更操作可查询 |
+
+## 最近验证记录
+
+- 2026-06-26：按 `backend-system-design-prompt-template.md` 目录结构完成拆包，后端 Java 源码从单文件拆分为 `common/`、`config/`、`modules/`、`infrastructure/`、`shared/`。
+- 2026-06-26：补齐在线用户 Redis 会话来源、请求活跃续期、退出/强制下线同步删除在线会话。
+- 2026-06-26：补齐定时任务白名单执行与成功/失败执行记录，不使用任意反射调用。
+- 2026-06-26：补齐数据库备份/恢复 `mysqldump`/`mysql` 命令执行；命令不可用或失败时返回明确错误，不生成 placeholder 备份。
+- 2026-06-26：执行 `mvn test` 通过，3 个测试全部成功。
+- 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
