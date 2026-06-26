@@ -46,7 +46,7 @@ public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity> i
     }
 
     @Override
-    public SysRoleEntity detail(long id) { SysRoleEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "?????"); return entity; }
+    public SysRoleEntity detail(long id) { SysRoleEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "operation failed"); return entity; }
 
     @Override
     public PageResult<SysUserEntity> users(long roleId, RoleQuery query) {
@@ -71,9 +71,9 @@ public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity> i
     @Override
     @Transactional
     public void delete(long id) {
-        SysRoleEntity role = detail(id); if (Objects.equals(role.getBuiltin(), 1)) throw new BusinessException(400000, "????????");
+        SysRoleEntity role = detail(id); if (Objects.equals(role.getBuiltin(), 1)) throw new BusinessException(400000, "operation failed");
         Long count = userRoleMapper.selectCount(new QueryWrapper<SysUserRoleEntity>().eq("role_id", id));
-        if (count != null && count > 0) throw new BusinessException(409000, "???????");
+        if (count != null && count > 0) throw new BusinessException(409000, "operation failed");
         removeById(id);
     }
 
@@ -91,13 +91,13 @@ public class RoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity> i
     private void assertExistingMenus(List<Long> menuIds) {
         if (menuIds == null || menuIds.isEmpty()) return;
         List<Long> uniqueIds = menuIds.stream().filter(Objects::nonNull).distinct().toList();
-        if (uniqueIds.size() != menuIds.size()) throw new BusinessException(400000, "?????");
+        if (uniqueIds.size() != menuIds.size()) throw new BusinessException(400000, "operation failed");
         Long count = menuMapper.selectCount(new QueryWrapper<SysMenuEntity>().in("id", uniqueIds));
-        if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "?????");
+        if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "operation failed");
     }
 
     private static void apply(SysRoleEntity entity, RoleSaveRequest request) { entity.setRoleName(request.getRoleName()); entity.setRoleCode(request.getRoleCode()); entity.setStatus(request.getStatus()); entity.setRemark(request.getRemark()); }
     private static void likeIfPresent(QueryWrapper<SysRoleEntity> wrapper, String column, String value) { if (value != null && !value.isBlank()) wrapper.like(column, value); }
     private static void eqIfPresent(QueryWrapper<SysRoleEntity> wrapper, String column, Object value) { if (value != null) wrapper.eq(column, value); }
-    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + "????"); }
+    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
 }

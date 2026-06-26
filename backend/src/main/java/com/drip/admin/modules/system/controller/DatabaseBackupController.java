@@ -10,6 +10,7 @@ import com.drip.admin.modules.system.dto.DatabaseBackupQuery;
 import com.drip.admin.modules.system.dto.DatabaseRestoreRequest;
 import com.drip.admin.modules.system.entity.SysDbBackupEntity;
 import com.drip.admin.modules.system.service.DatabaseBackupService;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,14 +37,14 @@ public class DatabaseBackupController {
 
     @GetMapping("/database/backups")
     @RequirePermission("system:database:backup:list")
-    public ApiResponse<PageResult<SysDbBackupEntity>> backups(DatabaseBackupQuery query) {
+    public ApiResponse<PageResult<SysDbBackupEntity>> backups(@Valid DatabaseBackupQuery query) {
         return ApiResponse.success(databaseBackupService.page(query));
     }
 
     @PostMapping("/database/backups")
     @RequirePermission("system:database:backup:create")
     @OperationLog(module = "数据库备份", action = "创建备份")
-    public ApiResponse<Long> createBackup(@RequestBody(required = false) DatabaseBackupCreateRequest request) {
+    public ApiResponse<Long> createBackup(@Valid @RequestBody(required = false) DatabaseBackupCreateRequest request) {
         return ApiResponse.success(databaseBackupService.create(request, currentUserId()));
     }
 
@@ -59,7 +60,7 @@ public class DatabaseBackupController {
     @PostMapping("/database/backups/{id}/restore")
     @RequirePermission("system:database:backup:restore")
     @OperationLog(module = "数据库备份", action = "恢复备份")
-    public ApiResponse<Void> restoreBackup(@PathVariable long id, @RequestBody DatabaseRestoreRequest request) {
+    public ApiResponse<Void> restoreBackup(@PathVariable long id, @Valid @RequestBody DatabaseRestoreRequest request) {
         databaseBackupService.restore(id, request);
         return ApiResponse.success(null);
     }

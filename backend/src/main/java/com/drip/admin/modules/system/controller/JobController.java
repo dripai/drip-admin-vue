@@ -11,6 +11,7 @@ import com.drip.admin.modules.system.dto.StatusUpdateRequest;
 import com.drip.admin.modules.system.entity.SysJobEntity;
 import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
 import com.drip.admin.modules.system.service.JobService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,7 +38,7 @@ public class JobController {
 
     @GetMapping("/jobs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<SysJobEntity>> jobs(JobQuery query) {
+    public ApiResponse<PageResult<SysJobEntity>> jobs(@Valid JobQuery query) {
         return ApiResponse.success(jobService.page(query));
     }
 
@@ -50,14 +51,14 @@ public class JobController {
     @PostMapping("/jobs")
     @RequirePermission("system:job:create")
     @OperationLog(module = "定时任务", action = "新增任务")
-    public ApiResponse<Long> createJob(@RequestBody JobSaveRequest request) {
+    public ApiResponse<Long> createJob(@Valid @RequestBody JobSaveRequest request) {
         return ApiResponse.success(jobService.create(request));
     }
 
     @PutMapping("/jobs/{id}")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "编辑任务")
-    public ApiResponse<Void> updateJob(@PathVariable long id, @RequestBody JobSaveRequest request) {
+    public ApiResponse<Void> updateJob(@PathVariable long id, @Valid @RequestBody JobSaveRequest request) {
         jobService.update(id, request);
         return ApiResponse.success(null);
     }
@@ -73,7 +74,7 @@ public class JobController {
     @PatchMapping("/jobs/{id}/status")
     @RequirePermission("system:job:update")
     @OperationLog(module = "定时任务", action = "变更任务状态")
-    public ApiResponse<Void> jobStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+    public ApiResponse<Void> jobStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
         jobService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
@@ -88,7 +89,7 @@ public class JobController {
 
     @GetMapping("/jobs/{id}/runLogs")
     @RequirePermission("system:job:list")
-    public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, JobRunLogQuery query) {
+    public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, @Valid JobRunLogQuery query) {
         return ApiResponse.success(jobService.runLogs(id, query));
     }
 }

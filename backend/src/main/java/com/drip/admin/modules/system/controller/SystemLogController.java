@@ -8,6 +8,7 @@ import com.drip.admin.modules.system.dto.OperationLogQuery;
 import com.drip.admin.modules.system.entity.SysLoginLogEntity;
 import com.drip.admin.modules.system.entity.SysOperationLogEntity;
 import com.drip.admin.modules.system.service.SystemLogQueryService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,7 @@ public class SystemLogController {
 
     @GetMapping("/loginLogs")
     @RequirePermission("system:loginLog:list")
-    public ApiResponse<PageResult<SysLoginLogEntity>> loginLogs(LoginLogQuery query) {
+    public ApiResponse<PageResult<SysLoginLogEntity>> loginLogs(@Valid LoginLogQuery query) {
         return ApiResponse.success(logQueryService.loginLogs(query));
     }
 
@@ -36,7 +37,7 @@ public class SystemLogController {
 
     @GetMapping("/operationLogs")
     @RequirePermission("system:operationLog:list")
-    public ApiResponse<PageResult<SysOperationLogEntity>> operationLogs(OperationLogQuery query) {
+    public ApiResponse<PageResult<SysOperationLogEntity>> operationLogs(@Valid OperationLogQuery query) {
         return ApiResponse.success(logQueryService.operationLogs(query));
     }
 

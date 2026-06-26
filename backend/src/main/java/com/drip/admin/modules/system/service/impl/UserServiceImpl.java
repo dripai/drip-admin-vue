@@ -43,7 +43,14 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         likeIfPresent(wrapper, "phone", query.getPhone());
         eqIfPresent(wrapper, "status", query.getStatus());
         eqIfPresent(wrapper, "dept_id", query.getDeptId());
-        likeIfPresent(wrapper, "created_at", query.getCreatedAt());
+        if (query.getCreatedFrom() != null) wrapper.ge("created_at", query.getCreatedFrom());
+        if (query.getCreatedTo() != null) wrapper.le("created_at", query.getCreatedTo());
+        if (query.getRoleId() != null) {
+            List<Long> userIds = userRoleMapper.selectList(new QueryWrapper<SysUserRoleEntity>().eq("role_id", query.getRoleId()))
+                .stream().map(SysUserRoleEntity::getUserId).distinct().toList();
+            if (userIds.isEmpty()) return new PageResult<>(List.of(), 0, page, pageSize);
+            wrapper.in("id", userIds);
+        }
         wrapper.orderByDesc("created_at");
         Page<SysUserEntity> result = page(new Page<>(page, pageSize), wrapper);
         return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize);
@@ -52,7 +59,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Override
     public SysUserEntity detail(long id) {
         SysUserEntity entity = getById(id);
-        if (entity == null) throw new BusinessException(404000, "?????");
+        if (entity == null) throw new BusinessException(404000, "operation failed");
         return entity;
     }
 
@@ -86,7 +93,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Override
     @Transactional
     public void delete(long id) {
-        if (currentUserId() == id) throw new BusinessException(400000, "????????");
+        if (currentUserId() == id) throw new BusinessException(400000, "operation failed");
         assertNotSuperAdminTarget(id);
         detail(id);
         removeById(id);
@@ -95,7 +102,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Override
     @Transactional
     public void updateStatus(long id, int status) {
-        if (id == currentUserId() && status != 1) throw new BusinessException(400000, "????????");
+        if (id == currentUserId() && status != 1) throw new BusinessException(400000, "operation failed");
         assertNotSuperAdminTarget(id);
         detail(id);
         SysUserEntity entity = new SysUserEntity();
@@ -134,7 +141,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
 
     private void assertNotSuperAdminTarget(long userId) {
         if (roleCodes(currentUserId()).contains("SUPER_ADMIN")) return;
-        if (roleCodes(userId).contains("SUPER_ADMIN")) throw new BusinessException(403000, "?????????");
+        if (roleCodes(userId).contains("SUPER_ADMIN")) throw new BusinessException(403000, "operation failed");
     }
 
     private List<String> roleCodes(long userId) {
@@ -150,9 +157,9 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     private void assertExistingRoles(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) return;
         List<Long> uniqueIds = roleIds.stream().filter(Objects::nonNull).distinct().toList();
-        if (uniqueIds.size() != roleIds.size()) throw new BusinessException(400000, "?????");
+        if (uniqueIds.size() != roleIds.size()) throw new BusinessException(400000, "operation failed");
         Long count = roleMapper.selectCount(new QueryWrapper<SysRoleEntity>().in("id", uniqueIds));
-        if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "?????");
+        if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "operation failed");
     }
 
     private static void apply(SysUserEntity entity, UserSaveRequest request) {
@@ -167,5 +174,5 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
 
     private static void likeIfPresent(QueryWrapper<SysUserEntity> wrapper, String column, String value) { if (value != null && !value.isBlank()) wrapper.like(column, value); }
     private static void eqIfPresent(QueryWrapper<SysUserEntity> wrapper, String column, Object value) { if (value != null) wrapper.eq(column, value); }
-    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + "????"); }
+    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
 }

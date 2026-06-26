@@ -72,6 +72,9 @@ public class OnlineSessionService {
 
     public PageResult<Map<String, Object>> page(Map<String, String> q) {
         List<Map<String, Object>> rows = list();
+        rows = filter(rows, "username", q.get("username"));
+        rows = filter(rows, "ip", q.get("ip"));
+        rows = filter(rows, "deviceType", q.get("deviceType"));
         int page = Math.max(1, AdminUtils.parseInt(q.get("page"), 1));
         int pageSize = Math.min(100, Math.max(1, AdminUtils.parseInt(q.get("pageSize"), 20)));
         int from = Math.min(rows.size(), (page - 1) * pageSize);
@@ -112,6 +115,16 @@ public class OnlineSessionService {
         }
         rows.sort(Comparator.comparing(v -> String.valueOf(v.getOrDefault("lastActiveAt", "")), Comparator.reverseOrder()));
         return rows;
+    }
+
+    private static List<Map<String, Object>> filter(List<Map<String, Object>> rows, String key, String value) {
+        if (value == null || value.isBlank()) {
+            return rows;
+        }
+        String needle = value.trim().toLowerCase();
+        return rows.stream()
+            .filter(row -> String.valueOf(row.getOrDefault(key, "")).toLowerCase().contains(needle))
+            .toList();
     }
 
     private Map<String, Object> get(String tokenId) {

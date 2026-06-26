@@ -7,6 +7,7 @@ import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.OnlineUserQuery;
 import com.drip.admin.modules.system.service.OnlineUserService;
 import com.drip.admin.modules.system.vo.OnlineUserVo;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +25,7 @@ public class OnlineUserController {
 
     @GetMapping("/onlineUsers")
     @RequirePermission("system:online:list")
-    public ApiResponse<PageResult<OnlineUserVo>> onlineUsers(OnlineUserQuery query) {
+    public ApiResponse<PageResult<OnlineUserVo>> onlineUsers(@Valid OnlineUserQuery query) {
         return ApiResponse.success(onlineUserService.page(query));
     }
 

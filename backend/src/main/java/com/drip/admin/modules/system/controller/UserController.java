@@ -75,7 +75,7 @@ public class UserController {
 
     @GetMapping("/users")
     @RequirePermission("system:user:list")
-    public ApiResponse<PageResult<SysUserEntity>> users(UserQuery query) {
+    public ApiResponse<PageResult<SysUserEntity>> users(@Valid UserQuery query) {
         return ApiResponse.success(userService.page(query));
     }
 
@@ -88,14 +88,14 @@ public class UserController {
     @PostMapping("/users")
     @RequirePermission("system:user:create")
     @OperationLog(module = "用户管理", action = "新增用户")
-    public ApiResponse<Long> createUser(@RequestBody UserSaveRequest request) {
+    public ApiResponse<Long> createUser(@Valid @RequestBody UserSaveRequest request) {
         return ApiResponse.success(userService.create(request));
     }
 
     @PutMapping("/users/{id}")
     @RequirePermission("system:user:update")
     @OperationLog(module = "用户管理", action = "编辑用户")
-    public ApiResponse<Void> updateUser(@PathVariable long id, @RequestBody UserSaveRequest request) {
+    public ApiResponse<Void> updateUser(@PathVariable long id, @Valid @RequestBody UserSaveRequest request) {
         userService.update(id, request);
         return ApiResponse.success(null);
     }
@@ -111,7 +111,7 @@ public class UserController {
     @PatchMapping("/users/{id}/status")
     @RequirePermission("system:user:disable")
     @OperationLog(module = "用户管理", action = "变更用户状态")
-    public ApiResponse<Void> userStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+    public ApiResponse<Void> userStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
         userService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
@@ -119,7 +119,7 @@ public class UserController {
     @PutMapping("/users/{id}/roles")
     @RequirePermission("system:user:assignRole")
     @OperationLog(module = "用户管理", action = "分配角色")
-    public ApiResponse<Void> userRoles(@PathVariable long id, @RequestBody RoleAssignRequest request) {
+    public ApiResponse<Void> userRoles(@PathVariable long id, @Valid @RequestBody RoleAssignRequest request) {
         userService.assignRoles(id, request.getRoleIds());
         return ApiResponse.success(null);
     }
@@ -127,7 +127,7 @@ public class UserController {
     @PostMapping("/users/{id}/resetPassword")
     @RequirePermission("system:user:resetPassword")
     @OperationLog(module = "用户管理", action = "重置密码")
-    public ApiResponse<Void> resetPassword(@PathVariable long id, @RequestBody PasswordResetRequest request) {
+    public ApiResponse<Void> resetPassword(@PathVariable long id, @Valid @RequestBody PasswordResetRequest request) {
         userService.resetPassword(id, request.passwordOrDefault());
         return ApiResponse.success(null);
     }

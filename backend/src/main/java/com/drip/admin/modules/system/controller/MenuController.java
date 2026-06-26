@@ -82,14 +82,14 @@ public class MenuController {
     @PostMapping("/menus")
     @RequirePermission("system:menu:create")
     @OperationLog(module = "菜单管理", action = "新增菜单")
-    public ApiResponse<Long> createMenu(@RequestBody MenuSaveRequest request) {
+    public ApiResponse<Long> createMenu(@Valid @RequestBody MenuSaveRequest request) {
         return ApiResponse.success(menuService.create(request));
     }
 
     @PutMapping("/menus/{id}")
     @RequirePermission("system:menu:update")
     @OperationLog(module = "菜单管理", action = "编辑菜单")
-    public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody MenuSaveRequest request) {
+    public ApiResponse<Void> updateMenu(@PathVariable long id, @Valid @RequestBody MenuSaveRequest request) {
         menuService.update(id, request);
         return ApiResponse.success(null);
     }
@@ -105,7 +105,7 @@ public class MenuController {
     @PatchMapping("/menus/{id}/status")
     @RequirePermission("system:menu:status")
     @OperationLog(module = "菜单管理", action = "变更菜单状态")
-    public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+    public ApiResponse<Void> menuStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
         menuService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }

@@ -76,7 +76,7 @@ public class RoleController {
 
     @GetMapping("/roles")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<SysRoleEntity>> roles(RoleQuery query) {
+    public ApiResponse<PageResult<SysRoleEntity>> roles(@Valid RoleQuery query) {
         return ApiResponse.success(roleService.page(query));
     }
 
@@ -88,21 +88,21 @@ public class RoleController {
 
     @GetMapping("/roles/{id}/users")
     @RequirePermission("system:role:list")
-    public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, RoleQuery query) {
+    public ApiResponse<PageResult<SysUserEntity>> roleUsers(@PathVariable long id, @Valid RoleQuery query) {
         return ApiResponse.success(roleService.users(id, query));
     }
 
     @PostMapping("/roles")
     @RequirePermission("system:role:create")
     @OperationLog(module = "角色管理", action = "新增角色")
-    public ApiResponse<Long> createRole(@RequestBody RoleSaveRequest request) {
+    public ApiResponse<Long> createRole(@Valid @RequestBody RoleSaveRequest request) {
         return ApiResponse.success(roleService.create(request));
     }
 
     @PutMapping("/roles/{id}")
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "编辑角色")
-    public ApiResponse<Void> updateRole(@PathVariable long id, @RequestBody RoleSaveRequest request) {
+    public ApiResponse<Void> updateRole(@PathVariable long id, @Valid @RequestBody RoleSaveRequest request) {
         roleService.update(id, request);
         return ApiResponse.success(null);
     }
@@ -118,7 +118,7 @@ public class RoleController {
     @PatchMapping("/roles/{id}/status")
     @RequirePermission("system:role:update")
     @OperationLog(module = "角色管理", action = "变更角色状态")
-    public ApiResponse<Void> roleStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+    public ApiResponse<Void> roleStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
         roleService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }
@@ -126,7 +126,7 @@ public class RoleController {
     @PutMapping("/roles/{id}/permissions")
     @RequirePermission("system:role:permission")
     @OperationLog(module = "角色管理", action = "角色授权")
-    public ApiResponse<Void> rolePermissions(@PathVariable long id, @RequestBody MenuAssignRequest request) {
+    public ApiResponse<Void> rolePermissions(@PathVariable long id, @Valid @RequestBody MenuAssignRequest request) {
         roleService.assignMenus(id, request.getMenuIds());
         return ApiResponse.success(null);
     }

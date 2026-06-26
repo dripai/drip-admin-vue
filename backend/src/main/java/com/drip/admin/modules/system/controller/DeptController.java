@@ -5,8 +5,10 @@ import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.DeptSaveRequest;
 import com.drip.admin.modules.system.dto.StatusUpdateRequest;
+import com.drip.admin.modules.system.entity.SysDeptEntity;
 import com.drip.admin.modules.system.service.DeptService;
 import com.drip.admin.modules.system.vo.DeptTreeVo;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,17 +35,23 @@ public class DeptController {
         return ApiResponse.success(deptService.tree());
     }
 
+    @GetMapping("/depts/{id}")
+    @RequirePermission("system:dept:list")
+    public ApiResponse<SysDeptEntity> dept(@PathVariable long id) {
+        return ApiResponse.success(deptService.detail(id));
+    }
+
     @PostMapping("/depts")
     @RequirePermission("system:dept:create")
     @OperationLog(module = "部门管理", action = "新增部门")
-    public ApiResponse<Long> createDept(@RequestBody DeptSaveRequest request) {
+    public ApiResponse<Long> createDept(@Valid @RequestBody DeptSaveRequest request) {
         return ApiResponse.success(deptService.create(request));
     }
 
     @PutMapping("/depts/{id}")
     @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "编辑部门")
-    public ApiResponse<Void> updateDept(@PathVariable long id, @RequestBody DeptSaveRequest request) {
+    public ApiResponse<Void> updateDept(@PathVariable long id, @Valid @RequestBody DeptSaveRequest request) {
         deptService.update(id, request);
         return ApiResponse.success(null);
     }
@@ -59,7 +67,7 @@ public class DeptController {
     @PatchMapping("/depts/{id}/status")
     @RequirePermission("system:dept:update")
     @OperationLog(module = "部门管理", action = "变更部门状态")
-    public ApiResponse<Void> deptStatus(@PathVariable long id, @RequestBody StatusUpdateRequest request) {
+    public ApiResponse<Void> deptStatus(@PathVariable long id, @Valid @RequestBody StatusUpdateRequest request) {
         deptService.updateStatus(id, request.statusOrDefault());
         return ApiResponse.success(null);
     }

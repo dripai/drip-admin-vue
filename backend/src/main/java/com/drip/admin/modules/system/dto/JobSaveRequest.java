@@ -1,7 +1,23 @@
 package com.drip.admin.modules.system.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class JobSaveRequest {
-    private String jobName; private String jobCode; private String cronExpression; private String beanName; private String methodName; private String params; private Integer status; private String remark;
+    @NotBlank(message = "jobName is required")
+    @Size(max = 128, message = "jobName length must be <= 128")
+    private String jobName;
+    @NotBlank(message = "jobCode is required")
+    @Size(max = 128, message = "jobCode length must be <= 128")
+    private String jobCode;
+    @NotBlank(message = "cronExpression is required")
+    @Size(max = 64, message = "cronExpression length must be <= 64")
+    private String cronExpression;
+    @NotBlank(message = "beanName is required")
+    private String beanName;
+    @NotBlank(message = "methodName is required")
+    private String methodName;
+    private String params; private Integer status; private String remark;
     public String getJobName() { return jobName; } public void setJobName(String jobName) { this.jobName = jobName; }
     public String getJobCode() { return jobCode; } public void setJobCode(String jobCode) { this.jobCode = jobCode; }
     public String getCronExpression() { return cronExpression; } public void setCronExpression(String cronExpression) { this.cronExpression = cronExpression; }

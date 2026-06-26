@@ -60,10 +60,10 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     public AuthLoginVo login(LoginRequest request, HttpServletRequest servletRequest) {
         loginAttemptService.assertNotLocked(request.username());
         SysUserEntity user = getOne(new QueryWrapper<SysUserEntity>().eq("username", request.username()), false);
-        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", "????????", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "????????"); }
-        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "????????", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "????????"); }
+        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
+        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
         String expected = hashPassword(request.password(), user.getPasswordSalt());
-        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "????????", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "????????"); }
+        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", "operation failed", servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, "operation failed"); }
         loginAttemptService.clear(request.username()); Long userId = user.getId(); StpUtil.login(userId); String token = StpUtil.getTokenValue(); LocalDateTime now = LocalDateTime.now();
         StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token);
         SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setLastLoginAt(now); updateById(update);
@@ -89,7 +89,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Transactional
     public void changePassword(long userId, PasswordRequest request) {
         SysUserEntity user = userDetail(userId); String currentHash = hashPassword(request.oldPassword(), user.getPasswordSalt());
-        if (!currentHash.equals(user.getPasswordHash())) throw new BusinessException(400000, "?????");
+        if (!currentHash.equals(user.getPasswordHash())) throw new BusinessException(400000, "operation failed");
         String salt = "salt" + System.nanoTime(); SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setPasswordSalt(salt); update.setPasswordHash(hashPassword(request.newPassword(), salt)); updateById(update);
     }
 
@@ -110,7 +110,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         return menuMapper.selectBatchIds(menuIds).stream().filter(menu -> Objects.equals(menu.getDeleted(), 0) && Objects.equals(menu.getStatus(), 1) && menu.getPermissionCode() != null).map(SysMenuEntity::getPermissionCode).distinct().toList();
     }
 
-    private SysUserEntity userDetail(long userId) { SysUserEntity user = getById(userId); if (user == null) throw new BusinessException(404000, "?????"); return user; }
+    private SysUserEntity userDetail(long userId) { SysUserEntity user = getById(userId); if (user == null) throw new BusinessException(404000, "operation failed"); return user; }
 
     private List<MenuTreeVo> menuTree(Long userId) {
         List<SysMenuEntity> rows;

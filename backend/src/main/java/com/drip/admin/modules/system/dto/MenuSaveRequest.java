@@ -1,7 +1,21 @@
 package com.drip.admin.modules.system.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 public class MenuSaveRequest {
-    private Long parentId; private String name; private String type; private String path; private String component; private String permissionCode; private String icon; private Integer sort; private Integer visible; private Integer status;
+    private Long parentId;
+    @NotBlank(message = "name is required")
+    @Size(max = 64, message = "name length must be <= 64")
+    private String name;
+    @NotBlank(message = "type is required")
+    @Pattern(regexp = "DIRECTORY|MENU|BUTTON", message = "type must be DIRECTORY, MENU or BUTTON")
+    private String type;
+    private String path; private String component;
+    @Pattern(regexp = "^$|^[a-z][a-zA-Z0-9]*:[a-z][a-zA-Z0-9]*:[a-z][a-zA-Z0-9]*$", message = "permissionCode format is invalid")
+    private String permissionCode;
+    private String icon; private Integer sort; private Integer visible; private Integer status;
     public Long getParentId() { return parentId; } public void setParentId(Long parentId) { this.parentId = parentId; }
     public String getName() { return name; } public void setName(String name) { this.name = name; }
     public String getType() { return type; } public void setType(String type) { this.type = type; }

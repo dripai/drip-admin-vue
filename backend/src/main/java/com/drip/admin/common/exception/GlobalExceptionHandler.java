@@ -8,11 +8,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,6 +25,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> validation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream().findFirst().map(FieldError::getDefaultMessage).orElse("请求参数错误");
         return ResponseEntity.badRequest().body(ApiResponse.fail(400000, message));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<Void>> bind(BindException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream().findFirst().map(FieldError::getDefaultMessage).orElse("请求参数错误");
+        return ResponseEntity.badRequest().body(ApiResponse.fail(400000, message));
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
+    public ResponseEntity<ApiResponse<Void>> constraint(Exception ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.fail(400000, ex.getMessage()));
     }
 
     @ExceptionHandler(NotLoginException.class)

@@ -25,7 +25,7 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
     }
 
     @Override
-    public SysMenuEntity detail(long id) { SysMenuEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "?????"); return entity; }
+    public SysMenuEntity detail(long id) { SysMenuEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "operation failed"); return entity; }
 
     @Override
     @Transactional
@@ -37,7 +37,7 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
 
     @Override
     @Transactional
-    public void delete(long id) { Long count = count(new QueryWrapper<SysMenuEntity>().eq("parent_id", id)); if (count != null && count > 0) throw new BusinessException(400301, "?????????"); detail(id); removeById(id); }
+    public void delete(long id) { Long count = count(new QueryWrapper<SysMenuEntity>().eq("parent_id", id)); if (count != null && count > 0) throw new BusinessException(400301, "operation failed"); detail(id); removeById(id); }
 
     @Override
     @Transactional
@@ -60,5 +60,5 @@ public class MenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenuEntity> i
         for (MenuTreeVo row : rows) { Long parentId = row.getParentId() == null ? 0L : row.getParentId(); if (parentId == 0 || !byId.containsKey(parentId)) roots.add(row); else byId.get(parentId).getChildren().add(row); }
         return roots;
     }
-    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + "????"); }
+    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
 }

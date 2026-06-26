@@ -29,7 +29,7 @@ public class DeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDeptEntity> i
     public List<DeptTreeVo> tree() { List<SysDeptEntity> rows = list(new QueryWrapper<SysDeptEntity>().orderByAsc("sort", "id")); return buildTree(rows.stream().map(this::toTreeVo).toList()); }
 
     @Override
-    public SysDeptEntity detail(long id) { SysDeptEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "?????"); return entity; }
+    public SysDeptEntity detail(long id) { SysDeptEntity entity = getById(id); if (entity == null) throw new BusinessException(404000, "operation failed"); return entity; }
 
     @Override
     @Transactional
@@ -41,18 +41,18 @@ public class DeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDeptEntity> i
 
     @Override
     @Transactional
-    public void delete(long id) { detail(id); Long childCount = count(new QueryWrapper<SysDeptEntity>().eq("parent_id", id)); if (childCount != null && childCount > 0) throw new BusinessException(400401, "?????????"); Long userCount = userMapper.selectCount(new QueryWrapper<SysUserEntity>().eq("dept_id", id)); if (userCount != null && userCount > 0) throw new BusinessException(400401, "???????"); removeById(id); }
+    public void delete(long id) { detail(id); Long childCount = count(new QueryWrapper<SysDeptEntity>().eq("parent_id", id)); if (childCount != null && childCount > 0) throw new BusinessException(400401, "operation failed"); Long userCount = userMapper.selectCount(new QueryWrapper<SysUserEntity>().eq("dept_id", id)); if (userCount != null && userCount > 0) throw new BusinessException(400401, "operation failed"); removeById(id); }
 
     @Override
     @Transactional
     public void updateStatus(long id, int status) { detail(id); SysDeptEntity entity = new SysDeptEntity(); entity.setId(id); entity.setStatus(status); updateById(entity); }
 
-    private void assertValidParent(long id, DeptSaveRequest request) { Long parentId = request.getParentId(); if (parentId == null) return; if (parentId == id || descendantDeptIds(id).contains(parentId)) throw new BusinessException(400000, "?????????????"); }
+    private void assertValidParent(long id, DeptSaveRequest request) { Long parentId = request.getParentId(); if (parentId == null) return; if (parentId == id || descendantDeptIds(id).contains(parentId)) throw new BusinessException(400000, "operation failed"); }
     private Set<Long> descendantDeptIds(long id) { Set<Long> result = new HashSet<>(); collectDept(id, result); return result; }
     private void collectDept(long id, Set<Long> result) { for (SysDeptEntity child : list(new QueryWrapper<SysDeptEntity>().eq("parent_id", id))) { result.add(child.getId()); collectDept(child.getId(), result); } }
 
     private DeptTreeVo toTreeVo(SysDeptEntity entity) { DeptTreeVo vo = new DeptTreeVo(); vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setDeptName(entity.getDeptName()); vo.setDeptCode(entity.getDeptCode()); vo.setLeaderUserId(entity.getLeaderUserId()); vo.setSort(entity.getSort()); vo.setStatus(entity.getStatus()); vo.setCreatedAt(entity.getCreatedAt()); vo.setUpdatedAt(entity.getUpdatedAt()); return vo; }
     private static List<DeptTreeVo> buildTree(List<DeptTreeVo> rows) { Map<Long, DeptTreeVo> byId = new LinkedHashMap<>(); rows.forEach(row -> byId.put(row.getId(), row)); List<DeptTreeVo> roots = new ArrayList<>(); for (DeptTreeVo row : rows) { Long parentId = row.getParentId() == null ? 0L : row.getParentId(); if (parentId == 0 || !byId.containsKey(parentId)) roots.add(row); else byId.get(parentId).getChildren().add(row); } return roots; }
     private static void apply(SysDeptEntity entity, DeptSaveRequest request) { entity.setParentId(request.getParentId()); entity.setDeptName(request.getDeptName()); entity.setDeptCode(request.getDeptCode()); entity.setLeaderUserId(request.getLeaderUserId()); entity.setSort(request.getSort()); entity.setStatus(request.getStatus()); }
-    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + "????"); }
+    private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
 }
