@@ -18,6 +18,7 @@ import com.drip.admin.modules.system.job.controller.JobController;
 import com.drip.admin.modules.system.config.controller.ConfigController;
 import com.drip.admin.modules.system.dept.controller.DeptController;
 import com.drip.admin.modules.system.dict.controller.DictController;
+import com.drip.admin.modules.system.menu.controller.MenuController;
 import com.drip.admin.modules.system.role.controller.RoleController;
 import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.file.controller.FileController;
@@ -181,6 +182,10 @@ class BackendContractTests {
 
     @Test
     void p1WriteOperationsUseActionPermissions() throws Exception {
+        assertPermission(MenuController.class, "createMenu", "system:menu:create", Map.class);
+        assertPermission(MenuController.class, "updateMenu", "system:menu:update", long.class, Map.class);
+        assertPermission(MenuController.class, "deleteMenu", "system:menu:delete", long.class);
+        assertPermission(MenuController.class, "menuStatus", "system:menu:status", long.class, Map.class);
         assertPermission(DeptController.class, "createDept", "system:dept:create", Map.class);
         assertPermission(DictController.class, "createDictType", "system:dict:create", Map.class);
         assertPermission(ConfigController.class, "createConfig", "system:config:create", Map.class);

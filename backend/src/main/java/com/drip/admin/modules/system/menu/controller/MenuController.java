@@ -81,14 +81,14 @@ public class MenuController {
     }
 
     @PostMapping("/menus")
-    @RequirePermission("system:menu:write")
+    @RequirePermission("system:menu:create")
     @OperationLog(module = "菜单管理", action = "新增菜单")
     public ApiResponse<Long> createMenu(@RequestBody Map<String, Object> body) {
         return ApiResponse.success(adminService.insert("sys_menu", body, Set.of("parent_id", "name", "type", "path", "component", "permission_code", "icon", "sort", "visible", "status")));
     }
 
     @PutMapping("/menus/{id}")
-    @RequirePermission("system:menu:write")
+    @RequirePermission("system:menu:update")
     @OperationLog(module = "菜单管理", action = "编辑菜单")
     public ApiResponse<Void> updateMenu(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.update("sys_menu", id, body, Set.of("parent_id", "name", "type", "path", "component", "permission_code", "icon", "sort", "visible", "status"));
@@ -96,7 +96,7 @@ public class MenuController {
     }
 
     @DeleteMapping("/menus/{id}")
-    @RequirePermission("system:menu:write")
+    @RequirePermission("system:menu:delete")
     @OperationLog(module = "菜单管理", action = "删除菜单")
     public ApiResponse<Void> deleteMenu(@PathVariable long id) {
         adminService.deleteMenu(id);
@@ -104,7 +104,7 @@ public class MenuController {
     }
 
     @PatchMapping("/menus/{id}/status")
-    @RequirePermission("system:menu:write")
+    @RequirePermission("system:menu:status")
     @OperationLog(module = "菜单管理", action = "变更菜单状态")
     public ApiResponse<Void> menuStatus(@PathVariable long id, @RequestBody Map<String, Object> body) {
         adminService.updateStatus("sys_menu", id, intValue(body, "status", 1), true);

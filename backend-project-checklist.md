@@ -126,5 +126,6 @@
 - 2026-06-26：业务异常 HTTP 状态按错误码映射，覆盖 401、403、404、409、500。
 - 2026-06-26：统一异常处理器补齐 `@RestControllerAdvice` 注册，保证参数校验、认证、权限、业务和系统异常由全局处理器接管。
 - 2026-06-26：补齐 Redis 登录失败限制，失败计数达到阈值后在凭证查库前阻断，登录成功清理失败计数。
+- 2026-06-26：菜单管理写操作权限从 `system:menu:write` 拆分为 `system:menu:create/update/delete/status`，并通过 Flyway 给超级管理员补齐按钮权限。
 - 2026-06-26：执行 `mvn test` 通过，18 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
