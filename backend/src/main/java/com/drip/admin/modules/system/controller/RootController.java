@@ -12,7 +12,7 @@ public class RootController {
     @GetMapping("/")
     public ResponseEntity<Void> root() {
         return ResponseEntity.status(302)
-            .header(HttpHeaders.LOCATION, URI.create("/swagger-ui/index.html").toString())
+            .header(HttpHeaders.LOCATION, URI.create("swagger-ui/index.html").toString())
             .build();
     }
 

@@ -66,7 +66,7 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class RoleController {
     private final RoleService roleService;
 

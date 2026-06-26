@@ -25,7 +25,7 @@ import java.util.Map;
 import static com.drip.admin.shared.utils.AdminUtils.intValue;
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class ConfigController {
     private final ConfigService configService;
 

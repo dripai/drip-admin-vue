@@ -28,7 +28,7 @@ import java.util.Map;
 import static com.drip.admin.shared.utils.AdminUtils.intValue;
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class DictController {
     private final DictService dictService;
 

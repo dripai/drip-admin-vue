@@ -294,7 +294,7 @@ class BackendContractTests {
         RootController controller = new RootController();
 
         assertEquals(HttpStatus.FOUND, controller.root().getStatusCode());
-        assertEquals("/swagger-ui/index.html", controller.root().getHeaders().getFirst("Location"));
+        assertEquals("swagger-ui/index.html", controller.root().getHeaders().getFirst("Location"));
         assertEquals(HttpStatus.NO_CONTENT, controller.favicon().getStatusCode());
     }
 

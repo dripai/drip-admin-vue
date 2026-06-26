@@ -65,7 +65,7 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class UserController {
     private final UserService userService;
 

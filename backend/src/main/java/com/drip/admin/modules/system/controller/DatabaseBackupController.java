@@ -26,7 +26,7 @@ import java.io.IOException;
 import static com.drip.admin.shared.utils.AdminUtils.currentUserId;
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class DatabaseBackupController {
     private final DatabaseBackupService databaseBackupService;
 

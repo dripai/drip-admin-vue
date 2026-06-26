@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping("/system")
 public class DeptController {
     private final DeptService deptService;
 
