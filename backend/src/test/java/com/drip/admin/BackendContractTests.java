@@ -34,6 +34,8 @@ import com.drip.admin.modules.system.controller.RoleController;
 import com.drip.admin.modules.system.service.RoleService;
 import com.drip.admin.modules.system.service.AdminService;
 import com.drip.admin.modules.system.controller.FileController;
+import com.drip.admin.modules.system.service.FileService;
+import com.drip.admin.modules.system.service.impl.FileServiceImpl;
 import com.drip.admin.modules.system.controller.OnlineUserController;
 import com.drip.admin.modules.system.service.OnlineUserService;
 import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
@@ -50,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -266,6 +269,17 @@ class BackendContractTests {
     }
 
     @Test
+    void fileControllerDelegatesUploadToFileService() throws Exception {
+        FileService fileService = mock(FileService.class);
+        FileController controller = new FileController(fileService);
+        MultipartFile file = mock(MultipartFile.class);
+
+        controller.upload(file);
+
+        verify(fileService).upload(file);
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -388,6 +402,20 @@ class BackendContractTests {
             .thenReturn(List.of(Map.of("id", 3L, "file_path", "./backups/demo.sql", "backup_name", "demo.sql")));
 
         BusinessException error = assertThrows(BusinessException.class, () -> service.restore(3L, Map.of("confirmed", false)));
+
+        assertEquals(400000, error.code());
+    }
+
+    @Test
+    void fileServiceRejectsDisallowedContentType() {
+        FileServiceImpl fileService = new FileServiceImpl(1024, "image/png");
+        MultipartFile file = mock(MultipartFile.class);
+
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(10L);
+        when(file.getContentType()).thenReturn("application/x-msdownload");
+
+        BusinessException error = assertThrows(BusinessException.class, () -> fileService.upload(file));
 
         assertEquals(400000, error.code());
     }

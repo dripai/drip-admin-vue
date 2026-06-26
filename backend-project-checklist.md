@@ -139,5 +139,6 @@
 - 2026-06-26：在线用户模块按 `OnlineUserService` 接口和 `OnlineUserServiceImpl` 实现类补齐，在线用户分页、详情、强制下线和 Redis 会话清理规则迁出通用 `AdminService`。
 - 2026-06-26：定时任务模块按 `JobService` 接口和 `JobServiceImpl` 实现类补齐，任务增删改查、状态变更、手动执行和执行记录查询迁出通用 `AdminService`。
 - 2026-06-26：数据库备份模块按 `DatabaseBackupService` 接口和 `DatabaseBackupServiceImpl` 实现类补齐，备份列表、创建、下载、恢复、删除记录迁出通用 `AdminService`。
-- 2026-06-26：执行 `mvn test` 通过，37 个测试全部成功。
+- 2026-06-26：文件上传模块按 `FileService` 接口和 `FileServiceImpl` 实现类补齐，上传大小、类型限制和返回结构迁出通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，39 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。
