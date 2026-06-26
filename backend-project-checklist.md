@@ -132,5 +132,6 @@
 - 2026-06-26：菜单模块补齐独立 `MenuService`，菜单树、增删改、状态变更和删除父级菜单校验不再由 Controller 直接转发到通用 `AdminService`。
 - 2026-06-26：用户模块补齐独立 `UserService`，用户分页、详情、增删改、状态、重置密码、分配角色和用户保护规则迁出通用 `AdminService`。
 - 2026-06-26：部门模块补齐独立 `DeptService`，部门树、增删改、状态变更、子部门和部门用户删除保护、父级移动防环规则迁出通用 `AdminService`。
-- 2026-06-26：执行 `mvn test` 通过，25 个测试全部成功。
+- 2026-06-26：字典模块补齐独立 `DictService`，字典类型、字典项、状态变更、缓存刷新和通用状态引用保护迁出通用 `AdminService`。
+- 2026-06-26：执行 `mvn test` 通过，26 个测试全部成功。
 - 2026-06-26：执行 `C:\Program Files\Git\bin\bash.exe backend/start.sh build` 通过，完成测试与 jar 打包。

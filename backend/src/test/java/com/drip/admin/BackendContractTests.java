@@ -19,6 +19,7 @@ import com.drip.admin.modules.system.config.controller.ConfigController;
 import com.drip.admin.modules.system.dept.controller.DeptController;
 import com.drip.admin.modules.system.dept.service.DeptService;
 import com.drip.admin.modules.system.dict.controller.DictController;
+import com.drip.admin.modules.system.dict.service.DictService;
 import com.drip.admin.modules.system.menu.controller.MenuController;
 import com.drip.admin.modules.system.menu.service.MenuService;
 import com.drip.admin.modules.system.role.controller.RoleController;
@@ -184,6 +185,16 @@ class BackendContractTests {
     }
 
     @Test
+    void dictControllerDelegatesItemWritesToDictService() {
+        DictService dictService = mock(DictService.class);
+        DictController controller = new DictController(dictService);
+
+        controller.updateDictItem(9L, Map.of("label", "Enabled"));
+
+        verify(dictService).updateItem(9L, Map.of("label", "Enabled"));
+    }
+
+    @Test
     void healthEndpointReturnsUpStatus() {
         ApiResponse<Map<String, Object>> response = new HealthController().health();
 
@@ -337,19 +348,7 @@ class BackendContractTests {
     @Test
     void referencedCommonStatusDictItemCannotBeDeleted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        AdminService adminService = new AdminService(
-            jdbc,
-            mock(OnlineSessionService.class),
-            mock(JobExecutorRegistry.class),
-            1024,
-            "image/png",
-            "./backups",
-            "jdbc:mysql://localhost:3307/drip-manager",
-            "root",
-            "root",
-            "mysqldump",
-            "mysql"
-        );
+        DictService dictService = new DictService(jdbc);
 
         when(jdbc.queryForList("select * from sys_dict_item where id = ? and deleted = 0", 5L))
             .thenReturn(List.of(Map.of("id", 5L, "dict_type_id", 1L, "value", "1")));
@@ -358,7 +357,7 @@ class BackendContractTests {
         when(jdbc.queryForObject("select count(1) from sys_user where status = ? and deleted = 0", Long.class, 1))
             .thenReturn(1L);
 
-        BusinessException error = assertThrows(BusinessException.class, () -> adminService.deleteDictItem(5L));
+        BusinessException error = assertThrows(BusinessException.class, () -> dictService.deleteItem(5L));
 
         assertEquals(400501, error.code());
     }
