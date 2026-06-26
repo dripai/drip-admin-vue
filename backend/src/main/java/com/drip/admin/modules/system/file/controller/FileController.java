@@ -75,6 +75,7 @@ public class FileController {
     }
 
     @PostMapping("/files")
+    @RequirePermission("system:file:upload")
     @OperationLog(module = "文件上传", action = "上传文件")
     public ApiResponse<Map<String, Object>> upload(@RequestParam("file") MultipartFile file) throws IOException {
         return ApiResponse.success(adminService.upload(file));

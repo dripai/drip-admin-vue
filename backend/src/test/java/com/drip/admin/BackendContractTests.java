@@ -3,7 +3,9 @@ package com.drip.admin;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.log.LogService;
 import com.drip.admin.common.log.OperationLog;
+import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
+import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.auth.dto.LoginRequest;
 import com.drip.admin.modules.auth.service.AuthService;
@@ -12,10 +14,14 @@ import com.drip.admin.modules.system.health.controller.HealthController;
 import com.drip.admin.modules.system.job.controller.JobController;
 import com.drip.admin.modules.system.role.controller.RoleController;
 import com.drip.admin.modules.system.service.AdminService;
+import com.drip.admin.modules.system.file.controller.FileController;
 import com.drip.admin.modules.system.user.controller.UserController;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -25,10 +31,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 class BackendContractTests {
     @Test
@@ -99,6 +107,37 @@ class BackendContractTests {
         assertOperationLogged(RoleController.class, "rolePermissions", long.class, Map.class);
         assertOperationLogged(JobController.class, "runJob", long.class);
         assertOperationLogged(DatabaseBackupController.class, "restoreBackup", long.class, Map.class);
+    }
+
+    @Test
+    void fileUploadRequiresPermissionCode() throws Exception {
+        Method method = FileController.class.getMethod("upload", org.springframework.web.multipart.MultipartFile.class);
+        RequirePermission permission = method.getAnnotation(RequirePermission.class);
+
+        assertEquals("system:file:upload", permission.value());
+    }
+
+    @Test
+    void operationLogFailureDoesNotRollbackBusinessResult() throws Throwable {
+        LogService logService = mock(LogService.class);
+        OperationLogAspect aspect = new OperationLogAspect(logService);
+        ProceedingJoinPoint point = mock(ProceedingJoinPoint.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        OperationLog operationLog = UserController.class.getMethod("createUser", Map.class).getAnnotation(OperationLog.class);
+
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(point.getArgs()).thenReturn(new Object[]{Map.of("username", "demo")});
+        when(point.proceed()).thenReturn("ok");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/api/system/users");
+        doThrow(new IllegalStateException("log store down")).when(logService)
+            .operation(any(), any(), any(), any(), any(), any(), any(), anyLong());
+
+        try {
+            assertEquals("ok", aspect.write(point, operationLog));
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     private static void assertOperationLogged(Class<?> type, String methodName, Class<?>... parameterTypes) throws Exception {

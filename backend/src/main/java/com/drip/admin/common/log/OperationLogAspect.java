@@ -67,6 +67,8 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 @Aspect
 @Component
 public class OperationLogAspect {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OperationLogAspect.class);
+
     private final LogService logService;
 
     public OperationLogAspect(LogService logService) {
@@ -91,8 +93,9 @@ public class OperationLogAspect {
    private void safeLog(OperationLog operationLog, HttpServletRequest request, String params, String status, String errorMessage, long costMs) {
         try {
             logService.operation(operationLog.module(), operationLog.action(), request.getMethod(), request.getRequestURI(), params, status, errorMessage, costMs);
-        } catch (Exception ignored) {
-            // Business operation logging must not break the primary business flow.
+        } catch (Exception ex) {
+            LOGGER.error("Business operation log write failed: module={}, action={}, path={}",
+                operationLog.module(), operationLog.action(), request.getRequestURI(), ex);
         }
     }
 }
