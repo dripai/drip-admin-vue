@@ -1,29 +1,35 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import AdminLayout from '@/layouts/AdminLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 export const staticRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'login',
     component: () => import('@/views/login/index.vue'),
-    meta: { public: true, title: '操作' },
+    meta: { public: true, title: '登录' },
   },
   {
     path: '/',
-    component: AdminLayout,
-    redirect: '/system/users',
+    component: AppLayout,
+    redirect: '/dashboard',
     children: [
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/dashboard/index.vue'),
+        meta: { title: '控制台' },
+      },
       {
         path: '403',
         name: '403',
         component: () => import('@/views/error/Forbidden.vue'),
-        meta: { title: '操作' },
+        meta: { title: '无权限' },
       },
       {
         path: '404',
         name: '404',
         component: () => import('@/views/error/NotFound.vue'),
-        meta: { title: '操作' },
+        meta: { title: '页面不存在' },
       },
     ],
   },

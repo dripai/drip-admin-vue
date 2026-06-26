@@ -7,8 +7,8 @@ const emit = defineEmits<{ change: [value: Status] }>();
   <a-switch
     :checked="value === 'ENABLED'"
     :loading="loading"
-    checked-children="操作"
-    un-checked-children="操作"
+    checked-children="启用"
+    un-checked-children="禁用"
     @change="emit('change', $event ? 'ENABLED' : 'DISABLED')"
   />
 </template>

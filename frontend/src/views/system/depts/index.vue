@@ -26,11 +26,11 @@ const form = reactive<Partial<DeptItem>>({
   status: 'ENABLED',
 });
 const columns = [
-  { title: '操作', dataIndex: 'deptName' },
-  { title: '操作', dataIndex: 'leader' },
-  { title: '操作', dataIndex: 'phone' },
-  { title: '操作', dataIndex: 'sort' },
-  { title: '操作', dataIndex: 'status' },
+  { title: '部门名称', dataIndex: 'deptName' },
+  { title: '负责人', dataIndex: 'leader' },
+  { title: '手机号', dataIndex: 'phone' },
+  { title: '排序', dataIndex: 'sort' },
+  { title: '状态', dataIndex: 'status' },
   { title: '操作', dataIndex: 'action' },
 ];
 async function load() {
@@ -56,7 +56,7 @@ async function submit() {
   try {
     if (current.value) await updateDept(current.value.id, form);
     else await createDept(form);
-    message.success('操作');
+    message.success('操作成功');
     open.value = false;
     load();
   } finally {
@@ -65,20 +65,21 @@ async function submit() {
 }
 async function remove(row: DeptItem) {
   await deleteDept(row.id);
-  message.success('操作');
+  message.success('操作成功');
   load();
 }
 async function status(row: DeptItem) {
   await updateDeptStatus(row.id, row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED');
-  message.success('操作');
+  message.success('操作成功');
   load();
 }
 onMounted(load);
 </script>
 <template>
-  <PageContainer title="操作"
+  <PageContainer title="部门管理"
     ><div class="page-actions">
-      <a-button type="primary" @click="add">操作</a-button><a-button @click="load">操作</a-button>
+      <a-button type="primary" @click="add">新增部门</a-button
+      ><a-button @click="load">刷新</a-button>
     </div>
     <a-table
       row-key="id"
@@ -91,27 +92,28 @@ onMounted(load);
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
-            ><a-button type="link" @click="edit(record)">操作</a-button
+            ><a-button type="link" @click="edit(record)">编辑</a-button
             ><ConfirmAction
-              :title="record.status === 'ENABLED' ? '操作' : '操作'"
+              :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
-              >{{ record.status === 'ENABLED' ? '操作' : '操作' }}</ConfirmAction
-            ><ConfirmAction title="操作" danger @confirm="remove(record)"
-              >操作</ConfirmAction
+              >{{ record.status === 'ENABLED' ? '禁用' : '启用' }}</ConfirmAction
+            ><ConfirmAction title="确认删除该部门？" danger @confirm="remove(record)"
+              >删除</ConfirmAction
             ></a-space
           ></template
         ></template
       ></a-table
     ><FormModal
       v-model:open="open"
-      :title="current ? '操作' : '操作'"
+      :title="current ? '禁用' : '启用'"
       :submitting="submitting"
       @submit="submit"
       ><a-form :model="form" layout="vertical"
-        ><a-form-item label="操作" required><a-input v-model:value="form.deptName" /></a-form-item
-        ><a-form-item label="操作"><a-input v-model:value="form.leader" /></a-form-item
-        ><a-form-item label="操作"><a-input v-model:value="form.phone" /></a-form-item
-        ><a-form-item label="操作"
+        ><a-form-item label="部门名称" required
+          ><a-input v-model:value="form.deptName" /></a-form-item
+        ><a-form-item label="负责人"><a-input v-model:value="form.leader" /></a-form-item
+        ><a-form-item label="联系电话"><a-input v-model:value="form.phone" /></a-form-item
+        ><a-form-item label="排序"
           ><a-input-number
             v-model:value="form.sort"
             style="width: 100%" /></a-form-item></a-form></FormModal

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import IconRenderer from '@/components/icons/IconRenderer.vue';
+import { changePasswordApi } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth';
 import { useUserStore } from '@/stores/user';
 import { usePreferenceStore } from '@/stores/preferences';
@@ -14,6 +15,13 @@ const user = useUserStore();
 const preferences = usePreferenceStore();
 const router = useRouter();
 const route = useRoute();
+const passwordOpen = ref(false);
+const passwordSubmitting = ref(false);
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+});
 
 const menuItems = computed(() => buildMenu(user.menus));
 const selectedKeys = computed(() => [route.path]);
@@ -42,8 +50,33 @@ function buildMenu(nodes: MenuNode[]): any[] {
 
 async function logout() {
   await auth.logout();
-  message.success('操作');
+  message.success('已退出登录');
   router.replace('/login');
+}
+function openPassword() {
+  Object.assign(passwordForm, { oldPassword: '', newPassword: '', confirmPassword: '' });
+  passwordOpen.value = true;
+}
+async function submitPassword() {
+  if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+    message.error('请填写旧密码和新密码');
+    return;
+  }
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    message.error('两次输入的新密码不一致');
+    return;
+  }
+  passwordSubmitting.value = true;
+  try {
+    await changePasswordApi({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+    });
+    message.success('密码修改成功');
+    passwordOpen.value = false;
+  } finally {
+    passwordSubmitting.value = false;
+  }
 }
 </script>
 <template>
@@ -78,18 +111,37 @@ async function logout() {
         >
         <a-dropdown>
           <a class="user-menu" @click.prevent>{{
-            user.profile?.realName || user.profile?.username || '操作'
+            user.profile?.realName || user.profile?.username || '用户'
           }}</a>
           <template #overlay
             ><a-menu
-              ><a-menu-item @click="router.push('/system/users')">操作</a-menu-item
-              ><a-menu-item @click="logout">操作</a-menu-item></a-menu
+              ><a-menu-item @click="router.push('/system/users')">当前用户</a-menu-item
+              ><a-menu-item @click="openPassword">修改密码</a-menu-item
+              ><a-menu-item @click="logout">退出登录</a-menu-item></a-menu
             ></template
           >
         </a-dropdown>
       </a-layout-header>
       <a-layout-content class="content"><router-view /></a-layout-content>
     </a-layout>
+    <a-modal
+      v-model:open="passwordOpen"
+      title="修改密码"
+      :confirm-loading="passwordSubmitting"
+      @ok="submitPassword"
+    >
+      <a-form :model="passwordForm" layout="vertical">
+        <a-form-item label="旧密码" required>
+          <a-input-password v-model:value="passwordForm.oldPassword" />
+        </a-form-item>
+        <a-form-item label="新密码" required>
+          <a-input-password v-model:value="passwordForm.newPassword" />
+        </a-form-item>
+        <a-form-item label="确认新密码" required>
+          <a-input-password v-model:value="passwordForm.confirmPassword" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </a-layout>
 </template>
 <style scoped lang="scss">

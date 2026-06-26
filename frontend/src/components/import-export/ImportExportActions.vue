@@ -4,7 +4,7 @@ const emit = defineEmits<{ downloadTemplate: []; importFile: [file: File]; expor
 </script>
 <template>
   <a-space>
-    <a-button @click="emit('downloadTemplate')">操作</a-button>
+    <a-button @click="emit('downloadTemplate')">下载模板</a-button>
     <a-upload
       :show-upload-list="false"
       :before-upload="
@@ -13,8 +13,9 @@ const emit = defineEmits<{ downloadTemplate: []; importFile: [file: File]; expor
           return false;
         }
       "
-      ><a-button :loading="importing">操作</a-button></a-upload
     >
-    <a-button :loading="exporting" @click="emit('exportData')">操作</a-button>
+      <a-button :loading="importing">导入</a-button>
+    </a-upload>
+    <a-button :loading="exporting" @click="emit('exportData')">导出</a-button>
   </a-space>
 </template>

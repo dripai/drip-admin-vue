@@ -4,6 +4,6 @@ defineProps<{ status?: Status }>();
 </script>
 <template>
   <a-tag :color="status === 'ENABLED' ? 'green' : 'default'">{{
-    status === 'ENABLED' ? '操作' : '操作'
+    status === 'ENABLED' ? '启用' : '禁用'
   }}</a-tag>
 </template>

@@ -54,7 +54,7 @@ async function saveType() {
   try {
     if (typeForm.id) await updateDictType(typeForm.id, typeForm);
     else await createDictType(typeForm);
-    message.success('操作');
+    message.success('操作成功');
     typeOpen.value = false;
     loadTypes();
   } finally {
@@ -64,7 +64,7 @@ async function saveType() {
 async function removeType() {
   if (!currentType.value) return;
   await deleteDictType(currentType.value.id);
-  message.success('操作');
+  message.success('操作成功');
   currentType.value = undefined;
   loadTypes();
 }
@@ -89,7 +89,7 @@ async function saveItem() {
   try {
     if (currentItem.value) await updateDictItem(currentItem.value.id, itemForm);
     else await createDictItem(itemForm);
-    message.success('操作');
+    message.success('操作成功');
     itemOpen.value = false;
     if (currentType.value) selectType(currentType.value);
   } finally {
@@ -98,23 +98,23 @@ async function saveItem() {
 }
 async function removeItem(row: DictItem) {
   await deleteDictItem(row.id);
-  message.success('操作');
+  message.success('操作成功');
   if (currentType.value) selectType(currentType.value);
 }
 async function refresh() {
   await refreshDictCache(currentType.value?.dictCode);
-  message.success('操作');
+  message.success('操作成功');
 }
 onMounted(loadTypes);
 </script>
 <template>
-  <PageContainer title="操作"
+  <PageContainer title="字典管理"
     ><a-row :gutter="16"
       ><a-col :span="8"
         ><div class="page-actions">
-          <a-button type="primary" @click="addType">操作</a-button
-          ><a-button :disabled="!currentType" @click="editType">操作</a-button
-          ><ConfirmAction title="操作" danger @confirm="removeType">操作</ConfirmAction>
+          <a-button type="primary" @click="addType">新增字典类型</a-button
+          ><a-button :disabled="!currentType" @click="editType">编辑字典类型</a-button
+          ><ConfirmAction title="删除字典类型" danger @confirm="removeType">删除</ConfirmAction>
         </div>
         <a-list bordered :data-source="types"
           ><template #renderItem="{ item }"
@@ -126,18 +126,18 @@ onMounted(loadTypes);
         ></a-col
       ><a-col :span="16"
         ><div class="page-actions">
-          <a-button type="primary" :disabled="!currentType" @click="addItem">操作</a-button
-          ><a-button :disabled="!currentType" @click="refresh">操作</a-button>
+          <a-button type="primary" :disabled="!currentType" @click="addItem">新增字典项</a-button
+          ><a-button :disabled="!currentType" @click="refresh">刷新</a-button>
         </div>
         <a-table
           row-key="id"
           :data-source="items"
           :columns="[
-            { title: '操作', dataIndex: 'label' },
-            { title: '?', dataIndex: 'value' },
-            { title: '操作', dataIndex: 'color' },
-            { title: '操作', dataIndex: 'sort' },
-            { title: '操作', dataIndex: 'status' },
+            { title: '标签', dataIndex: 'label' },
+            { title: '字典值', dataIndex: 'value' },
+            { title: '颜色', dataIndex: 'color' },
+            { title: '排序', dataIndex: 'sort' },
+            { title: '状态', dataIndex: 'status' },
             { title: '操作', dataIndex: 'action' },
           ]"
           :pagination="false"
@@ -146,26 +146,36 @@ onMounted(loadTypes);
               ><StatusTag :status="record.status" /></template
             ><template v-else-if="column.dataIndex === 'action'"
               ><a-space
-                ><a-button type="link" @click="editItem(record)">操作</a-button
-                ><ConfirmAction title="操作" danger @confirm="removeItem(record)"
-                  >操作</ConfirmAction
+                ><a-button type="link" @click="editItem(record)">编辑字典项</a-button
+                ><ConfirmAction title="删除字典项" danger @confirm="removeItem(record)"
+                  >删除</ConfirmAction
                 ></a-space
               ></template
             ></template
           ></a-table
         ></a-col
       ></a-row
-    ><FormModal v-model:open="typeOpen" title="操作" :submitting="submitting" @submit="saveType"
+    ><FormModal
+      v-model:open="typeOpen"
+      :title="currentType ? '编辑字典类型' : '新增字典类型'"
+      :submitting="submitting"
+      @submit="saveType"
       ><a-form layout="vertical" :model="typeForm"
-        ><a-form-item label="操作" required
+        ><a-form-item label="字典名称" required
           ><a-input v-model:value="typeForm.dictName" /></a-form-item
-        ><a-form-item label="操作" required
+        ><a-form-item label="字典编码" required
           ><a-input v-model:value="typeForm.dictCode" /></a-form-item></a-form></FormModal
-    ><FormModal v-model:open="itemOpen" title="操作" :submitting="submitting" @submit="saveItem"
+    ><FormModal
+      v-model:open="itemOpen"
+      title="新增字典项"
+      :submitting="submitting"
+      @submit="saveItem"
       ><a-form layout="vertical" :model="itemForm"
-        ><a-form-item label="操作" required><a-input v-model:value="itemForm.label" /></a-form-item
-        ><a-form-item label="?" required><a-input v-model:value="itemForm.value" /></a-form-item
-        ><a-form-item label="操作"
+        ><a-form-item label="字典标签" required
+          ><a-input v-model:value="itemForm.label" /></a-form-item
+        ><a-form-item label="字典值" required
+          ><a-input v-model:value="itemForm.value" /></a-form-item
+        ><a-form-item label="颜色"
           ><a-input v-model:value="itemForm.color" /></a-form-item></a-form></FormModal
   ></PageContainer>
 </template>

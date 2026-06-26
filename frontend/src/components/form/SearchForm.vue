@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 export interface SearchField {
   label: string;
   field: string;
@@ -10,12 +11,21 @@ const props = defineProps<{
   model: Record<string, unknown>;
   fields: SearchField[];
   loading?: boolean;
+  collapsible?: boolean;
+  defaultVisibleCount?: number;
 }>();
 const emit = defineEmits<{ search: []; reset: [] }>();
+const expanded = ref(false);
+const visibleFields = computed(() => {
+  if (!props.collapsible && props.collapsible !== undefined) return props.fields;
+  const count = props.defaultVisibleCount || 4;
+  return expanded.value ? props.fields : props.fields.slice(0, count);
+});
+const canToggle = computed(() => props.fields.length > (props.defaultVisibleCount || 4));
 </script>
 <template>
   <a-form class="search-form" layout="inline" :model="props.model">
-    <a-form-item v-for="field in fields" :key="field.field" :label="field.label">
+    <a-form-item v-for="field in visibleFields" :key="field.field" :label="field.label">
       <a-input
         v-if="field.component === 'input'"
         v-model:value="props.model[field.field]"
@@ -34,8 +44,11 @@ const emit = defineEmits<{ search: []; reset: [] }>();
     </a-form-item>
     <a-form-item>
       <a-space>
-        <a-button type="primary" :loading="loading" @click="emit('search')">操作</a-button>
-        <a-button @click="emit('reset')">操作</a-button>
+        <a-button type="primary" :loading="loading" @click="emit('search')">查询</a-button>
+        <a-button @click="emit('reset')">重置</a-button>
+        <a-button v-if="canToggle" type="link" @click="expanded = !expanded">
+          {{ expanded ? '收起' : '展开' }}
+        </a-button>
       </a-space>
     </a-form-item>
   </a-form>

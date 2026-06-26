@@ -21,8 +21,8 @@ request.interceptors.response.use(
   (response) => {
     const body = response.data as ApiResponse<unknown>;
     if (typeof body?.code === 'number' && body.code !== 0) {
-      message.error(body.message || '操作');
-      return Promise.reject(new Error(body.message || '操作'));
+      message.error(body.message || '请求处理失败');
+      return Promise.reject(new Error(body.message || '业务错误'));
     }
     return body?.data ?? response.data;
   },
@@ -31,19 +31,23 @@ request.interceptors.response.use(
     if (status === 401) {
       const auth = useAuthStore();
       auth.clearSession();
-      message.error('操作');
+      message.error('登录状态已失效，请重新登录');
       if (window.location.pathname !== '/login') window.location.href = '/login';
       return Promise.reject(error);
     }
     if (status === 403) {
-      message.error('操作');
+      message.error('没有权限执行该操作');
       return Promise.reject(error);
     }
     const backendMessage = error.response?.data?.message;
-    message.error(backendMessage || '操作');
+    message.error(backendMessage || '网络或服务异常，请稍后重试');
     return Promise.reject(error);
   },
 );
+
+export function createRequestController() {
+  return new AbortController();
+}
 
 export function get<T>(url: string, config?: AxiosRequestConfig) {
   return request.get<unknown, T>(url, config);

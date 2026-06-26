@@ -10,32 +10,36 @@ import { useTable } from '@/composables/useTable';
 import { forceOffline, queryOnlineUsers } from '@/api/system/onlineUser';
 import type { OnlineUserItem } from '@/types/system';
 const fields = [
-  { label: '操作', field: 'username', component: 'input' as const },
-  { label: '操作', field: 'realName', component: 'input' as const },
+  { label: '用户名', field: 'username', component: 'input' as const },
+  { label: '姓名', field: 'realName', component: 'input' as const },
   { label: 'IP', field: 'ip', component: 'input' as const },
-  { label: '操作', field: 'loginRange', component: 'range' as const },
+  { label: '登录时间范围', field: 'loginRange', component: 'range' as const },
 ];
 const columns: TableColumnType[] = [
-  { title: '操作', dataIndex: 'username' },
-  { title: '操作', dataIndex: 'realName' },
-  { title: '操作', dataIndex: 'deviceType' },
+  { title: '用户名', dataIndex: 'username' },
+  { title: '姓名', dataIndex: 'realName' },
+  { title: '设备类型', dataIndex: 'deviceType' },
   { title: 'IP', dataIndex: 'ip' },
   { title: 'userAgent', dataIndex: 'userAgent' },
-  { title: '操作', dataIndex: 'loginAt' },
-  { title: '操作', dataIndex: 'lastActiveAt' },
-  { title: 'token 操作', dataIndex: 'expireAt' },
+  { title: '登录时间', dataIndex: 'loginAt' },
+  { title: '最后活跃时间', dataIndex: 'lastActiveAt' },
+  { title: '会话过期时间', dataIndex: 'expireAt' },
   { title: '操作', dataIndex: 'action' },
 ];
-const table = useTable<OnlineUserItem, Record<string, unknown>>(queryOnlineUsers as any, {});
+const table = useTable<OnlineUserItem, Record<string, unknown>>(
+  queryOnlineUsers as any,
+  {},
+  { storageKey: 'system.online-users.query' },
+);
 async function kick(row: OnlineUserItem) {
   await forceOffline(row.id);
-  message.success('操作');
+  message.success('操作成功');
   table.refresh();
 }
 onMounted(table.refresh);
 </script>
 <template>
-  <PageContainer title="操作"
+  <PageContainer title="在线用户"
     ><SearchForm
       :model="table.query"
       :fields="fields"
@@ -47,12 +51,17 @@ onMounted(table.refresh);
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
       :pagination="table.pagination.value"
+      table-key="system-online-users"
       @change="table.handleTableChange"
       ><template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'action'"
-          ><ConfirmAction v-if="!record.current" title="操作" danger @confirm="kick(record)"
-            >操作</ConfirmAction
-          ><span v-else class="text-muted">操作</span></template
+          ><ConfirmAction
+            v-if="!record.current"
+            title="确认强制该用户下线？"
+            danger
+            @confirm="kick(record)"
+            >强制下线</ConfirmAction
+          ><span v-else class="text-muted">当前会话</span></template
         ></template
       ></DataTable
     ></PageContainer
