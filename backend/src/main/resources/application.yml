@@ -24,6 +24,14 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+mybatis-plus:
+  type-aliases-package: com.drip.admin.modules.system.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
 sa-token:
   token-name: Authorization
   timeout: 7200

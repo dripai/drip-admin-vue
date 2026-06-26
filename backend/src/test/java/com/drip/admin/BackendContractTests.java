@@ -1,5 +1,9 @@
 package com.drip.admin;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.exception.GlobalExceptionHandler;
 import com.drip.admin.common.log.LogService;
@@ -8,10 +12,39 @@ import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.config.MybatisPlusConfig;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
+import com.drip.admin.modules.system.entity.SysConfigEntity;
+import com.drip.admin.modules.system.entity.SysDbBackupEntity;
+import com.drip.admin.modules.system.entity.SysDeptEntity;
+import com.drip.admin.modules.system.entity.SysDictItemEntity;
+import com.drip.admin.modules.system.entity.SysDictTypeEntity;
+import com.drip.admin.modules.system.entity.SysJobEntity;
+import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
+import com.drip.admin.modules.system.entity.SysLoginLogEntity;
+import com.drip.admin.modules.system.entity.SysMenuEntity;
+import com.drip.admin.modules.system.entity.SysOperationLogEntity;
+import com.drip.admin.modules.system.entity.SysRoleEntity;
+import com.drip.admin.modules.system.entity.SysRoleMenuEntity;
+import com.drip.admin.modules.system.entity.SysUserEntity;
+import com.drip.admin.modules.system.entity.SysUserRoleEntity;
+import com.drip.admin.modules.system.mapper.SysConfigMapper;
+import com.drip.admin.modules.system.mapper.SysDbBackupMapper;
+import com.drip.admin.modules.system.mapper.SysDeptMapper;
+import com.drip.admin.modules.system.mapper.SysDictItemMapper;
+import com.drip.admin.modules.system.mapper.SysDictTypeMapper;
+import com.drip.admin.modules.system.mapper.SysJobMapper;
+import com.drip.admin.modules.system.mapper.SysJobRunLogMapper;
+import com.drip.admin.modules.system.mapper.SysLoginLogMapper;
+import com.drip.admin.modules.system.mapper.SysMenuMapper;
+import com.drip.admin.modules.system.mapper.SysOperationLogMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMapper;
+import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
+import com.drip.admin.modules.system.mapper.SysUserMapper;
+import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.service.impl.AuthServiceImpl;
 import com.drip.admin.modules.system.controller.DatabaseBackupController;
@@ -50,6 +83,7 @@ import com.drip.admin.modules.system.service.impl.UserServiceImpl;
 import com.drip.admin.modules.system.controller.UserController;
 import com.drip.admin.modules.system.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.mybatis.spring.annotation.MapperScan;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.http.HttpStatus;
@@ -62,11 +96,13 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -579,6 +615,51 @@ class BackendContractTests {
     }
 
     @Test
+    void mybatisPlusEntitiesAndMappersCoverSystemTables() throws Exception {
+        Object[][] mappings = {
+            {SysUserEntity.class, SysUserMapper.class, "sys_user"},
+            {SysRoleEntity.class, SysRoleMapper.class, "sys_role"},
+            {SysUserRoleEntity.class, SysUserRoleMapper.class, "sys_user_role"},
+            {SysMenuEntity.class, SysMenuMapper.class, "sys_menu"},
+            {SysRoleMenuEntity.class, SysRoleMenuMapper.class, "sys_role_menu"},
+            {SysDeptEntity.class, SysDeptMapper.class, "sys_dept"},
+            {SysDictTypeEntity.class, SysDictTypeMapper.class, "sys_dict_type"},
+            {SysDictItemEntity.class, SysDictItemMapper.class, "sys_dict_item"},
+            {SysLoginLogEntity.class, SysLoginLogMapper.class, "sys_login_log"},
+            {SysOperationLogEntity.class, SysOperationLogMapper.class, "sys_operation_log"},
+            {SysJobEntity.class, SysJobMapper.class, "sys_job"},
+            {SysJobRunLogEntity.class, SysJobRunLogMapper.class, "sys_job_run_log"},
+            {SysDbBackupEntity.class, SysDbBackupMapper.class, "sys_db_backup"},
+            {SysConfigEntity.class, SysConfigMapper.class, "sys_config"}
+        };
+        Set<Class<?>> logicDeleteEntities = Set.of(
+            SysUserEntity.class,
+            SysRoleEntity.class,
+            SysMenuEntity.class,
+            SysDeptEntity.class,
+            SysDictTypeEntity.class,
+            SysDictItemEntity.class,
+            SysJobEntity.class,
+            SysConfigEntity.class
+        );
+
+        assertEquals(14, mappings.length);
+        for (Object[] mapping : mappings) {
+            Class<?> entityType = (Class<?>) mapping[0];
+            Class<?> mapperType = (Class<?>) mapping[1];
+            String tableName = (String) mapping[2];
+
+            assertEquals(tableName, entityType.getAnnotation(TableName.class).value());
+            assertTrue(BaseMapper.class.isAssignableFrom(mapperType));
+            assertTrue(entityType.getDeclaredField("id").isAnnotationPresent(TableId.class));
+            assertEquals(logicDeleteEntities.contains(entityType), hasTableLogicField(entityType));
+        }
+
+        MapperScan mapperScan = MybatisPlusConfig.class.getAnnotation(MapperScan.class);
+        assertEquals("com.drip.admin.modules.system.mapper", mapperScan.value()[0]);
+    }
+
+    @Test
     void businessExceptionHttpStatusMatchesErrorCode() {
         GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
@@ -606,5 +687,14 @@ class BackendContractTests {
         RequirePermission permission = method.getAnnotation(RequirePermission.class);
 
         assertEquals(permissionCode, permission.value());
+    }
+
+    private static boolean hasTableLogicField(Class<?> entityType) {
+        for (Field field : entityType.getDeclaredFields()) {
+            if (field.isAnnotationPresent(TableLogic.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
