@@ -1,5 +1,6 @@
 package com.drip.admin;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -88,9 +89,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.mybatis.spring.annotation.MapperScan;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -117,6 +120,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -346,6 +350,31 @@ class BackendContractTests {
 
         assertFalse(baselineSql.contains("AUTO_INCREMENT"));
         assertFalse(baselineSql.matches("(?s).*ENGINE=InnoDB\\d+.*"));
+    }
+
+    @Test
+    void jdbcLogWritesIncludeApplicationAssignedIds() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        LogService logService = new LogService(jdbc);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+
+        when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1");
+        when(request.getHeader("User-Agent")).thenReturn("JUnit");
+
+        logService.login(7L, "demo", "Demo", "LOGIN", "SUCCESS", null, request, "web");
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            stp.when(StpUtil::isLogin).thenReturn(false);
+            logService.operation("module", "action", "POST", "/demo", "{}", "SUCCESS", null, 12L);
+        }
+
+        verify(jdbc).update(
+            contains("insert into sys_login_log (id,"),
+            anyLong(), eq(7L), eq("demo"), eq("Demo"), eq("LOGIN"), eq("SUCCESS"), any(), eq("10.0.0.1"), eq("JUnit"), eq("web")
+        );
+        verify(jdbc).update(
+            contains("insert into sys_operation_log (id,"),
+            anyLong(), any(), any(), eq("module"), eq("action"), eq("POST"), eq("/demo"), eq("{}"), eq("SUCCESS"), any(), eq(12L)
+        );
     }
 
     @Test
