@@ -1,6 +1,7 @@
 import type { Component } from 'vue';
 
 export const pageComponentMap: Record<string, () => Promise<Component>> = {
+  'system/profile/index': () => import('@/views/system/profile/index.vue'),
   'system/user/index': () => import('@/views/system/users/index.vue'),
   'system/role/index': () => import('@/views/system/roles/index.vue'),
   'system/menu/index': () => import('@/views/system/menus/index.vue'),

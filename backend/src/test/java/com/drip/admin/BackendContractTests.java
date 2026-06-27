@@ -126,10 +126,12 @@ class BackendContractTests {
     void loginAttemptServiceLocksWhenFailureLimitReached() {
         StringRedisTemplate redis = mock(StringRedisTemplate.class);
         ValueOperations<String, String> values = mock(ValueOperations.class);
-        LoginAttemptService service = new LoginAttemptService(redis, 5, 900);
+        ConfigService configService = mock(ConfigService.class);
+        LoginAttemptService service = new LoginAttemptService(redis, configService);
 
         when(redis.opsForValue()).thenReturn(values);
         when(values.get("drip:login:fail:demo")).thenReturn("4", "5");
+        when(configService.requiredInt("login.maxFailures")).thenReturn(5);
 
         assertDoesNotThrow(() -> service.assertNotLocked("Demo"));
         BusinessException error = assertThrows(BusinessException.class, () -> service.assertNotLocked("Demo"));
@@ -239,9 +241,9 @@ class BackendContractTests {
     void onlineUserServiceReadsSessionsFromRedisBackedService() {
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
         OnlineUserService onlineUserService = new OnlineUserServiceImpl(onlineSessionService);
-        var page = new PageResult<>(List.of(Map.<String, Object>of("tokenId", "token-1")), 1, 1, 20);
+        var page = new PageResult<>(List.of(Map.<String, Object>of("tokenId", "token-1")), 1, 1, 10);
 
-        when(onlineSessionService.page(Map.of("page", "1", "pageSize", "20"))).thenReturn(page);
+        when(onlineSessionService.page(Map.of("page", "1", "pageSize", "10"))).thenReturn(page);
 
         OnlineUserQuery query = new OnlineUserQuery();
         query.setPage(1);
@@ -344,11 +346,11 @@ class BackendContractTests {
     @Test
     void systemControllersUseSystemBasePathAndCamelCaseUrls() throws Exception {
         assertEquals("/system", AuthController.class.getAnnotation(org.springframework.web.bind.annotation.RequestMapping.class).value()[0]);
-        assertMapping(UserController.class, "resetPassword", org.springframework.web.bind.annotation.PostMapping.class, "/users/{id}/resetPassword", long.class, PasswordResetRequest.class);
-        assertMapping(SystemLogController.class, "loginLogs", org.springframework.web.bind.annotation.GetMapping.class, "/loginLogs", LoginLogQuery.class);
-        assertMapping(SystemLogController.class, "operationLogs", org.springframework.web.bind.annotation.GetMapping.class, "/operationLogs", OperationLogQuery.class);
-        assertMapping(OnlineUserController.class, "onlineUsers", org.springframework.web.bind.annotation.GetMapping.class, "/onlineUsers", OnlineUserQuery.class);
-        assertMapping(JobController.class, "jobLogs", org.springframework.web.bind.annotation.GetMapping.class, "/jobs/{id}/runLogs", long.class, JobRunLogQuery.class);
+        assertMapping(UserController.class, "resetPassword", org.springframework.web.bind.annotation.PostMapping.class, "/user/{id}/resetPassword", long.class, PasswordResetRequest.class);
+        assertMapping(SystemLogController.class, "loginLogs", org.springframework.web.bind.annotation.GetMapping.class, "/loginLog", LoginLogQuery.class);
+        assertMapping(SystemLogController.class, "operationLogs", org.springframework.web.bind.annotation.GetMapping.class, "/operationLog", OperationLogQuery.class);
+        assertMapping(OnlineUserController.class, "onlineUsers", org.springframework.web.bind.annotation.GetMapping.class, "/onlineUser", OnlineUserQuery.class);
+        assertMapping(JobController.class, "jobLogs", org.springframework.web.bind.annotation.GetMapping.class, "/job/{id}/runLog", long.class, JobRunLogQuery.class);
     }
 
     @Test
@@ -377,13 +379,16 @@ class BackendContractTests {
     }
 
     @Test
-    void fileServiceRejectsDisallowedContentType() {
-        FileServiceImpl fileService = new FileServiceImpl(1024, "image/png");
+    void fileServiceRejectsDisallowedExtension() {
+        ConfigService configService = mock(ConfigService.class);
+        FileServiceImpl fileService = new FileServiceImpl(configService);
         MultipartFile file = mock(MultipartFile.class);
 
         when(file.isEmpty()).thenReturn(false);
         when(file.getSize()).thenReturn(10L);
-        when(file.getContentType()).thenReturn("application/x-msdownload");
+        when(file.getOriginalFilename()).thenReturn("demo.exe");
+        when(configService.requiredLong("upload.maxSizeBytes")).thenReturn(1024L);
+        when(configService.requiredValue("upload.allowedExtensions")).thenReturn("png");
 
         BusinessException error = assertThrows(BusinessException.class, () -> fileService.upload(file));
 

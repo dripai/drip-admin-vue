@@ -3,12 +3,15 @@ import { reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { useAuthStore } from '@/stores/auth';
+import { useAppConfigStore } from '@/stores/appConfig';
 
 const auth = useAuthStore();
+const appConfig = useAppConfigStore();
 const router = useRouter();
 const route = useRoute();
 const loading = ref(false);
 const form = reactive({ username: '', password: '' });
+
 async function submit() {
   loading.value = true;
   try {
@@ -25,7 +28,13 @@ async function submit() {
 <template>
   <main class="login-page">
     <a-form class="login-form" :model="form" layout="vertical" @finish="submit">
-      <h1>后台管理系统</h1>
+      <img
+        v-if="appConfig.logoUrl"
+        class="login-logo"
+        :src="appConfig.logoUrl"
+        :alt="appConfig.systemName"
+      />
+      <h1>{{ appConfig.systemName }}</h1>
       <a-form-item
         label="用户名"
         name="username"
@@ -59,5 +68,12 @@ async function submit() {
 h1 {
   margin: 0 0 20px;
   font-size: 20px;
+}
+.login-logo {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  object-fit: contain;
 }
 </style>

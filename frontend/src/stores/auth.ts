@@ -84,6 +84,8 @@ export const useAuthStore = defineStore('auth', {
           id: result.userId,
           username: result.username,
           realName: result.realName,
+          phone: result.phone,
+          email: result.email,
           avatar: result.avatar,
           dept: result.deptId ? { id: result.deptId, deptName: '' } : undefined,
         };

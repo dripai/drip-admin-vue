@@ -3,11 +3,11 @@ import { computed, h, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   AppstoreOutlined,
-  BorderOutlined,
-  ColumnWidthOutlined,
+  LayoutOutlined,
+  MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  PicCenterOutlined,
+  PartitionOutlined,
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import IconRenderer from '@/components/icons/IconRenderer.vue';
@@ -15,6 +15,7 @@ import { changePasswordApi } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth';
 import { useUserStore } from '@/stores/user';
 import { usePreferenceStore } from '@/stores/preferences';
+import { useAppConfigStore } from '@/stores/appConfig';
 import type { MenuNode, PreferenceState } from '@/types/system';
 
 type MenuItem = {
@@ -25,9 +26,16 @@ type MenuItem = {
   type?: MenuNode['type'];
 };
 
+type TopNavItem = {
+  key: string;
+  label: string;
+  icon?: string;
+};
+
 const auth = useAuthStore();
 const user = useUserStore();
 const preferences = usePreferenceStore();
+const appConfig = useAppConfigStore();
 const router = useRouter();
 const route = useRoute();
 const passwordOpen = ref(false);
@@ -44,8 +52,14 @@ const dashboardMenuItem: MenuItem = {
   label: '首页',
   icon: () => h(IconRenderer, { icon: 'AppstoreOutlined' }),
 };
+const dashboardTopNavItem: TopNavItem = {
+  key: '/dashboard',
+  label: '首页',
+  icon: 'AppstoreOutlined',
+};
 const rootMenuNodes = computed(() => enabledMenus(user.menus));
 const rootMenuItems = computed(() => [dashboardMenuItem, ...rootMenuNodes.value.map(toRootMenuItem)]);
+const topNavItems = computed(() => [dashboardTopNavItem, ...rootMenuNodes.value.map(toTopNavItem)]);
 const sideMenuItems = computed(() => [dashboardMenuItem, ...buildMenu(rootMenuNodes.value)]);
 const activeMenuTrail = computed(() => findActiveMenuTrail(user.menus, route.path));
 const activeRootKey = computed(() => activeMenuTrail.value.keys[0] || '/dashboard');
@@ -80,12 +94,15 @@ const layoutOptions: Array<{
   label: string;
   icon: () => unknown;
 }> = [
-  { key: 'doubleSide', label: '左侧双列', icon: () => h(ColumnWidthOutlined) },
-  { key: 'side', label: '左侧单列', icon: () => h(BorderOutlined) },
-  { key: 'mix', label: '顶部+左侧', icon: () => h(PicCenterOutlined) },
+  { key: 'doubleSide', label: '左侧双列', icon: () => h(PartitionOutlined) },
+  { key: 'side', label: '左侧单列', icon: () => h(MenuOutlined) },
+  { key: 'mix', label: '顶部+左侧', icon: () => h(LayoutOutlined) },
 ];
 const activeLayout = computed(
   () => layoutOptions.find((item) => item.key === preferences.layoutMode) || layoutOptions[1],
+);
+const headerUserText = computed(() =>
+  (user.profile?.realName || user.profile?.username || '用户').slice(0, 1),
 );
 
 function menuKey(item: MenuNode) {
@@ -124,6 +141,14 @@ function toRootMenuItem(item: MenuNode): MenuItem {
     key: menuKey(item),
     label: item.name,
     icon: item.icon ? () => h(IconRenderer, { icon: item.icon }) : undefined,
+  };
+}
+
+function toTopNavItem(item: MenuNode): TopNavItem {
+  return {
+    key: menuKey(item),
+    label: item.name,
+    icon: item.icon,
   };
 }
 
@@ -244,7 +269,21 @@ async function submitPassword() {
       class="sider root-sider"
     >
       <div class="brand">
-        {{ preferences.layoutMode === 'doubleSide' || preferences.collapsed ? 'DA' : 'Drip Admin' }}
+        <img
+          v-if="appConfig.logoUrl"
+          class="brand-logo"
+          :src="appConfig.logoUrl"
+          :alt="appConfig.systemName"
+        />
+        <span v-else-if="preferences.layoutMode === 'doubleSide' || preferences.collapsed">
+          {{ appConfig.systemName.slice(0, 2).toUpperCase() }}
+        </span>
+        <span v-else class="brand-text">{{ appConfig.systemName }}</span>
+        <span
+          v-if="appConfig.logoUrl && preferences.layoutMode !== 'doubleSide' && !preferences.collapsed"
+          class="brand-text"
+          >{{ appConfig.systemName }}</span
+        >
       </div>
       <a-menu
         theme="dark"
@@ -264,7 +303,7 @@ async function submitPassword() {
       theme="light"
     >
       <div class="child-title">
-        {{ preferences.layoutMode === 'mix' ? 'Drip Admin' : activeMenuTrail.labels[0] || '菜单' }}
+        {{ preferences.layoutMode === 'mix' ? appConfig.systemName : activeMenuTrail.labels[0] || '菜单' }}
       </div>
       <a-menu
         mode="inline"
@@ -283,51 +322,56 @@ async function submitPassword() {
         >
           <MenuUnfoldOutlined v-if="preferences.collapsed" /><MenuFoldOutlined v-else />
         </a-button>
-        <a-menu
-          v-if="preferences.layoutMode === 'mix'"
-          class="top-menu"
-          mode="horizontal"
-          :selected-keys="rootSelectedKeys"
-          :items="rootMenuItems"
-          @click="handleRootClick($event as any)"
-        />
+        <nav v-if="preferences.layoutMode === 'mix'" class="top-menu" aria-label="一级菜单">
+          <button
+            v-for="item in topNavItems"
+            :key="item.key"
+            type="button"
+            class="top-menu-item"
+            :class="{ active: rootSelectedKeys.includes(item.key) }"
+            @click="handleRootClick({ key: item.key })"
+          >
+            <IconRenderer v-if="item.icon" :icon="item.icon" />
+            <span>{{ item.label }}</span>
+          </button>
+        </nav>
         <a-breadcrumb v-if="preferences.layoutMode !== 'mix'" class="breadcrumb"
           ><a-breadcrumb-item v-for="item in breadcrumb" :key="item">{{
             item
           }}</a-breadcrumb-item></a-breadcrumb
         >
-        <a-popover v-model:open="layoutOpen" trigger="click" placement="bottomRight">
-          <a-button type="text" class="layout-switch" :title="activeLayout.label">
-            <component :is="activeLayout.icon" />
-          </a-button>
-          <template #content>
-            <div class="layout-panel">
-              <button
-                v-for="item in layoutOptions"
-                :key="item.key"
-                type="button"
-                class="layout-option"
-                :class="{ active: item.key === preferences.layoutMode }"
-                @click="setLayoutMode(item.key)"
-              >
-                <component :is="item.icon" />
-                <span>{{ item.label }}</span>
-              </button>
-            </div>
-          </template>
-        </a-popover>
-        <a-dropdown :trigger="['click']">
-          <a class="user-menu" @click.prevent>{{
-            user.profile?.realName || user.profile?.username || '用户'
-          }}</a>
-          <template #overlay
-            ><a-menu
-              ><a-menu-item @click="router.push('/system/user')">当前用户</a-menu-item
-              ><a-menu-item @click="openPassword">修改密码</a-menu-item
-              ><a-menu-item @click="logout">退出登录</a-menu-item></a-menu
-            ></template
-          >
-        </a-dropdown>
+        <div class="header-actions">
+          <a-popover v-model:open="layoutOpen" trigger="click" placement="bottomRight">
+            <button type="button" class="header-action-icon" :title="activeLayout.label">
+              <component :is="activeLayout.icon" />
+            </button>
+            <template #content>
+              <div class="layout-panel">
+                <button
+                  v-for="item in layoutOptions"
+                  :key="item.key"
+                  type="button"
+                  class="layout-option"
+                  :class="{ active: item.key === preferences.layoutMode }"
+                  @click="setLayoutMode(item.key)"
+                >
+                  <component :is="item.icon" />
+                  <span>{{ item.label }}</span>
+                </button>
+              </div>
+            </template>
+          </a-popover>
+          <a-dropdown :trigger="['click']">
+            <button type="button" class="user-menu" @click.prevent>{{ headerUserText }}</button>
+            <template #overlay
+              ><a-menu
+                ><a-menu-item @click="router.push('/system/profile')">个人中心</a-menu-item
+                ><a-menu-item @click="openPassword">修改密码</a-menu-item
+                ><a-menu-item @click="logout">退出登录</a-menu-item></a-menu
+              ></template
+            >
+          </a-dropdown>
+        </div>
       </a-layout-header>
       <div v-if="preferences.layoutMode === 'mix'" class="breadcrumb-bar">
         <a-breadcrumb class="breadcrumb"
@@ -344,7 +388,12 @@ async function submitPassword() {
       :confirm-loading="passwordSubmitting"
       @ok="submitPassword"
     >
-      <a-form :model="passwordForm" layout="vertical">
+      <a-form
+        :model="passwordForm"
+        layout="horizontal"
+        :label-col="{ style: { width: '84px' } }"
+        :wrapper-col="{ flex: 1 }"
+      >
         <a-form-item label="旧密码" required>
           <a-input-password v-model:value="passwordForm.oldPassword" />
         </a-form-item>
@@ -360,6 +409,8 @@ async function submitPassword() {
 </template>
 <style scoped lang="scss">
 .admin-layout {
+  --layout-header-height: 48px;
+
   min-height: 100vh;
 }
 
@@ -425,7 +476,7 @@ async function submitPassword() {
 
 .brand,
 .child-title {
-  height: 48px;
+  height: var(--layout-header-height);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -435,11 +486,27 @@ async function submitPassword() {
 
 .brand {
   color: #fff;
+  gap: 8px;
+  min-width: 0;
 }
 
 .layout-doubleSide .brand {
   justify-content: center;
   padding: 0;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.brand-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .child-title {
@@ -478,7 +545,7 @@ async function submitPassword() {
 }
 
 .header {
-  height: 56px;
+  height: var(--layout-header-height);
   padding: 0 16px;
   background: #fff;
   display: flex;
@@ -488,9 +555,38 @@ async function submitPassword() {
 }
 
 .top-menu {
+  height: var(--layout-header-height);
   min-width: 0;
   flex: 0 1 auto;
-  border-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.top-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  color: #1f2937;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.top-menu-item:hover,
+.top-menu-item.active {
+  color: #1677ff;
+  background: #e6f4ff;
+}
+
+.top-menu-item :deep(.anticon),
+.top-menu-item :deep(svg) {
+  flex: 0 0 auto;
 }
 
 .breadcrumb {
@@ -511,14 +607,52 @@ async function submitPassword() {
   padding: 16px;
 }
 
-.layout-switch {
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-action-icon,
+.user-menu {
+  height: 32px;
+  color: #1f2937;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.header-action-icon {
+  width: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
-.layout-mix .layout-switch {
-  margin-left: auto;
+.user-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  overflow: hidden;
+  color: #1677ff;
+  font-weight: 600;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #e6f4ff;
+  border-color: #bae0ff;
+}
+
+.header-action-icon:hover,
+.user-menu:hover {
+  color: #1677ff;
+  background: #d9ecff;
+  border-color: #91caff;
 }
 
 .layout-panel {
@@ -548,8 +682,4 @@ async function submitPassword() {
   background: #e6f4ff;
 }
 
-.user-menu {
-  color: #1f2937;
-  white-space: nowrap;
-}
 </style>

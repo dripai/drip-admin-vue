@@ -42,7 +42,8 @@ const columns: TableColumnType[] = [
   { title: '状态', dataIndex: 'status' },
   { title: '备注', dataIndex: 'remark' },
   { title: '创建时间', dataIndex: 'createdAt' },
-  { title: '操作', dataIndex: 'action', width: 260 },
+  { title: '关联用户', dataIndex: 'relatedUsers', width: 100 },
+  { title: '操作', dataIndex: 'action', width: 210 },
 ];
 const table = useTable<RoleItem, Record<string, unknown>>(
   queryRoles as any,
@@ -142,11 +143,12 @@ onMounted(table.refresh);
       <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
+        ><template v-else-if="column.dataIndex === 'relatedUsers'"
+          ><a-button type="link" @click="openUsers(record)">查看</a-button></template
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
             ><a-button type="link" @click="openEdit(record)">编辑</a-button
             ><a-button type="link" @click="openPerm(record)">授权</a-button
-            ><a-button type="link" @click="openUsers(record)">关联用户</a-button
             ><ConfirmAction
               :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"

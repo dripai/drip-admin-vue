@@ -16,6 +16,7 @@ import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.ProfileUpdateRequest;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.vo.AuthLoginVo;
 import com.drip.admin.modules.system.vo.AuthMeVo;
@@ -92,6 +93,13 @@ public class AuthController {
     @PutMapping("/password")
     public ApiResponse<Void> password(@Valid @RequestBody PasswordRequest request) {
         authService.changePassword(currentUserId(), request);
+        return ApiResponse.success(null);
+    }
+
+    @PutMapping("/profile")
+    @OperationLog(module = "个人中心", action = "编辑资料")
+    public ApiResponse<Void> profile(@Valid @RequestBody ProfileUpdateRequest request) {
+        authService.updateProfile(currentUserId(), request);
         return ApiResponse.success(null);
     }
 }

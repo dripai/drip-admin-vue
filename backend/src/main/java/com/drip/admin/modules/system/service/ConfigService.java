@@ -13,4 +13,8 @@ public interface ConfigService extends IService<SysConfigEntity> {
     void update(long id, ConfigSaveRequest request);
     void delete(long id);
     void updateStatus(long id, int status);
+    String requiredValue(String configKey);
+    String valueOrDefault(String configKey, String defaultValue);
+    int requiredInt(String configKey);
+    long requiredLong(String configKey);
 }

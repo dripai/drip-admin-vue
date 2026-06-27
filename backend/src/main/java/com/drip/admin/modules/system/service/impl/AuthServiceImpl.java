@@ -9,6 +9,7 @@ import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.ProfileUpdateRequest;
 import com.drip.admin.modules.system.entity.SysMenuEntity;
 import com.drip.admin.modules.system.entity.SysRoleEntity;
 import com.drip.admin.modules.system.entity.SysRoleMenuEntity;
@@ -68,7 +69,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         String expected = hashPassword(request.password(), user.getPasswordSalt());
         if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
         loginAttemptService.clear(request.username()); Long userId = user.getId(); StpUtil.login(userId); String token = StpUtil.getTokenValue(); LocalDateTime now = LocalDateTime.now();
-        StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token);
+        StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token); StpUtil.getSession().set("username", user.getUsername()); StpUtil.getSession().set("realName", user.getRealName());
         SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setLastLoginAt(now); updateById(update);
         logService.login(userId, request.username(), user.getRealName(), "LOGIN", "SUCCESS", null, servletRequest, request.deviceType());
         onlineSessionService.register(userId, toOnlineMap(user), token, request.deviceType(), idleTimeout, maxDuration, servletRequest);
@@ -85,7 +86,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Override
     public AuthMeVo me(long userId) {
         SysUserEntity user = userDetail(userId);
-        return new AuthMeVo(user.getId(), user.getUsername(), user.getRealName(), user.getAvatar(), user.getDeptId(), roleCodes(userId), permissionCodes(userId), menuTree(userId));
+        return new AuthMeVo(user.getId(), user.getUsername(), user.getRealName(), user.getPhone(), user.getEmail(), user.getAvatar(), user.getDeptId(), roleCodes(userId), permissionCodes(userId), menuTree(userId));
     }
 
     @Override
@@ -94,6 +95,19 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         SysUserEntity user = userDetail(userId); String currentHash = hashPassword(request.oldPassword(), user.getPasswordSalt());
         if (!currentHash.equals(user.getPasswordHash())) throw new BusinessException(400000, "旧密码错误");
         String salt = "salt" + System.nanoTime(); SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setPasswordSalt(salt); update.setPasswordHash(hashPassword(request.newPassword(), salt)); updateById(update);
+    }
+
+    @Override
+    @Transactional
+    public void updateProfile(long userId, ProfileUpdateRequest request) {
+        userDetail(userId);
+        SysUserEntity update = new SysUserEntity();
+        update.setId(userId);
+        update.setRealName(request.realName());
+        update.setPhone(trimToEmpty(request.phone()));
+        update.setEmail(trimToEmpty(request.email()));
+        updateById(update);
+        StpUtil.getSession().set("realName", request.realName());
     }
 
     @Override
@@ -114,6 +128,8 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     }
 
     private SysUserEntity userDetail(long userId) { SysUserEntity user = getById(userId); if (user == null) throw new BusinessException(404000, "operation failed"); return user; }
+
+    private static String trimToEmpty(String value) { return value == null ? "" : value.trim(); }
 
     private List<MenuTreeVo> menuTree(Long userId) {
         List<SysMenuEntity> rows;

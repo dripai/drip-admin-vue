@@ -65,6 +65,8 @@ import static com.drip.admin.shared.utils.AdminUtils.*;
 
 @Service
 public class LogService {
+    private static final int OPERATION_LOG_TEXT_LIMIT = 8192;
+
     private final JdbcTemplate jdbc;
 
     public LogService(JdbcTemplate jdbc) {
@@ -83,11 +85,28 @@ public class LogService {
         String operatorName = null;
     if (StpUtil.isLogin()) {
             userId = currentUserId();
-            operatorName = String.valueOf(userId);
+            String realName = String.valueOf(StpUtil.getSession().get("realName", ""));
+            String username = String.valueOf(StpUtil.getSession().get("username", ""));
+            operatorName = !realName.isBlank() ? realName : (!username.isBlank() ? username : userDisplayName(userId));
         }
         jdbc.update("""
     insert into sys_operation_log (operator_id, operator_name, module, action, method, path, request_params, response_status, error_message, cost_ms)
     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, userId, operatorName, module, action, method, path, requestParams, responseStatus, errorMessage, costMs);
+            """, userId, operatorName, module, action, method, path, limitText(requestParams), responseStatus, limitText(errorMessage), costMs);
+    }
+
+    private static String limitText(String value) {
+        if (value == null || value.length() <= OPERATION_LOG_TEXT_LIMIT) return value;
+        return value.substring(0, OPERATION_LOG_TEXT_LIMIT);
+    }
+
+    private String userDisplayName(Long userId) {
+        if (userId == null) return null;
+        List<String> names = jdbc.query("""
+            select coalesce(nullif(real_name, ''), nullif(username, ''), cast(id as char))
+            from sys_user
+            where id = ? and deleted = 0
+            """, (rs, rowNum) -> rs.getString(1), userId);
+        return names.isEmpty() ? String.valueOf(userId) : names.get(0);
     }
 }

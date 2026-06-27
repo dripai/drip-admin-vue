@@ -19,6 +19,8 @@ export interface CurrentUserResult {
   userId: ID;
   username: string;
   realName: string;
+  phone?: string;
+  email?: string;
   avatar?: string;
   deptId?: ID;
   roles: string[];

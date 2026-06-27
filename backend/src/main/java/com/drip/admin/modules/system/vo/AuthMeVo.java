@@ -6,6 +6,8 @@ public record AuthMeVo(
     Long userId,
     String username,
     String realName,
+    String phone,
+    String email,
     String avatar,
     Long deptId,
     List<String> roles,

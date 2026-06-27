@@ -1,7 +1,7 @@
 import { del, get, post, put } from '@/utils/request';
 import type { ID, PageParams, PageResult } from '@/types/api';
 import type { ConfigItem } from '@/types/system';
-import { booleanNumber, statusValue, withNumericStatus } from './serialize';
+import { statusValue, withNumericStatus } from './serialize';
 export function queryConfigs(params: PageParams & Record<string, unknown>) {
   return get<PageResult<ConfigItem>>('/system/config', { params });
 }
@@ -17,8 +17,12 @@ export function deleteConfig(id: ID) {
 export function updateConfigStatus(id: ID, status: string) {
   return put<void>(`/system/config/${id}/status`, { status: statusValue(status) });
 }
+export function getPublicConfig() {
+  return get<{ systemName: string; logoUrl: string }>('/system/publicConfig');
+}
 
 function configPayload(data: Partial<ConfigItem>) {
-  const payload = withNumericStatus(data as Record<string, unknown>);
-  return { ...payload, isSensitive: booleanNumber(payload.isSensitive) };
+  const { builtin, ...rest } = data;
+  void builtin;
+  return withNumericStatus(rest as Record<string, unknown>);
 }

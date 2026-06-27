@@ -15,6 +15,8 @@ export interface UserProfile {
   id: ID;
   username: string;
   realName: string;
+  phone?: string;
+  email?: string;
   avatar?: string;
   dept?: DeptSummary;
 }
@@ -122,9 +124,9 @@ export interface ConfigItem {
   configName: string;
   configKey: string;
   configValue: string;
-  groupName: string;
-  sensitive: boolean;
+  builtin: number;
   status: Status;
+  remark?: string;
   updatedAt: string;
 }
 export interface LoginLogItem {
@@ -138,18 +140,21 @@ export interface LoginLogItem {
 }
 export interface OperationLogItem {
   id: ID;
-  operator: string;
+  operatorId?: ID;
+  operator?: string;
   module: string;
   action: string;
   method: string;
   path: string;
-  status: 'SUCCESS' | 'FAILED';
+  requestParams?: string;
+  status: 'SUCCESS' | 'FAIL';
+  errorMessage?: string;
   duration: number;
   createdAt: string;
-  detail?: string;
 }
 export interface OnlineUserItem {
-  id: ID;
+  tokenId: string;
+  userId: ID;
   username: string;
   realName: string;
   deviceType: string;

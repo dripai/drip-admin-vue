@@ -14,7 +14,7 @@ export function getLoginLog(id: ID) {
   return get<LoginLogItem>(`/system/loginLog/${id}`);
 }
 export function queryOperationLogs(params: PageParams & Record<string, unknown>) {
-  return get<PageResult<OperationLogItem>>('/system/operationLog', { params });
+  return get<PageResult<OperationLogItem>>('/system/operationLog', { params: operationLogParams(params) });
 }
 export function getOperationLog(id: ID) {
   return get<OperationLogItem>(`/system/operationLog/${id}`);
@@ -27,6 +27,16 @@ function loginLogParams(params: PageParams & Record<string, unknown>) {
     ...rest,
     loginFrom: formatRangeDate(createdRange[0], 'start'),
     loginTo: formatRangeDate(createdRange[1], 'end'),
+  };
+}
+
+function operationLogParams(params: PageParams & Record<string, unknown>) {
+  const { createdRange, ...rest } = params;
+  if (!Array.isArray(createdRange) || createdRange.length !== 2) return rest;
+  return {
+    ...rest,
+    createdFrom: formatRangeDate(createdRange[0], 'start'),
+    createdTo: formatRangeDate(createdRange[1], 'end'),
   };
 }
 

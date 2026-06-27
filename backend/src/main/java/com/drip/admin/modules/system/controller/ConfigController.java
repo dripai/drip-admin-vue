@@ -40,6 +40,14 @@ public class ConfigController {
         return ApiResponse.success(configService.page(query));
     }
 
+    @GetMapping("/publicConfig")
+    public ApiResponse<Map<String, String>> publicConfig() {
+        return ApiResponse.success(Map.of(
+            "systemName", configService.requiredValue("system.name"),
+            "logoUrl", configService.valueOrDefault("system.logo", "")
+        ));
+    }
+
     @PostMapping("/config")
     @RequirePermission("system:config:create")
     @OperationLog(module = "系统配置", action = "新增配置")

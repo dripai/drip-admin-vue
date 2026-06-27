@@ -9,6 +9,8 @@ public record OnlineUserVo(
     String ip,
     String userAgent,
     String loginAt,
-    String lastActiveAt
+    String lastActiveAt,
+    String expireAt,
+    Boolean current
 ) {
 }

@@ -13,3 +13,6 @@ export function getCurrentUserApi() {
 export function changePasswordApi(data: { oldPassword: string; newPassword: string }) {
   return put<void>('/system/password', data);
 }
+export function updateProfileApi(data: { realName: string; phone?: string; email?: string }) {
+  return put<void>('/system/profile', data);
+}

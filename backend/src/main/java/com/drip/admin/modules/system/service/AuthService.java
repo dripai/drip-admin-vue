@@ -3,6 +3,7 @@ package com.drip.admin.modules.system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.drip.admin.modules.system.dto.LoginRequest;
 import com.drip.admin.modules.system.dto.PasswordRequest;
+import com.drip.admin.modules.system.dto.ProfileUpdateRequest;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.vo.AuthLoginVo;
 import com.drip.admin.modules.system.vo.AuthMeVo;
@@ -18,6 +19,8 @@ public interface AuthService extends IService<SysUserEntity> {
     AuthMeVo me(long userId);
 
     void changePassword(long userId, PasswordRequest request);
+
+    void updateProfile(long userId, ProfileUpdateRequest request);
 
     List<String> roleCodes(long userId);
 

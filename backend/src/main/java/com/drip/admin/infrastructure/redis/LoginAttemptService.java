@@ -1,7 +1,7 @@
 package com.drip.admin.infrastructure.redis;
 
 import com.drip.admin.common.exception.BusinessException;
-import org.springframework.beans.factory.annotation.Value;
+import com.drip.admin.modules.system.service.ConfigService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,19 +13,15 @@ public class LoginAttemptService {
     private static final String KEY_PREFIX = "drip:login:fail:";
 
     private final StringRedisTemplate redis;
-    private final int maxFailures;
-    private final long lockSeconds;
+    private final ConfigService configService;
 
-    public LoginAttemptService(StringRedisTemplate redis,
-                               @Value("${drip.login.max-failures}") int maxFailures,
-                               @Value("${drip.login.lock-seconds}") long lockSeconds) {
+    public LoginAttemptService(StringRedisTemplate redis, ConfigService configService) {
         this.redis = redis;
-        this.maxFailures = maxFailures;
-        this.lockSeconds = lockSeconds;
+        this.configService = configService;
     }
 
     public void assertNotLocked(String username) {
-        if (failureCount(username) >= maxFailures) {
+        if (failureCount(username) >= configService.requiredInt("login.maxFailures")) {
             throw new BusinessException(401000, "用户名或密码错误");
         }
     }
@@ -37,7 +33,7 @@ public class LoginAttemptService {
             if (failures == null) {
                 throw new BusinessException(500000, "failed to update login failure limit");
             }
-            redis.expire(key, lockSeconds, TimeUnit.SECONDS);
+            redis.expire(key, configService.requiredLong("login.lockSeconds"), TimeUnit.SECONDS);
         } catch (BusinessException ex) {
             throw ex;
         } catch (RuntimeException ex) {

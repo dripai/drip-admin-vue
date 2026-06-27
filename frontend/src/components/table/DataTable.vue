@@ -12,6 +12,7 @@ const props = defineProps<{
   loading?: boolean;
   pagination?: TablePaginationConfig | false;
   tableKey?: string;
+  rowKey?: string;
   defaultExpandAllRows?: boolean;
   expandedRowKeys?: Array<string | number>;
   tableLayout?: 'auto' | 'fixed';
@@ -106,7 +107,7 @@ function updateDensity(info: { key: string }) {
   </div>
   <a-table
     class="data-table"
-    row-key="id"
+    :row-key="rowKey || 'id'"
     :columns="visibleColumns"
     :data-source="dataSource"
     :loading="loading"

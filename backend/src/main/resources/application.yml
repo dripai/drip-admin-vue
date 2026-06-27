@@ -47,12 +47,6 @@ drip:
   session:
     idle-timeout-seconds: 1800
     max-duration-seconds: 28800
-  login:
-    max-failures: 5
-    lock-seconds: 900
-  upload:
-    max-size-bytes: 10485760
-    allowed-types: image/png,image/jpeg,application/pdf
   database:
     backup-dir: ./backups
     mysqldump-command: mysqldump

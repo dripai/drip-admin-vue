@@ -100,7 +100,7 @@ CREATE TABLE `sys_menu` (
   UNIQUE KEY `uk_sys_menu_permission` (`permission_code`),
   KEY `idx_sys_menu_parent` (`parent_id`),
   KEY `idx_sys_menu_sort` (`sort`)
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_role_menu`
@@ -113,7 +113,7 @@ CREATE TABLE `sys_role_menu` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_role_menu` (`role_id`,`menu_id`),
   KEY `idx_sys_role_menu_menu` (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_dict_type`
@@ -158,8 +158,6 @@ CREATE TABLE `sys_config` (
   `config_name` varchar(64) NOT NULL,
   `config_key` varchar(128) NOT NULL,
   `config_value` varchar(1024) NOT NULL,
-  `group_code` varchar(64) NOT NULL,
-  `is_sensitive` tinyint NOT NULL DEFAULT '0',
   `builtin` tinyint NOT NULL DEFAULT '0',
   `status` tinyint NOT NULL DEFAULT '1',
   `remark` varchar(255) DEFAULT NULL,
@@ -167,9 +165,8 @@ CREATE TABLE `sys_config` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_sys_config_key` (`config_key`),
-  KEY `idx_sys_config_group` (`group_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `uk_sys_config_key` (`config_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_login_log`
@@ -205,7 +202,7 @@ CREATE TABLE `sys_operation_log` (
   `path` varchar(255) NOT NULL,
   `request_params` text,
   `response_status` varchar(16) NOT NULL,
-  `error_message` varchar(512) DEFAULT NULL,
+  `error_message` text,
   `cost_ms` bigint NOT NULL DEFAULT '0',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -296,6 +293,7 @@ INSERT INTO `sys_user_role` (`id`, `user_id`, `role_id`, `created_at`) VALUES (2
 -- Data for `sys_menu`
 -- ----------------------------
 INSERT INTO `sys_menu` (`id`, `parent_id`, `name`, `type`, `path`, `component`, `permission_code`, `icon`, `sort`, `visible`, `status`, `deleted`, `created_at`, `updated_at`) VALUES (1, 0, '系统管理', 'DIRECTORY', '/system', NULL, 'system', 'settings', 1, 1, 1, 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_menu` (`id`, `parent_id`, `name`, `type`, `path`, `component`, `permission_code`, `icon`, `sort`, `visible`, `status`, `deleted`, `created_at`, `updated_at`) VALUES (47, 1, '个人中心', 'MENU', '/system/profile', 'system/profile/index', NULL, 'user', 5, 1, 1, 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 INSERT INTO `sys_menu` (`id`, `parent_id`, `name`, `type`, `path`, `component`, `permission_code`, `icon`, `sort`, `visible`, `status`, `deleted`, `created_at`, `updated_at`) VALUES (2, 1, '用户管理', 'MENU', '/system/user', 'system/user/index', 'system:user:list', 'user', 10, 1, 1, 0, '2026-06-26 12:27:47', '2026-06-26 23:24:45');
 INSERT INTO `sys_menu` (`id`, `parent_id`, `name`, `type`, `path`, `component`, `permission_code`, `icon`, `sort`, `visible`, `status`, `deleted`, `created_at`, `updated_at`) VALUES (3, 2, '用户详情', 'BUTTON', NULL, NULL, 'system:user:detail', NULL, 11, 0, 1, 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 INSERT INTO `sys_menu` (`id`, `parent_id`, `name`, `type`, `path`, `component`, `permission_code`, `icon`, `sort`, `visible`, `status`, `deleted`, `created_at`, `updated_at`) VALUES (4, 2, '新增用户', 'BUTTON', NULL, NULL, 'system:user:create', NULL, 12, 0, 1, 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
@@ -391,6 +389,7 @@ INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `created_at`) VALUES (4
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `created_at`) VALUES (48, 1, 45, '2026-06-26 17:57:08');
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `created_at`) VALUES (49, 1, 46, '2026-06-26 17:57:08');
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `created_at`) VALUES (50, 1, 44, '2026-06-26 17:57:08');
+INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `created_at`) VALUES (51, 1, 47, '2026-06-26 17:57:08');
 
 -- ----------------------------
 -- Data for `sys_dict_type`
@@ -406,9 +405,12 @@ INSERT INTO `sys_dict_item` (`id`, `dict_type_id`, `label`, `value`, `color`, `s
 -- ----------------------------
 -- Data for `sys_config`
 -- ----------------------------
-INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `group_code`, `is_sensitive`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (1, '系统名称', 'system.name', 'Drip Admin', 'system', 0, 1, 1, '后台系统名称', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
-INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `group_code`, `is_sensitive`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (2, '会话最大时长', 'session.maxDuration', '28800', 'security', 0, 1, 1, '秒', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
-INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `group_code`, `is_sensitive`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (3, '数据库备份目录', 'database.backupDir', './backups', 'database', 1, 1, 1, '本地备份目录', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (1, '系统名称', 'system.name', 'Drip Admin', 1, 1, '后台系统名称', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (2, '上传文件大小限制', 'upload.maxSizeBytes', '10485760', 1, 1, '字节', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (3, '上传文件后缀限制', 'upload.allowedExtensions', 'png,jpg,jpeg,pdf', 1, 1, '逗号分隔的文件后缀', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (4, '登录失败锁定次数', 'login.maxFailures', '5', 1, 1, '连续失败次数', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (5, '登录失败锁定时长', 'login.lockSeconds', '900', 1, 1, '秒', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (6, '系统Logo', 'system.logo', '', 1, 1, '图片 URL，为空时使用系统名称缩写', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 
 -- ----------------------------
 -- Data for `sys_login_log`
