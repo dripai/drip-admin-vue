@@ -414,6 +414,7 @@ INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `va
 INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `value_type`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (4, '登录失败锁定次数', 'login.maxFailures', '5', 'number', 1, 1, '连续失败次数', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `value_type`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (5, '登录失败锁定时长', 'login.lockSeconds', '900', 'number', 1, 1, '秒', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `value_type`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (6, '系统Logo', 'system.logo', '', 'string', 1, 1, '图片 URL，为空时使用系统名称缩写', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
+INSERT INTO `sys_config` (`id`, `config_name`, `config_key`, `config_value`, `value_type`, `builtin`, `status`, `remark`, `deleted`, `created_at`, `updated_at`) VALUES (7, '启用水印', 'system.watermark.enabled', 'false', 'boolean', 1, 1, '是否启用系统水印', 0, '2026-06-26 12:27:47', '2026-06-26 12:27:47');
 
 -- ----------------------------
 -- Data for `sys_login_log`

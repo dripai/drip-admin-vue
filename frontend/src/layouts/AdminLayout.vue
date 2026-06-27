@@ -104,6 +104,14 @@ const activeLayout = computed(
 const headerUserText = computed(() =>
   (user.profile?.realName || user.profile?.username || '用户').slice(0, 1),
 );
+const watermarkContent = computed(() =>
+  [user.profile?.realName || user.profile?.username || '', user.profile?.email || ''].filter(
+    Boolean,
+  ),
+);
+const watermarkEnabled = computed(
+  () => appConfig.watermarkEnabled && auth.isLoggedIn && watermarkContent.value.length > 0,
+);
 
 function menuKey(item: MenuNode) {
   return item.path || String(item.id);
@@ -258,7 +266,14 @@ async function submitPassword() {
 }
 </script>
 <template>
-  <a-layout class="admin-layout" :class="`layout-${preferences.layoutMode}`">
+  <a-watermark
+    class="layout-watermark"
+    :content="watermarkEnabled ? watermarkContent : []"
+    :font="{ color: 'rgba(0, 0, 0, 0.08)', fontSize: 15 }"
+    :gap="[160, 120]"
+    :z-index="8"
+  >
+    <a-layout class="admin-layout" :class="`layout-${preferences.layoutMode}`">
     <a-layout-sider
       v-if="preferences.layoutMode !== 'mix'"
       :collapsed="preferences.layoutMode === 'side' && preferences.collapsed"
@@ -405,9 +420,15 @@ async function submitPassword() {
         </a-form-item>
       </a-form>
     </a-modal>
-  </a-layout>
+    </a-layout>
+  </a-watermark>
 </template>
 <style scoped lang="scss">
+.layout-watermark {
+  min-height: 100vh;
+  display: block;
+}
+
 .admin-layout {
   --layout-header-height: 48px;
 

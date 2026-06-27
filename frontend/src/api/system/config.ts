@@ -18,7 +18,7 @@ export function updateConfigStatus(id: ID, status: string) {
   return put<void>(`/system/config/${id}/status`, { status: statusValue(status) });
 }
 export function getPublicConfig() {
-  return get<{ systemName: string; logoUrl: string }>('/system/publicConfig');
+  return get<{ systemName: string; logoUrl: string; watermarkEnabled: string }>('/system/publicConfig');
 }
 
 function configPayload(data: Partial<ConfigItem>) {

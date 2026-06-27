@@ -10,6 +10,7 @@ import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
 import { useTable } from '@/composables/useTable';
 import { formatDateTime } from '@/utils/date';
+import { useAppConfigStore } from '@/stores/appConfig';
 import {
   createConfig,
   deleteConfig,
@@ -48,6 +49,7 @@ const table = useTable<ConfigItem, Record<string, unknown>>(
   {},
   { storageKey: 'system.config.query' },
 );
+const appConfig = useAppConfigStore();
 const open = ref(false);
 const submitting = ref(false);
 const current = ref<ConfigItem>();
@@ -97,6 +99,7 @@ async function submit() {
     message.success('操作成功');
     open.value = false;
     table.refresh();
+    appConfig.load().catch(() => {});
   } finally {
     submitting.value = false;
   }
