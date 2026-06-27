@@ -148,7 +148,7 @@ onMounted(table.refresh);
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
             ><a-button type="link" @click="openEdit(record)">编辑</a-button
-            ><a-button type="link" @click="openPerm(record)">授权</a-button
+            ><a-button type="link" @click="openPerm(record)">分配菜单</a-button
             ><ConfirmAction
               :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
@@ -180,7 +180,7 @@ onMounted(table.refresh);
           ><a-textarea v-model:value="form.remark" /></a-form-item></a-form></FormModal
     ><FormModal
       v-model:open="permOpen"
-      title="角色授权"
+      title="分配菜单"
       :submitting="submitting"
       :width="760"
       @submit="savePerm"

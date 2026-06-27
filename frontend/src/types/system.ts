@@ -97,8 +97,8 @@ export interface DeptItem {
   id: ID;
   parentId?: ID | null;
   deptName: string;
-  leader?: string;
-  phone?: string;
+  deptCode: string;
+  leaderUserId?: ID | null;
   sort: number;
   status: Status;
   children?: DeptItem[];
@@ -124,6 +124,7 @@ export interface ConfigItem {
   configName: string;
   configKey: string;
   configValue: string;
+  valueType: 'string' | 'boolean' | 'number';
   builtin: number;
   status: Status;
   remark?: string;
@@ -194,7 +195,7 @@ export interface DatabaseBackupItem {
 }
 export interface PreferenceState {
   collapsed: boolean;
-  tableSize: 'small' | 'middle' | 'large';
+  tableSize: 'mini' | 'small' | 'middle' | 'large';
   layoutMode: 'side' | 'doubleSide' | 'mix';
 }
 export interface OptionItem {

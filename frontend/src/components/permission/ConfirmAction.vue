@@ -5,8 +5,7 @@ const emit = defineEmits<{ confirm: [] }>();
 <template>
   <a-popconfirm
     :title="title"
-    :ok-text="okText || '确认'"
-    cancel-text="取消"
+    :ok-text="okText"
     @confirm="emit('confirm')"
   >
     <a-button :danger="danger" type="link"><slot /></a-button>

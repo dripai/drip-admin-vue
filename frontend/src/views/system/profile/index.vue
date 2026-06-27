@@ -4,10 +4,13 @@ import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import { updateProfileApi } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth';
+import { usePreferenceStore } from '@/stores/preferences';
 import { useUserStore } from '@/stores/user';
+import type { PreferenceState } from '@/types/system';
 
 const auth = useAuthStore();
 const user = useUserStore();
+const preferences = usePreferenceStore();
 const profileOpen = ref(false);
 const submitting = ref(false);
 
@@ -20,6 +23,17 @@ const profileForm = reactive({
   phone: '',
   email: '',
 });
+const tableDensityOptions: Array<{ label: string; value: PreferenceState['tableSize'] }> = [
+  { label: '迷你', value: 'mini' },
+  { label: '紧凑', value: 'small' },
+  { label: '默认', value: 'middle' },
+  { label: '宽松', value: 'large' },
+];
+const layoutOptions: Array<{ label: string; value: PreferenceState['layoutMode'] }> = [
+  { label: '左侧双列', value: 'doubleSide' },
+  { label: '左侧单列', value: 'side' },
+  { label: '顶部+左侧', value: 'mix' },
+];
 
 function openProfile() {
   Object.assign(profileForm, {
@@ -49,6 +63,14 @@ async function submitProfile() {
     submitting.value = false;
   }
 }
+
+function setTableSize(value: string | number) {
+  preferences.setTableSize(value as PreferenceState['tableSize']);
+}
+
+function setLayoutMode(value: string | number) {
+  preferences.setLayoutMode(value as PreferenceState['layoutMode']);
+}
 </script>
 
 <template>
@@ -65,42 +87,70 @@ async function submitProfile() {
         </div>
       </section>
 
-      <section class="profile-section">
-        <div class="section-title">基本资料</div>
-        <dl class="info-list">
-          <div>
-            <dt>姓名</dt>
-            <dd>{{ user.profile?.realName || '-' }}</dd>
-          </div>
-          <div>
-            <dt>手机号</dt>
-            <dd>{{ user.profile?.phone || '-' }}</dd>
-          </div>
-          <div>
-            <dt>邮箱</dt>
-            <dd>{{ user.profile?.email || '-' }}</dd>
-          </div>
-          <div>
-            <dt>用户名</dt>
-            <dd>{{ user.profile?.username || '-' }}</dd>
-          </div>
-          <div>
-            <dt>用户ID</dt>
-            <dd>{{ user.profile?.id || '-' }}</dd>
-          </div>
-          <div>
-            <dt>部门</dt>
-            <dd>{{ user.profile?.dept?.deptName || '-' }}</dd>
-          </div>
-          <div>
-            <dt>组织角色</dt>
-            <dd class="role-list">
-              <a-tag v-for="role in roleNames" :key="role">{{ role }}</a-tag>
-              <span v-if="!roleNames.length" class="empty-text">-</span>
-            </dd>
-          </div>
-        </dl>
-      </section>
+      <div class="profile-columns">
+        <section class="profile-section">
+          <div class="section-title">基本资料</div>
+          <dl class="info-list">
+            <div>
+              <dt>姓名</dt>
+              <dd>{{ user.profile?.realName || '-' }}</dd>
+            </div>
+            <div>
+              <dt>手机号</dt>
+              <dd>{{ user.profile?.phone || '-' }}</dd>
+            </div>
+            <div>
+              <dt>邮箱</dt>
+              <dd>{{ user.profile?.email || '-' }}</dd>
+            </div>
+            <div>
+              <dt>用户名</dt>
+              <dd>{{ user.profile?.username || '-' }}</dd>
+            </div>
+            <div>
+              <dt>用户ID</dt>
+              <dd>{{ user.profile?.id || '-' }}</dd>
+            </div>
+            <div>
+              <dt>部门</dt>
+              <dd>{{ user.profile?.dept?.deptName || '-' }}</dd>
+            </div>
+            <div>
+              <dt>组织角色</dt>
+              <dd class="role-list">
+                <a-tag v-for="role in roleNames" :key="role">{{ role }}</a-tag>
+                <span v-if="!roleNames.length" class="empty-text">-</span>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-title">个性化</div>
+          <dl class="preference-list">
+            <div>
+              <dt>表格密度</dt>
+              <dd>
+                <a-segmented
+                  :value="preferences.tableSize"
+                  :options="tableDensityOptions"
+                  @change="setTableSize"
+                />
+              </dd>
+            </div>
+            <div>
+              <dt>菜单布局</dt>
+              <dd>
+                <a-segmented
+                  :value="preferences.layoutMode"
+                  :options="layoutOptions"
+                  @change="setLayoutMode"
+                />
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
     </div>
 
     <a-modal
@@ -184,6 +234,13 @@ async function submitProfile() {
   padding: 18px 22px;
 }
 
+.profile-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 14px;
+  align-items: start;
+}
+
 .section-title {
   margin-bottom: 16px;
   color: #101828;
@@ -191,14 +248,16 @@ async function submitProfile() {
   font-weight: 600;
 }
 
-.info-list {
+.info-list,
+.preference-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 34px;
   margin: 0;
 }
 
-.info-list div {
+.info-list div,
+.preference-list div {
   display: flex;
   align-items: flex-start;
   min-width: 0;
@@ -207,20 +266,35 @@ async function submitProfile() {
   border-bottom: 1px solid #f0f2f5;
 }
 
-.info-list dt {
+.info-list dt,
+.preference-list dt {
   flex: 0 0 76px;
   color: #667085;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 24px;
 }
 
-.info-list dd {
+.info-list dd,
+.preference-list dd {
   flex: 1;
   min-width: 0;
   margin: 0;
   color: #101828;
   line-height: 24px;
   overflow-wrap: anywhere;
+}
+
+.preference-list {
+  grid-template-columns: 1fr;
+}
+
+.preference-list dd {
+  line-height: 1;
+}
+
+.preference-list :deep(.ant-segmented) {
+  width: fit-content;
+  max-width: 100%;
 }
 
 .role-list {
@@ -247,8 +321,18 @@ async function submitProfile() {
     width: 100%;
   }
 
-  .info-list {
+  .info-list,
+  .preference-list {
     grid-template-columns: 1fr;
+  }
+
+  .profile-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .preference-list div {
+    display: grid;
+    gap: 8px;
   }
 }
 </style>

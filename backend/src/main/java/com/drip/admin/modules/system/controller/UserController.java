@@ -117,6 +117,14 @@ public class UserController {
         return ApiResponse.success(null);
     }
 
+    @PostMapping("/user/{id}/unlock")
+    @RequirePermission("system:user:unlock")
+    @OperationLog(module = "用户管理", action = "解除登录锁定")
+    public ApiResponse<Void> unlockUser(@PathVariable long id) {
+        userService.unlockLogin(id);
+        return ApiResponse.success(null);
+    }
+
     @PutMapping("/user/{id}/role")
     @RequirePermission("system:user:assignRole")
     @OperationLog(module = "用户管理", action = "分配角色")

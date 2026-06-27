@@ -9,6 +9,7 @@ import FormModal from '@/components/form/FormModal.vue';
 import PermissionButton from '@/components/permission/PermissionButton.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
+import StatusSwitch from '@/components/status/StatusSwitch.vue';
 import { useTable } from '@/composables/useTable';
 import {
   assignUserRoles,
@@ -17,10 +18,11 @@ import {
   listRoleOptions,
   queryUsers,
   resetUserPassword,
+  unlockUserLogin,
   updateUser,
-  updateUserStatus,
 } from '@/api/system/user';
-import type { OptionItem, UserForm, UserItem } from '@/types/system';
+import { getDeptTree } from '@/api/system/dept';
+import type { DeptItem, OptionItem, UserForm, UserItem } from '@/types/system';
 
 const fields = [
   { label: '用户名', field: 'username', component: 'input' as const },
@@ -58,12 +60,14 @@ const assignOpen = ref(false);
 const submitting = ref(false);
 const current = ref<UserItem>();
 const roleOptions = ref<OptionItem[]>([]);
+const deptTree = ref<DeptItem[]>([]);
 const form = reactive<UserForm>({
   username: '',
   realName: '',
   phone: '',
   email: '',
   password: '',
+  deptId: undefined,
   roleIds: [],
   status: 'ENABLED',
 });
@@ -75,6 +79,7 @@ function openCreate() {
     phone: '',
     email: '',
     password: '',
+    deptId: undefined,
     roleIds: [],
     status: 'ENABLED',
   });
@@ -99,6 +104,9 @@ async function loadRoleOptions() {
   const roles = await listRoleOptions();
   roleOptions.value = roles.map((role) => ({ label: role.roleName, value: role.id }));
 }
+async function loadDeptTree() {
+  deptTree.value = await getDeptTree();
+}
 async function submit() {
   submitting.value = true;
   try {
@@ -116,14 +124,13 @@ async function remove(row: UserItem) {
   message.success('操作成功');
   table.refresh();
 }
-async function status(row: UserItem) {
-  await updateUserStatus(row.id, row.status === 'ENABLED' ? 'DISABLED' : 'ENABLED');
-  message.success('操作成功');
-  table.refresh();
-}
 async function reset(row: UserItem) {
   await resetUserPassword(row.id);
   message.success('操作成功');
+}
+async function unlock(row: UserItem) {
+  await unlockUserLogin(row.id);
+  message.success('已解除锁定');
 }
 function openAssign(row: UserItem) {
   current.value = row;
@@ -146,6 +153,7 @@ async function saveAssign() {
 onMounted(() => {
   table.refresh();
   loadRoleOptions();
+  loadDeptTree();
 });
 </script>
 <template>
@@ -182,13 +190,10 @@ onMounted(() => {
           ><a-space>
             <a-button type="link" @click="openEdit(record)">编辑</a-button
             ><a-button type="link" @click="openAssign(record)">分配角色</a-button>
-            <ConfirmAction
-              :title="record.status === 'ENABLED' ? '禁用' : '启用'"
-              @confirm="status(record)"
-              >{{ record.status === 'ENABLED' ? '禁用' : '启用' }}</ConfirmAction
-            >
             <ConfirmAction title="确认重置该用户密码？" @confirm="reset(record)"
               >重置密码</ConfirmAction
+            ><ConfirmAction title="确认解除该用户登录锁定？" @confirm="unlock(record)"
+              >解锁</ConfirmAction
             ><ConfirmAction title="确认删除该用户？" danger @confirm="remove(record)"
               >删除</ConfirmAction
             >
@@ -203,10 +208,21 @@ onMounted(() => {
       @submit="submit"
     >
       <a-form :model="form" layout="vertical"
-        ><a-form-item label="用户名" required><a-input v-model:value="form.username" /></a-form-item
+        ><a-form-item label="用户名" required
+          ><a-input v-model:value="form.username" :disabled="Boolean(current)" /></a-form-item
         ><a-form-item label="姓名" required><a-input v-model:value="form.realName" /></a-form-item
         ><a-form-item label="手机号"><a-input v-model:value="form.phone" /></a-form-item
         ><a-form-item label="邮箱"><a-input v-model:value="form.email" /></a-form-item
+        ><a-form-item label="部门"
+          ><a-tree-select
+            v-model:value="form.deptId"
+            :tree-data="deptTree"
+            :field-names="{ label: 'deptName', value: 'id', children: 'children' }"
+            allow-clear
+            tree-default-expand-all
+            placeholder="请选择部门" /></a-form-item
+        ><a-form-item label="状态"
+          ><StatusSwitch :value="form.status" @change="form.status = $event" /></a-form-item
         ><a-form-item v-if="!current" label="密码" required
           ><a-input-password v-model:value="form.password" /></a-form-item
       ></a-form>

@@ -17,7 +17,11 @@ const props = defineProps<{
   expandedRowKeys?: Array<string | number>;
   tableLayout?: 'auto' | 'fixed';
 }>();
-const emit = defineEmits<{ change: [pagination: TablePaginationConfig]; refresh: [] }>();
+const emit = defineEmits<{
+  change: [pagination: TablePaginationConfig];
+  refresh: [];
+  expandedRowsChange: [keys: Array<string | number>];
+}>();
 const preferences = usePreferenceStore();
 const allColumnKeys = computed(() =>
   props.columns.map((column) => String(column.dataIndex || column.key)),
@@ -51,10 +55,12 @@ const columnOptions = computed(() =>
   })),
 );
 const densityItems = [
+  { key: 'mini', label: '迷你' },
   { key: 'small', label: '紧凑' },
   { key: 'middle', label: '默认' },
   { key: 'large', label: '宽松' },
 ];
+const tableSize = computed(() => (preferences.tableSize === 'mini' ? 'small' : preferences.tableSize));
 function updateColumns(values: Array<string | number | boolean>) {
   checkedKeys.value = values.map(String);
   if (storageKey.value) saveJson(storageKey.value, checkedKeys.value);
@@ -107,16 +113,18 @@ function updateDensity(info: { key: string }) {
   </div>
   <a-table
     class="data-table"
+    :class="{ 'data-table-mini': preferences.tableSize === 'mini' }"
     :row-key="rowKey || 'id'"
     :columns="visibleColumns"
     :data-source="dataSource"
     :loading="loading"
     :pagination="pagination"
-    :size="preferences.tableSize"
+    :size="tableSize"
     :default-expand-all-rows="defaultExpandAllRows"
     :expanded-row-keys="expandedRowKeys"
     :table-layout="tableLayout"
     @change="(p: any) => emit('change', p)"
+    @expandedRowsChange="(keys: any) => emit('expandedRowsChange', keys)"
   >
     <template #bodyCell="scope"><slot name="bodyCell" v-bind="scope" /></template>
     <template #emptyText><a-empty description="暂无数据" /></template>
@@ -156,5 +164,20 @@ function updateDensity(info: { key: string }) {
 }
 .data-table :deep(.table-action-cell .ant-space-item) {
   line-height: 1;
+}
+.data-table-mini :deep(.ant-table-thead > tr > th) {
+  padding: 6px 8px;
+  line-height: 20px;
+}
+.data-table-mini :deep(.ant-table-tbody > tr > td) {
+  padding: 4px 8px;
+  line-height: 20px;
+}
+.data-table-mini :deep(.ant-btn-link) {
+  height: 24px;
+  line-height: 22px;
+}
+.data-table-mini :deep(.ant-tag) {
+  line-height: 18px;
 }
 </style>

@@ -3,7 +3,7 @@ import { loadJson, saveJson } from '@/utils/storage';
 import type { PreferenceState } from '@/types/system';
 
 const KEY = 'drip-admin-preferences';
-const defaults: PreferenceState = { collapsed: false, tableSize: 'middle', layoutMode: 'side' };
+const defaults: PreferenceState = { collapsed: false, tableSize: 'small', layoutMode: 'side' };
 
 export const usePreferenceStore = defineStore('preferences', {
   state: (): PreferenceState => ({ ...defaults, ...loadJson<Partial<PreferenceState>>(KEY, {}) }),

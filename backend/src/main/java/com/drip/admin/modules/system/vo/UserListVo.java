@@ -10,7 +10,7 @@ public record UserListVo(
     String phone,
     String email,
     Integer status,
-    Long deptId,
+    DeptSummaryVo dept,
     List<RoleSummaryVo> roles,
     LocalDateTime createdAt,
     LocalDateTime lastLoginAt

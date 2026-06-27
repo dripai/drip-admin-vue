@@ -36,6 +36,7 @@ const columns: TableColumnType[] = [
   { title: '配置名称', dataIndex: 'configName' },
   { title: '配置键', dataIndex: 'configKey' },
   { title: '配置值', dataIndex: 'configValue' },
+  { title: '值类型', dataIndex: 'valueType', width: 90 },
   { title: '内置', dataIndex: 'builtin', width: 80 },
   { title: '状态', dataIndex: 'status', width: 90 },
   { title: '备注', dataIndex: 'remark' },
@@ -54,15 +55,22 @@ const form = reactive<Partial<ConfigItem>>({
   configName: '',
   configKey: '',
   configValue: '',
+  valueType: 'string',
   status: 'ENABLED',
   remark: '',
 });
+const valueTypeOptions = [
+  { label: '字符串', value: 'string' },
+  { label: '布尔', value: 'boolean' },
+  { label: '数字', value: 'number' },
+];
 
 function resetForm(data: Partial<ConfigItem> = {}) {
   Object.assign(form, {
     configName: '',
     configKey: '',
     configValue: '',
+    valueType: 'string',
     status: 'ENABLED',
     remark: '',
     ...data,
@@ -110,6 +118,28 @@ function formatTime(value?: string) {
   return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '';
 }
 
+function valueTypeLabel(value?: string) {
+  return valueTypeOptions.find((item) => item.value === value)?.label || '字符串';
+}
+
+function setBooleanValue(checked: boolean) {
+  form.configValue = checked ? 'true' : 'false';
+}
+
+function setNumberValue(value: number | null) {
+  form.configValue = value == null ? '' : String(value);
+}
+
+function handleValueTypeChange(value: ConfigItem['valueType']) {
+  form.valueType = value;
+  if (value === 'boolean' && !['true', 'false'].includes(String(form.configValue))) {
+    form.configValue = 'false';
+  }
+  if (value === 'number' && Number.isNaN(Number(form.configValue))) {
+    form.configValue = '';
+  }
+}
+
 onMounted(table.refresh);
 </script>
 <template>
@@ -132,7 +162,11 @@ onMounted(table.refresh);
         <a-button type="primary" @click="add">新增</a-button>
       </template>
       <template #bodyCell="{ column, record }"
-        ><template v-if="column.dataIndex === 'builtin'"
+        ><template v-if="column.dataIndex === 'configValue' && record.valueType === 'boolean'"
+          ><a-tag>{{ record.configValue === 'true' ? '是' : '否' }}</a-tag></template
+        ><template v-else-if="column.dataIndex === 'valueType'"
+          ><a-tag>{{ valueTypeLabel(record.valueType) }}</a-tag></template
+        ><template v-else-if="column.dataIndex === 'builtin'"
           ><a-tag>{{ record.builtin === 1 ? '是' : '否' }}</a-tag></template
         ><template v-else-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
@@ -167,8 +201,24 @@ onMounted(table.refresh);
           ><a-input v-model:value="form.configName" /></a-form-item
         ><a-form-item label="配置键" required
           ><a-input v-model:value="form.configKey" :disabled="Boolean(current)" /></a-form-item
-        ><a-form-item label="配置值"
-          ><a-input v-model:value="form.configValue" /></a-form-item
+        ><a-form-item label="值类型" required
+          ><a-select
+            :value="form.valueType"
+            :options="valueTypeOptions"
+            @change="handleValueTypeChange" /></a-form-item
+        ><a-form-item label="配置值" required
+          ><a-switch
+            v-if="form.valueType === 'boolean'"
+            :checked="form.configValue === 'true'"
+            checked-children="是"
+            un-checked-children="否"
+            @change="setBooleanValue" />
+          <a-input-number
+            v-else-if="form.valueType === 'number'"
+            :value="form.configValue === '' ? null : Number(form.configValue)"
+            style="width: 100%"
+            @change="setNumberValue" />
+          <a-input v-else v-model:value="form.configValue" /></a-form-item
         ><a-form-item label="备注"><a-textarea v-model:value="form.remark" :rows="3" /></a-form-item
       ></a-form></FormModal
   ></PageContainer>

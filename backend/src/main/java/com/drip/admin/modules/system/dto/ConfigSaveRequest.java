@@ -1,6 +1,7 @@
 package com.drip.admin.modules.system.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class ConfigSaveRequest {
@@ -12,10 +13,13 @@ public class ConfigSaveRequest {
     private String configKey;
     @Size(max = 1024, message = "configValue length must be <= 1024")
     private String configValue;
+    @Pattern(regexp = "string|boolean|number", message = "valueType must be string, boolean or number")
+    private String valueType;
     private Integer status; private String remark;
     public String getConfigName() { return configName; } public void setConfigName(String configName) { this.configName = configName; }
     public String getConfigKey() { return configKey; } public void setConfigKey(String configKey) { this.configKey = configKey; }
     public String getConfigValue() { return configValue; } public void setConfigValue(String configValue) { this.configValue = configValue; }
+    public String getValueType() { return valueType; } public void setValueType(String valueType) { this.valueType = valueType; }
     public Integer getStatus() { return status; } public void setStatus(Integer status) { this.status = status; }
     public String getRemark() { return remark; } public void setRemark(String remark) { this.remark = remark; }
 }

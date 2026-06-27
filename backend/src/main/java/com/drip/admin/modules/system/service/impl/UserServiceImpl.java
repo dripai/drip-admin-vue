@@ -1,19 +1,24 @@
 package com.drip.admin.modules.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.modules.system.dto.UserQuery;
 import com.drip.admin.modules.system.dto.UserSaveRequest;
+import com.drip.admin.modules.system.entity.SysDeptEntity;
 import com.drip.admin.modules.system.entity.SysRoleEntity;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.entity.SysUserRoleEntity;
+import com.drip.admin.modules.system.mapper.SysDeptMapper;
 import com.drip.admin.modules.system.mapper.SysRoleMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.UserService;
+import com.drip.admin.modules.system.vo.DeptSummaryVo;
 import com.drip.admin.modules.system.vo.RoleSummaryVo;
 import com.drip.admin.modules.system.vo.UserListVo;
 import org.springframework.stereotype.Service;
@@ -29,12 +34,16 @@ import static com.drip.admin.shared.utils.AdminUtils.hashPassword;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> implements UserService {
+    private final SysDeptMapper deptMapper;
     private final SysRoleMapper roleMapper;
     private final SysUserRoleMapper userRoleMapper;
+    private final LoginAttemptService loginAttemptService;
 
-    public UserServiceImpl(SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper) {
+    public UserServiceImpl(SysDeptMapper deptMapper, SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper, LoginAttemptService loginAttemptService) {
+        this.deptMapper = deptMapper;
         this.roleMapper = roleMapper;
         this.userRoleMapper = userRoleMapper;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
@@ -72,6 +81,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     public Long create(UserSaveRequest request) {
         requireText(request.getUsername(), "username");
         requireText(request.getRealName(), "realName");
+        assertExistingDept(request.getDeptId());
         SysUserEntity entity = new SysUserEntity();
         apply(entity, request);
         String password = request.getPassword() == null || request.getPassword().isBlank() ? "Admin@123456" : request.getPassword();
@@ -88,10 +98,11 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     public void update(long id, UserSaveRequest request) {
         assertNotSuperAdminTarget(id);
         detail(id);
+        assertExistingDept(request.getDeptId());
         SysUserEntity entity = new SysUserEntity();
         entity.setId(id);
         apply(entity, request);
-        updateById(entity);
+        update(entity, new UpdateWrapper<SysUserEntity>().eq("id", id).set("dept_id", request.getDeptId()));
     }
 
     @Override
@@ -113,6 +124,12 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         entity.setId(id);
         entity.setStatus(status);
         updateById(entity);
+    }
+
+    @Override
+    public void unlockLogin(long id) {
+        SysUserEntity user = detail(id);
+        loginAttemptService.unlock(user.getUsername());
     }
 
     @Override
@@ -163,6 +180,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         List<Long> userIds = users.stream().map(SysUserEntity::getId).toList();
         List<SysUserRoleEntity> relations = userRoleMapper.selectList(new QueryWrapper<SysUserRoleEntity>().in("user_id", userIds));
         Map<Long, SysRoleEntity> rolesById = rolesById(relations);
+        Map<Long, SysDeptEntity> deptsById = deptsById(users);
         Map<Long, List<RoleSummaryVo>> rolesByUserId = relations.stream()
             .filter(relation -> rolesById.containsKey(relation.getRoleId()))
             .collect(Collectors.groupingBy(
@@ -177,7 +195,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
                 user.getPhone(),
                 user.getEmail(),
                 user.getStatus(),
-                user.getDeptId(),
+                toDeptSummary(deptsById.get(user.getDeptId())),
                 rolesByUserId.getOrDefault(user.getId(), List.of()),
                 user.getCreatedAt(),
                 user.getLastLoginAt()
@@ -193,6 +211,18 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
             .collect(Collectors.toMap(SysRoleEntity::getId, role -> role));
     }
 
+    private Map<Long, SysDeptEntity> deptsById(List<SysUserEntity> users) {
+        List<Long> deptIds = users.stream().map(SysUserEntity::getDeptId).filter(Objects::nonNull).distinct().toList();
+        if (deptIds.isEmpty()) return Map.of();
+        return deptMapper.selectBatchIds(deptIds).stream()
+            .filter(dept -> Objects.equals(dept.getDeleted(), 0))
+            .collect(Collectors.toMap(SysDeptEntity::getId, dept -> dept));
+    }
+
+    private static DeptSummaryVo toDeptSummary(SysDeptEntity dept) {
+        return dept == null ? null : new DeptSummaryVo(dept.getId(), dept.getDeptName());
+    }
+
     private static RoleSummaryVo toRoleSummary(SysRoleEntity role) {
         return new RoleSummaryVo(role.getId(), role.getRoleName(), role.getRoleCode());
     }
@@ -203,6 +233,12 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         if (uniqueIds.size() != roleIds.size()) throw new BusinessException(400000, "operation failed");
         Long count = roleMapper.selectCount(new QueryWrapper<SysRoleEntity>().in("id", uniqueIds));
         if (count == null || count != uniqueIds.size()) throw new BusinessException(400000, "operation failed");
+    }
+
+    private void assertExistingDept(Long deptId) {
+        if (deptId == null) return;
+        Long count = deptMapper.selectCount(new QueryWrapper<SysDeptEntity>().eq("id", deptId));
+        if (count == null || count == 0) throw new BusinessException(400000, "部门不存在");
     }
 
     private static void apply(SysUserEntity entity, UserSaveRequest request) {

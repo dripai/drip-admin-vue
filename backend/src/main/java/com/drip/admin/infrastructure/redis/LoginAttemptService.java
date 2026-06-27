@@ -22,18 +22,24 @@ public class LoginAttemptService {
 
     public void assertNotLocked(String username) {
         if (failureCount(username) >= configService.requiredInt("login.maxFailures")) {
-            throw new BusinessException(401000, "用户名或密码错误");
+            throw new BusinessException(401000, lockedMessage(username));
         }
     }
 
-    public void recordFailure(String username) {
+    public int recordFailure(String username) {
         String key = key(username);
         try {
             Long failures = redis.opsForValue().increment(key);
             if (failures == null) {
                 throw new BusinessException(500000, "failed to update login failure limit");
             }
-            redis.expire(key, configService.requiredLong("login.lockSeconds"), TimeUnit.SECONDS);
+            long lockSeconds = configService.requiredLong("login.lockSeconds");
+            redis.expire(key, lockSeconds, TimeUnit.SECONDS);
+            int maxFailures = configService.requiredInt("login.maxFailures");
+            if (failures >= maxFailures) {
+                throw new BusinessException(401000, lockedMessage(lockSeconds));
+            }
+            return (int) (maxFailures - failures);
         } catch (BusinessException ex) {
             throw ex;
         } catch (RuntimeException ex) {
@@ -49,6 +55,10 @@ public class LoginAttemptService {
         }
     }
 
+    public void unlock(String username) {
+        clear(username);
+    }
+
     private int failureCount(String username) {
         try {
             String value = redis.opsForValue().get(key(username));
@@ -62,6 +72,38 @@ public class LoginAttemptService {
         } catch (RuntimeException ex) {
             throw new BusinessException(500000, "failed to read login failure limit");
         }
+    }
+
+    private String lockedMessage(String username) {
+        String key = key(username);
+        try {
+            Long seconds = redis.getExpire(key, TimeUnit.SECONDS);
+            if (seconds == null || seconds <= 0) {
+                seconds = configService.requiredLong("login.lockSeconds");
+            }
+            return lockedMessage(seconds);
+        } catch (RuntimeException ex) {
+            throw new BusinessException(500000, "failed to read login failure limit");
+        }
+    }
+
+    private static String lockedMessage(long seconds) {
+        return "账号已锁定，请" + formatDuration(seconds) + "后再试";
+    }
+
+    private static String formatDuration(long seconds) {
+        if (seconds <= 0) {
+            return "稍后";
+        }
+        long minutes = seconds / 60;
+        long remainSeconds = seconds % 60;
+        if (minutes == 0) {
+            return seconds + "秒";
+        }
+        if (remainSeconds == 0) {
+            return minutes + "分钟";
+        }
+        return minutes + "分" + remainSeconds + "秒";
     }
 
     private static String key(String username) {

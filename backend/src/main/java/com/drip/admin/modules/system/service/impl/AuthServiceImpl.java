@@ -62,12 +62,12 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     @Override
     @Transactional
     public AuthLoginVo login(LoginRequest request, HttpServletRequest servletRequest) {
-        loginAttemptService.assertNotLocked(request.username());
         SysUserEntity user = getOne(new QueryWrapper<SysUserEntity>().eq("username", request.username()), false);
-        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
-        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", ACCOUNT_DISABLED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, ACCOUNT_DISABLED_MESSAGE); }
+        if (user == null) { logService.login(null, request.username(), null, "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
+        if (!Objects.equals(user.getStatus(), 1) || Objects.equals(user.getDeleted(), 1)) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", ACCOUNT_DISABLED_MESSAGE, servletRequest, request.deviceType()); throw new BusinessException(401000, ACCOUNT_DISABLED_MESSAGE); }
+        loginAttemptService.assertNotLocked(request.username());
         String expected = hashPassword(request.password(), user.getPasswordSalt());
-        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE); }
+        if (!expected.equals(user.getPasswordHash())) { logService.login(user.getId(), request.username(), user.getRealName(), "LOGIN", "FAIL", LOGIN_FAILED_MESSAGE, servletRequest, request.deviceType()); int remaining = loginAttemptService.recordFailure(request.username()); throw new BusinessException(401000, LOGIN_FAILED_MESSAGE + "，还剩" + remaining + "次机会"); }
         loginAttemptService.clear(request.username()); Long userId = user.getId(); StpUtil.login(userId); String token = StpUtil.getTokenValue(); LocalDateTime now = LocalDateTime.now();
         StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token); StpUtil.getSession().set("username", user.getUsername()); StpUtil.getSession().set("realName", user.getRealName());
         SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setLastLoginAt(now); updateById(update);

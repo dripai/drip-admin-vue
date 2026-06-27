@@ -1,7 +1,7 @@
 import { del, get, post, put } from '@/utils/request';
 import type { ID, PageResult } from '@/types/api';
 import type { RoleSummary, UserForm, UserItem, UserQuery } from '@/types/system';
-import { statusValue, withNumericStatus } from './serialize';
+import { withNumericStatus } from './serialize';
 export function queryUsers(params: UserQuery) {
   return get<PageResult<UserItem>>('/system/user', { params });
 }
@@ -14,8 +14,8 @@ export function updateUser(id: ID, data: UserForm) {
 export function deleteUser(id: ID) {
   return del<void>(`/system/user/${id}`);
 }
-export function updateUserStatus(id: ID, status: string) {
-  return put<void>(`/system/user/${id}/status`, { status: statusValue(status) });
+export function unlockUserLogin(id: ID) {
+  return post<void>(`/system/user/${id}/unlock`, {});
 }
 export function resetUserPassword(id: ID) {
   return post<void>(`/system/user/${id}/resetPassword`, {});

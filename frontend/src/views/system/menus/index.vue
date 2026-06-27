@@ -31,6 +31,7 @@ const loading = ref(false);
 const open = ref(false);
 const submitting = ref(false);
 const current = ref<MenuNode>();
+const expandedRowKeys = ref<ID[]>([]);
 const form = reactive<Partial<MenuNode>>({
   parentId: undefined,
   name: '',
@@ -65,12 +66,12 @@ const columns: TableColumnType[] = [
   { title: '操作', dataIndex: 'action', width: 124, align: 'center' },
 ];
 const parentTreeData = computed(() => buildParentOptions(data.value));
-const expandedRowKeys = computed(() => flattenMenuIds(data.value));
 
 async function load() {
   loading.value = true;
   try {
     data.value = await getMenuTree();
+    expandAll();
   } finally {
     loading.value = false;
   }
@@ -204,6 +205,18 @@ function flattenMenuIds(nodes: MenuNode[]): ID[] {
   ]);
 }
 
+function expandAll() {
+  expandedRowKeys.value = flattenMenuIds(data.value);
+}
+
+function collapseAll() {
+  expandedRowKeys.value = [];
+}
+
+function updateExpandedRows(keys: Array<string | number>) {
+  expandedRowKeys.value = keys as ID[];
+}
+
 onMounted(load);
 </script>
 
@@ -214,14 +227,18 @@ onMounted(load);
       :data-source="data"
       :loading="loading"
       :pagination="false"
-      default-expand-all-rows
       :expanded-row-keys="expandedRowKeys"
       table-layout="fixed"
       table-key="system-menu"
       @refresh="load"
+      @expandedRowsChange="updateExpandedRows"
     >
       <template #toolbarLeft>
-        <a-button type="primary" @click="openCreate">新增</a-button>
+        <a-space>
+          <a-button type="primary" @click="openCreate">新增</a-button>
+          <a-button @click="expandAll">展开</a-button>
+          <a-button @click="collapseAll">收缩</a-button>
+        </a-space>
       </template>
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex === 'type'">

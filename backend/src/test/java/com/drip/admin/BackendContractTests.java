@@ -103,6 +103,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -131,12 +132,23 @@ class BackendContractTests {
 
         when(redis.opsForValue()).thenReturn(values);
         when(values.get("drip:login:fail:demo")).thenReturn("4", "5");
+        when(redis.getExpire("drip:login:fail:demo", TimeUnit.SECONDS)).thenReturn(899L);
         when(configService.requiredInt("login.maxFailures")).thenReturn(5);
 
         assertDoesNotThrow(() -> service.assertNotLocked("Demo"));
         BusinessException error = assertThrows(BusinessException.class, () -> service.assertNotLocked("Demo"));
 
         assertEquals(401000, error.code());
+        assertEquals("账号已锁定，请14分59秒后再试", error.getMessage());
+
+        when(values.increment("drip:login:fail:demo")).thenReturn(5L);
+        when(configService.requiredLong("login.lockSeconds")).thenReturn(900L);
+
+        BusinessException recordError = assertThrows(BusinessException.class, () -> service.recordFailure("Demo"));
+
+        assertEquals(401000, recordError.code());
+        assertEquals("账号已锁定，请15分钟后再试", recordError.getMessage());
+        verify(redis).expire("drip:login:fail:demo", 900L, TimeUnit.SECONDS);
     }
 
     @Test

@@ -16,6 +16,7 @@ public interface UserService extends IService<SysUserEntity> {
     void update(long id, UserSaveRequest request);
     void delete(long id);
     void updateStatus(long id, int status);
+    void unlockLogin(long id);
     void resetPassword(long id, String password);
     void assignRoles(long userId, List<Long> roleIds);
 }

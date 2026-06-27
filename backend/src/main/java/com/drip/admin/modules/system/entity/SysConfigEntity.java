@@ -17,6 +17,8 @@ public class SysConfigEntity {
 
     private String configValue;
 
+    private String valueType;
+
     private Integer builtin;
 
     private Integer status;
@@ -60,6 +62,14 @@ public class SysConfigEntity {
 
     public void setConfigValue(String configValue) {
         this.configValue = configValue;
+    }
+
+    public String getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(String valueType) {
+        this.valueType = valueType;
     }
 
     public Integer getBuiltin() {
