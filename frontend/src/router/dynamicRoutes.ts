@@ -12,5 +12,5 @@ export const pageComponentMap: Record<string, () => Promise<Component>> = {
   'system/operationLog/index': () => import('@/views/system/logs/OperationLogs.vue'),
   'system/onlineUser/index': () => import('@/views/system/online-users/index.vue'),
   'system/job/index': () => import('@/views/system/jobs/index.vue'),
-  'system/database/index': () => import('@/views/system/database/index.vue'),
+  'system/job-history/index': () => import('@/views/system/jobs/JobHistory.vue'),
 };

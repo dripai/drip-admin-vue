@@ -7,7 +7,7 @@ cd "$SCRIPT_DIR"
 
 case "$MODE" in
   dev)
-    mvn spring-boot:run -Dspring-boot.run.profiles=dev,monitor
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev
     ;;
   build)
     mvn clean package

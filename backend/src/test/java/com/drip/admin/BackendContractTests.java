@@ -19,11 +19,12 @@ import com.drip.admin.common.security.SessionInterceptor;
 import com.drip.admin.config.JacksonConfig;
 import com.drip.admin.config.MybatisPlusConfig;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
+import com.drip.admin.infrastructure.external.JobRunner;
+import com.drip.admin.infrastructure.external.JobScriptCatalog;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.entity.SysConfigEntity;
-import com.drip.admin.modules.system.entity.SysDbBackupEntity;
 import com.drip.admin.modules.system.entity.SysDeptEntity;
 import com.drip.admin.modules.system.entity.SysDictItemEntity;
 import com.drip.admin.modules.system.entity.SysDictTypeEntity;
@@ -37,7 +38,6 @@ import com.drip.admin.modules.system.entity.SysRoleMenuEntity;
 import com.drip.admin.modules.system.entity.SysUserEntity;
 import com.drip.admin.modules.system.entity.SysUserRoleEntity;
 import com.drip.admin.modules.system.mapper.SysConfigMapper;
-import com.drip.admin.modules.system.mapper.SysDbBackupMapper;
 import com.drip.admin.modules.system.mapper.SysDeptMapper;
 import com.drip.admin.modules.system.mapper.SysDictItemMapper;
 import com.drip.admin.modules.system.mapper.SysDictTypeMapper;
@@ -53,9 +53,6 @@ import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.AuthService;
 import com.drip.admin.modules.system.service.impl.AuthServiceImpl;
 import com.drip.admin.modules.system.controller.AuthController;
-import com.drip.admin.modules.system.controller.DatabaseBackupController;
-import com.drip.admin.modules.system.service.DatabaseBackupService;
-import com.drip.admin.modules.system.service.impl.DatabaseBackupServiceImpl;
 import com.drip.admin.modules.system.controller.HealthController;
 import com.drip.admin.modules.system.controller.JobController;
 import com.drip.admin.modules.system.service.JobService;
@@ -278,24 +275,16 @@ class BackendContractTests {
     @Test
     void jobControllerDelegatesManualRunToJobService() {
         JobService jobService = mock(JobService.class);
-        JobController controller = new JobController(jobService);
+        JobScriptCatalog jobScriptCatalog = mock(JobScriptCatalog.class);
+        JobRunner jobRunner = mock(JobRunner.class);
+        SysJobEntity job = new SysJobEntity();
+        job.setId(15L);
+        when(jobService.detail(15L)).thenReturn(job);
+        JobController controller = new JobController(jobService, jobScriptCatalog, jobRunner);
 
         controller.runJob(15L);
 
-        verify(jobService).run(15L);
-    }
-
-    @Test
-    void databaseBackupControllerDelegatesRestoreToDatabaseBackupService() {
-        DatabaseBackupService databaseBackupService = mock(DatabaseBackupService.class);
-        DatabaseBackupController controller = new DatabaseBackupController(databaseBackupService);
-
-        DatabaseRestoreRequest request = new DatabaseRestoreRequest();
-        request.setConfirmed(true);
-
-        controller.restoreBackup(21L, request);
-
-        verify(databaseBackupService).restore(eq(21L), argThat(body -> Boolean.TRUE.equals(body.getConfirmed())));
+        verify(jobRunner).submit(job);
     }
 
     @Test
@@ -345,7 +334,6 @@ class BackendContractTests {
         assertOperationLogged(UserController.class, "createUser", UserSaveRequest.class);
         assertOperationLogged(RoleController.class, "rolePermissions", long.class, MenuAssignRequest.class);
         assertOperationLogged(JobController.class, "runJob", long.class);
-        assertOperationLogged(DatabaseBackupController.class, "restoreBackup", long.class, DatabaseRestoreRequest.class);
     }
 
     @Test
@@ -476,6 +464,7 @@ class BackendContractTests {
         assertPermission(SystemLogController.class, "operationLogs", "system:operationLog:list", OperationLogQuery.class);
         assertPermission(JobController.class, "createJob", "system:job:create", JobSaveRequest.class);
         assertPermission(JobController.class, "runJob", "system:job:run", long.class);
+        assertPermission(JobController.class, "jobRunLogs", "system:job:history", JobRunLogQuery.class);
         assertPermission(OnlineUserController.class, "kickout", "system:online:kickout", String.class);
     }
 
@@ -487,6 +476,7 @@ class BackendContractTests {
         assertMapping(SystemLogController.class, "operationLogs", org.springframework.web.bind.annotation.GetMapping.class, "/operationLog", OperationLogQuery.class);
         assertMapping(OnlineUserController.class, "onlineUsers", org.springframework.web.bind.annotation.GetMapping.class, "/onlineUser", OnlineUserQuery.class);
         assertMapping(JobController.class, "jobLogs", org.springframework.web.bind.annotation.GetMapping.class, "/job/{id}/runLog", long.class, JobRunLogQuery.class);
+        assertMapping(JobController.class, "jobRunLogs", org.springframework.web.bind.annotation.GetMapping.class, "/jobRunLog", JobRunLogQuery.class);
     }
 
     @Test
@@ -546,7 +536,6 @@ class BackendContractTests {
             {SysOperationLogEntity.class, SysOperationLogMapper.class, "sys_operation_log"},
             {SysJobEntity.class, SysJobMapper.class, "sys_job"},
             {SysJobRunLogEntity.class, SysJobRunLogMapper.class, "sys_job_run_log"},
-            {SysDbBackupEntity.class, SysDbBackupMapper.class, "sys_db_backup"},
             {SysConfigEntity.class, SysConfigMapper.class, "sys_config"}
         };
         Set<Class<?>> logicDeleteEntities = Set.of(
@@ -560,7 +549,7 @@ class BackendContractTests {
             SysConfigEntity.class
         );
 
-        assertEquals(14, mappings.length);
+        assertEquals(13, mappings.length);
         for (Object[] mapping : mappings) {
             Class<?> entityType = (Class<?>) mapping[0];
             Class<?> mapperType = (Class<?>) mapping[1];

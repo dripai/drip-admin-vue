@@ -19,6 +19,5 @@ ALTER TABLE `sys_login_log` MODIFY COLUMN `id` bigint NOT NULL;
 ALTER TABLE `sys_operation_log` MODIFY COLUMN `id` bigint NOT NULL;
 ALTER TABLE `sys_job` MODIFY COLUMN `id` bigint NOT NULL;
 ALTER TABLE `sys_job_run_log` MODIFY COLUMN `id` bigint NOT NULL;
-ALTER TABLE `sys_db_backup` MODIFY COLUMN `id` bigint NOT NULL;
 
 SET FOREIGN_KEY_CHECKS = 1;

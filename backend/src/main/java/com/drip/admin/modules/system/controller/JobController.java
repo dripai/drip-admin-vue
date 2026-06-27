@@ -4,6 +4,8 @@ import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.infrastructure.external.JobRunner;
+import com.drip.admin.infrastructure.external.JobScriptCatalog;
 import com.drip.admin.modules.system.dto.JobQuery;
 import com.drip.admin.modules.system.dto.JobRunLogQuery;
 import com.drip.admin.modules.system.dto.JobSaveRequest;
@@ -27,9 +29,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/system")
 public class JobController {
     private final JobService jobService;
+    private final JobScriptCatalog jobScriptCatalog;
+    private final JobRunner jobRunner;
 
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService, JobScriptCatalog jobScriptCatalog, JobRunner jobRunner) {
         this.jobService = jobService;
+        this.jobScriptCatalog = jobScriptCatalog;
+        this.jobRunner = jobRunner;
     }
 
     @GetMapping("/job")
@@ -42,6 +48,12 @@ public class JobController {
     @RequirePermission("system:job:list")
     public ApiResponse<SysJobEntity> job(@PathVariable long id) {
         return ApiResponse.success(jobService.detail(id));
+    }
+
+    @GetMapping("/job/scripts")
+    @RequirePermission("system:job:list")
+    public ApiResponse<java.util.List<String>> jobScripts(String executorType) {
+        return ApiResponse.success(jobScriptCatalog.list(executorType));
     }
 
     @PostMapping("/job")
@@ -79,7 +91,7 @@ public class JobController {
     @RequirePermission("system:job:run")
     @OperationLog(module = "定时任务", action = "手动执行任务")
     public ApiResponse<Void> runJob(@PathVariable long id) {
-        jobService.run(id);
+        jobRunner.submit(jobService.detail(id));
         return ApiResponse.success(null);
     }
 
@@ -87,5 +99,11 @@ public class JobController {
     @RequirePermission("system:job:list")
     public ApiResponse<PageResult<SysJobRunLogEntity>> jobLogs(@PathVariable long id, @Valid JobRunLogQuery query) {
         return ApiResponse.success(jobService.runLogs(id, query));
+    }
+
+    @GetMapping("/jobRunLog")
+    @RequirePermission("system:job:history")
+    public ApiResponse<PageResult<SysJobRunLogEntity>> jobRunLogs(@Valid JobRunLogQuery query) {
+        return ApiResponse.success(jobService.runLogs(query));
     }
 }

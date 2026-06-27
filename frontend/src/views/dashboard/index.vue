@@ -25,7 +25,7 @@ const quickLinks = [
   { title: '菜单权限', path: '/system/menu', description: '路由、按钮、权限标识' },
   { title: '系统配置', path: '/system/config', description: '运行参数与敏感配置' },
   { title: '登录日志', path: '/system/loginLog', description: '登录记录与失败原因' },
-  { title: '数据库备份', path: '/system/databaseBackup', description: '备份文件与恢复操作' },
+  { title: '任务历史', path: '/system/jobHistory', description: '定时任务执行记录' },
 ];
 </script>
 

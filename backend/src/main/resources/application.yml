@@ -44,7 +44,12 @@ sa-token:
   is-log: false
 
 drip:
-  database:
-    backup-dir: ./backups
-    mysqldump-command: mysqldump
-    mysql-command: mysql
+  mvc-async:
+    core-pool-size: 8
+    max-pool-size: 32
+    queue-capacity: 200
+  job:
+    scan-delay-ms: 30000
+    worker-pool-size: 4
+    queue-capacity: 100
+    script-dir: ../scripts

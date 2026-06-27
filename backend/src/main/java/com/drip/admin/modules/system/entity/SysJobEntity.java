@@ -13,15 +13,17 @@ public class SysJobEntity {
 
     private String jobName;
 
-    private String jobCode;
-
     private String cronExpression;
 
-    private String beanName;
+    private String executorType;
+
+    private String scriptFile;
+
+    private String scriptArgs;
+
+    private String className;
 
     private String methodName;
-
-    private String params;
 
     private Integer status;
 
@@ -50,14 +52,6 @@ public class SysJobEntity {
         this.jobName = jobName;
     }
 
-    public String getJobCode() {
-        return jobCode;
-    }
-
-    public void setJobCode(String jobCode) {
-        this.jobCode = jobCode;
-    }
-
     public String getCronExpression() {
         return cronExpression;
     }
@@ -66,12 +60,36 @@ public class SysJobEntity {
         this.cronExpression = cronExpression;
     }
 
-    public String getBeanName() {
-        return beanName;
+    public String getExecutorType() {
+        return executorType;
     }
 
-    public void setBeanName(String beanName) {
-        this.beanName = beanName;
+    public void setExecutorType(String executorType) {
+        this.executorType = executorType;
+    }
+
+    public String getScriptFile() {
+        return scriptFile;
+    }
+
+    public void setScriptFile(String scriptFile) {
+        this.scriptFile = scriptFile;
+    }
+
+    public String getScriptArgs() {
+        return scriptArgs;
+    }
+
+    public void setScriptArgs(String scriptArgs) {
+        this.scriptArgs = scriptArgs;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public String getMethodName() {
@@ -80,14 +98,6 @@ public class SysJobEntity {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
-    }
-
-    public String getParams() {
-        return params;
-    }
-
-    public void setParams(String params) {
-        this.params = params;
     }
 
     public Integer getStatus() {

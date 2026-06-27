@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
 import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
@@ -12,16 +12,16 @@ import { useTable } from '@/composables/useTable';
 import {
   createJob,
   deleteJob,
-  queryJobRecords,
+  queryJobScripts,
   queryJobs,
   runJob,
   updateJob,
   updateJobStatus,
 } from '@/api/system/job';
-import type { JobItem, JobRecordItem } from '@/types/system';
+import type { JobItem } from '@/types/system';
 const fields = [
   { label: '任务名称', field: 'jobName', component: 'input' as const },
-  { label: '任务编码', field: 'jobCode', component: 'input' as const },
+  { label: '备注', field: 'remark', component: 'input' as const },
   {
     label: '状态',
     field: 'status',
@@ -35,12 +35,10 @@ const fields = [
 ];
 const columns: TableColumnType[] = [
   { title: '任务名称', dataIndex: 'jobName' },
-  { title: '任务编码', dataIndex: 'jobCode' },
-  { title: 'cron 表达式', dataIndex: 'cron' },
+  { title: '备注', dataIndex: 'remark' },
+  { title: 'cron 表达式', dataIndex: 'cronExpression' },
+  { title: '执行类型', dataIndex: 'executorType' },
   { title: '状态', dataIndex: 'status' },
-  { title: '最近执行时间', dataIndex: 'lastRunAt' },
-  { title: '最近执行结果', dataIndex: 'lastResult' },
-  { title: '下次执行时间', dataIndex: 'nextRunAt' },
   { title: '操作', dataIndex: 'action', width: 260 },
 ];
 const table = useTable<JobItem, Record<string, unknown>>(
@@ -49,24 +47,59 @@ const table = useTable<JobItem, Record<string, unknown>>(
   { storageKey: 'system.jobs.query' },
 );
 const open = ref(false);
-const recordsOpen = ref(false);
-const records = ref<JobRecordItem[]>([]);
 const current = ref<JobItem>();
 const submitting = ref(false);
-const form = reactive<Partial<JobItem>>({ jobName: '', jobCode: '', cron: '', status: 'ENABLED' });
+const scriptFiles = ref<string[]>([]);
+const scriptExecutorTypes = ['shell', 'bat', 'powershell', 'python'];
+const form = reactive<Partial<JobItem>>({
+  jobName: '',
+  remark: '',
+  cronExpression: '',
+  executorType: 'bat',
+  scriptFile: 'mysql-backup.cmd',
+  scriptArgs: '',
+  className: '',
+  methodName: '',
+  status: 'ENABLED',
+});
+const isScriptJob = computed(() => scriptExecutorTypes.includes(form.executorType || ''));
 function add() {
   current.value = undefined;
-  Object.assign(form, { jobName: '', jobCode: '', cron: '', status: 'ENABLED' });
+  Object.assign(form, {
+    jobName: '',
+    remark: '',
+    cronExpression: '',
+    executorType: 'bat',
+    scriptFile: 'mysql-backup.cmd',
+    scriptArgs: '',
+    className: '',
+    methodName: '',
+    status: 'ENABLED',
+  });
   open.value = true;
+  loadScripts();
 }
 function edit(row: JobItem) {
   current.value = row;
   Object.assign(form, row);
   open.value = true;
+  loadScripts();
 }
 async function submit() {
-  if (!form.cron?.trim()) {
+  if (!form.cronExpression?.trim()) {
     message.error('请输入 cron 表达式');
+    return;
+  }
+  if (!form.executorType?.trim()) {
+    message.error('请选择执行类型');
+    return;
+  }
+  if (isScriptJob.value && !form.scriptFile?.trim()) {
+    message.error('请选择脚本文件');
+    return;
+  }
+  if (!isScriptJob.value && !form.className?.trim()) {
+    message.error('请输入方法名');
     return;
   }
   submitting.value = true;
@@ -94,11 +127,17 @@ async function run(row: JobItem) {
   await runJob(row.id);
   message.success('操作成功');
 }
-async function showRecords(row: JobItem) {
-  const res = await queryJobRecords(row.id, { page: 1, pageSize: 10 });
-  records.value = res.list;
-  recordsOpen.value = true;
+async function loadScripts() {
+  if (!isScriptJob.value || !form.executorType) {
+    scriptFiles.value = [];
+    return;
+  }
+  scriptFiles.value = await queryJobScripts(form.executorType);
+  if (form.scriptFile && !scriptFiles.value.includes(form.scriptFile)) {
+    form.scriptFile = undefined;
+  }
 }
+watch(() => form.executorType, loadScripts);
 onMounted(table.refresh);
 </script>
 <template>
@@ -113,7 +152,7 @@ onMounted(table.refresh);
       :columns="columns"
       :data-source="table.dataSource.value"
       :loading="table.loading.value"
-      :pagination="table.pagination.value"
+        :pagination="table.pagination.value"
       table-key="system-jobs"
       @change="table.handleTableChange"
       @refresh="table.refresh"
@@ -128,7 +167,6 @@ onMounted(table.refresh);
             ><a-button type="link" @click="edit(record)">编辑</a-button
             ><ConfirmAction title="确认手动执行该任务？" @confirm="run(record)"
               >手动执行</ConfirmAction
-            ><a-button type="link" @click="showRecords(record)">执行记录</a-button
             ><ConfirmAction
               :title="record.status === 'ENABLED' ? '禁用' : '启用'"
               @confirm="status(record)"
@@ -147,19 +185,36 @@ onMounted(table.refresh);
       ><a-form layout="vertical" :model="form"
         ><a-form-item label="任务名称" required
           ><a-input v-model:value="form.jobName" /></a-form-item
-        ><a-form-item label="任务编码" required
-          ><a-input v-model:value="form.jobCode" /></a-form-item
         ><a-form-item label="cron 表达式" required
-          ><a-input v-model:value="form.cron" /></a-form-item></a-form></FormModal
-    ><a-modal v-model:open="recordsOpen" title="执行记录" :footer="null" width="760"
-      ><a-table
-        row-key="id"
-        :data-source="records"
-        :columns="[
-          { title: '状态', dataIndex: 'status' },
-          { title: '开始时间', dataIndex: 'startedAt' },
-          { title: '结束时间', dataIndex: 'finishedAt' },
-          { title: '消息', dataIndex: 'message' },
-        ]" /></a-modal
+          ><a-input v-model:value="form.cronExpression" /></a-form-item
+        ><a-form-item label="执行类型" required
+          ><a-select v-model:value="form.executorType">
+            <a-select-option value="shell">Shell</a-select-option>
+            <a-select-option value="bat">Bat/Cmd</a-select-option>
+            <a-select-option value="powershell">PowerShell</a-select-option>
+            <a-select-option value="python">Python</a-select-option>
+            <a-select-option value="java">Java</a-select-option>
+          </a-select></a-form-item
+        ><template v-if="isScriptJob">
+          <a-form-item label="脚本文件" required
+            ><a-select v-model:value="form.scriptFile" @focus="loadScripts">
+              <a-select-option v-for="file in scriptFiles" :key="file" :value="file">{{
+                file
+              }}</a-select-option>
+            </a-select></a-form-item
+          ><a-form-item label="脚本参数"
+            ><a-input v-model:value="form.scriptArgs" /></a-form-item
+        ></template>
+        <template v-else>
+          <a-form-item label="方法名" required
+            ><a-input
+              v-model:value="form.className"
+              placeholder="com.drip.admin.infrastructure.external.SystemHealthJob" /></a-form-item
+          ><a-form-item label="参数"
+            ><a-input v-model:value="form.methodName" placeholder="run" /></a-form-item
+        ></template
+        ><a-form-item label="备注"
+          ><a-input v-model:value="form.remark" /></a-form-item
+        ></a-form></FormModal
   ></PageContainer>
 </template>

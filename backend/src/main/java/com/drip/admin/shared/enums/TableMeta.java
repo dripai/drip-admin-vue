@@ -15,8 +15,7 @@ public enum TableMeta {
     SYS_JOB("sys_job", true),
     SYS_LOGIN_LOG("sys_login_log", false),
     SYS_OPERATION_LOG("sys_operation_log", false),
-    SYS_JOB_RUN_LOG("sys_job_run_log", false),
-    SYS_DB_BACKUP("sys_db_backup", false);
+    SYS_JOB_RUN_LOG("sys_job_run_log", false);
 
     public final String table;
     public final boolean softDelete;

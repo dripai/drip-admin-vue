@@ -8,3 +8,9 @@ spring:
     redis:
       host: localhost
       port: 6379
+  boot:
+    admin:
+      server:
+        enabled: false
+      client:
+        enabled: false

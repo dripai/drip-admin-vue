@@ -16,5 +16,7 @@ public interface JobService extends IService<SysJobEntity> {
     void delete(long id);
     void updateStatus(long id, int status);
     void run(long id);
+    void run(SysJobEntity job);
     PageResult<SysJobRunLogEntity> runLogs(long jobId, JobRunLogQuery query);
+    PageResult<SysJobRunLogEntity> runLogs(JobRunLogQuery query);
 }

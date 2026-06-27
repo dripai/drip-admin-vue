@@ -9,7 +9,7 @@ spring:
         url: http://localhost:${server.port}${server.servlet.context-path}/admin
         instance:
           name: ${spring.application.name}
-          service-base-url: http://localhost:${server.port}${server.servlet.context-path}
+          service-base-url: http://localhost:${server.port}
           management-base-url: http://localhost:${server.port}${server.servlet.context-path}
 
 management:

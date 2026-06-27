@@ -149,7 +149,7 @@ export interface OperationLogItem {
   method: string;
   path: string;
   requestParams?: string;
-  status: 'SUCCESS' | 'FAIL';
+  status: 'RUNNING' | 'SUCCESS' | 'FAIL';
   errorMessage?: string;
   duration: number;
   createdAt: string;
@@ -170,29 +170,26 @@ export interface OnlineUserItem {
 export interface JobItem {
   id: ID;
   jobName: string;
-  jobCode: string;
-  cron: string;
+  cronExpression: string;
+  executorType: 'shell' | 'bat' | 'powershell' | 'python' | 'java';
+  scriptFile?: string;
+  scriptArgs?: string;
+  className?: string;
+  methodName: string;
   status: Status;
-  lastRunAt?: string;
-  lastResult?: string;
-  nextRunAt?: string;
+  remark?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 export interface JobRecordItem {
   id: ID;
   jobId: ID;
-  status: 'SUCCESS' | 'FAILED';
+  jobName: string;
+  status: 'RUNNING' | 'SUCCESS' | 'FAIL';
   startedAt: string;
   finishedAt?: string;
-  message?: string;
-}
-export interface DatabaseBackupItem {
-  id: ID;
-  backupName: string;
-  fileSize: number;
-  status: 'SUCCESS' | 'FAILED' | 'RUNNING';
-  createdBy: string;
-  createdAt: string;
-  remark?: string;
+  costMs?: number;
+  errorMessage?: string;
 }
 export interface PreferenceState {
   collapsed: boolean;

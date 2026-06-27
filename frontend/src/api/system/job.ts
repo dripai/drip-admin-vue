@@ -5,6 +5,9 @@ import { statusValue, withNumericStatus } from './serialize';
 export function queryJobs(params: PageParams & Record<string, unknown>) {
   return get<PageResult<JobItem>>('/system/job', { params });
 }
+export function queryJobScripts(executorType: string) {
+  return get<string[]>('/system/job/scripts', { params: { executorType } });
+}
 export function createJob(data: Partial<JobItem>) {
   return post<void>('/system/job', withNumericStatus(data as Record<string, unknown>));
 }
@@ -22,4 +25,7 @@ export function runJob(id: ID) {
 }
 export function queryJobRecords(id: ID, params: PageParams) {
   return get<PageResult<JobRecordItem>>(`/system/job/${id}/runLog`, { params });
+}
+export function queryJobRunLogs(params: PageParams & Record<string, unknown>) {
+  return get<PageResult<JobRecordItem>>('/system/jobRunLog', { params });
 }

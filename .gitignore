@@ -1,5 +1,7 @@
 .vscode/
 backend/backups/
+backups/
+scripts/mysql-client.cnf
 
 # Dependencies
 node_modules/
