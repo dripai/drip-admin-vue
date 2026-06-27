@@ -1,12 +1,9 @@
 import { del, get, post, put } from '@/utils/request';
-import type { ID, PageResult } from '@/types/api';
+import type { ID } from '@/types/api';
 import type { DictItem, DictTypeItem } from '@/types/system';
 import { statusValue, withNumericStatus } from './serialize';
-export async function queryDictTypes() {
-  const page = await get<PageResult<DictTypeItem>>('/system/dict/type', {
-    params: { page: 1, pageSize: 100 },
-  });
-  return page.list;
+export function queryDictTypes() {
+  return get<DictTypeItem[]>('/system/dict/type');
 }
 export function createDictType(data: Partial<DictTypeItem>) {
   return post<void>('/system/dict/type', withNumericStatus(data as Record<string, unknown>));

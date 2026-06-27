@@ -1,9 +1,7 @@
 package com.drip.admin.modules.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.drip.admin.common.response.PageResult;
 import com.drip.admin.modules.system.dto.DictItemSaveRequest;
-import com.drip.admin.modules.system.dto.DictTypeQuery;
 import com.drip.admin.modules.system.dto.DictTypeSaveRequest;
 import com.drip.admin.modules.system.entity.SysDictItemEntity;
 import com.drip.admin.modules.system.entity.SysDictTypeEntity;
@@ -11,7 +9,7 @@ import com.drip.admin.modules.system.entity.SysDictTypeEntity;
 import java.util.List;
 
 public interface DictService extends IService<SysDictTypeEntity> {
-    PageResult<SysDictTypeEntity> types(DictTypeQuery query);
+    List<SysDictTypeEntity> types();
     List<SysDictItemEntity> items(long dictTypeId);
     SysDictTypeEntity typeDetail(long id);
     SysDictItemEntity itemDetail(long id);

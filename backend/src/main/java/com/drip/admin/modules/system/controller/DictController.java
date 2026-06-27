@@ -2,10 +2,8 @@ package com.drip.admin.modules.system.controller;
 
 import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.response.ApiResponse;
-import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
 import com.drip.admin.modules.system.dto.DictItemSaveRequest;
-import com.drip.admin.modules.system.dto.DictTypeQuery;
 import com.drip.admin.modules.system.dto.DictTypeSaveRequest;
 import com.drip.admin.modules.system.dto.StatusUpdateRequest;
 import com.drip.admin.modules.system.entity.SysDictItemEntity;
@@ -35,8 +33,8 @@ public class DictController {
 
     @GetMapping("/dict/type")
     @RequirePermission("system:dict:list")
-    public ApiResponse<PageResult<SysDictTypeEntity>> dictTypes(@Valid DictTypeQuery query) {
-        return ApiResponse.success(dictService.types(query));
+    public ApiResponse<List<SysDictTypeEntity>> dictTypes() {
+        return ApiResponse.success(dictService.types());
     }
 
     @PostMapping("/dict/type")
