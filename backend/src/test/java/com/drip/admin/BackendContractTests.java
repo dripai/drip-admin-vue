@@ -91,6 +91,8 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.mockito.MockedStatic;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -350,12 +352,17 @@ class BackendContractTests {
     @Test
     void jacksonSerializesLongIdsAsStrings() throws Exception {
         record LongIdPayload(Long id, long parentId) {}
+        JacksonConfig jacksonConfig = new JacksonConfig();
 
-        String json = new JacksonConfig().objectMapper()
-            .writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+        String json = jacksonConfig.objectMapper().writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        jacksonConfig.extendMessageConverters(List.<HttpMessageConverter<?>>of(converter));
+        String mvcJson = converter.getObjectMapper().writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
 
         assertTrue(json.contains("\"id\":\"1781234567890123456\""));
         assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
+        assertTrue(mvcJson.contains("\"id\":\"1781234567890123456\""));
+        assertTrue(mvcJson.contains("\"parentId\":\"1781234567890123457\""));
     }
 
     @Test
