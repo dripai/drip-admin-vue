@@ -56,7 +56,8 @@ const usersOpen = ref(false);
 const submitting = ref(false);
 const current = ref<RoleItem>();
 const menus = ref<MenuNode[]>([]);
-const checkedKeys = ref<ID[]>([]);
+type TreeCheckedKeys = ID[] | { checked?: ID[]; halfChecked?: ID[] };
+const checkedKeys = ref<TreeCheckedKeys>([]);
 const relatedUsers = ref<UserItem[]>([]);
 const form = reactive<RoleForm>({ roleName: '', roleCode: '', status: 'ENABLED', remark: '' });
 function openCreate() {
@@ -108,7 +109,7 @@ async function savePerm() {
   submitting.value = true;
   try {
     await saveRolePermissions(current.value.id, {
-      menuIds: checkedKeys.value.filter((k) => typeof k !== 'string'),
+      menuIds: normalizeCheckedKeys(checkedKeys.value),
       permissionCodes: [],
     });
     message.success('操作成功');
@@ -116,6 +117,10 @@ async function savePerm() {
   } finally {
     submitting.value = false;
   }
+}
+function normalizeCheckedKeys(value: TreeCheckedKeys) {
+  const keys = Array.isArray(value) ? value : value.checked || [];
+  return keys.filter((key): key is number => typeof key === 'number');
 }
 onMounted(table.refresh);
 </script>
