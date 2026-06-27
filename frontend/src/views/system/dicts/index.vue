@@ -43,13 +43,20 @@ const itemColumns = [
 ];
 async function loadTypes() {
   types.value = await queryDictTypes();
-  if (!currentType.value && types.value[0]) selectType(types.value[0]);
+  const selected = types.value.find((item) => currentType.value && item.id === currentType.value.id);
+  if (selected) selectType(selected);
+  else if (types.value[0]) selectType(types.value[0]);
+  else {
+    currentType.value = undefined;
+    items.value = [];
+  }
 }
 async function selectType(row: DictTypeItem) {
   currentType.value = row;
-  items.value = await queryDictItems(row.dictCode);
+  items.value = await queryDictItems(row.id);
 }
 function addType() {
+  delete typeForm.id;
   Object.assign(typeForm, { dictName: '', dictCode: '', status: 'ENABLED' });
   typeOpen.value = true;
 }
@@ -78,8 +85,10 @@ async function removeType() {
   loadTypes();
 }
 function addItem() {
+  currentItem.value = undefined;
+  delete itemForm.id;
   Object.assign(itemForm, {
-    typeCode: currentType.value?.dictCode,
+    dictTypeId: currentType.value?.id,
     label: '',
     value: '',
     color: '',
@@ -116,7 +125,7 @@ async function refresh() {
 }
 async function reloadItems() {
   if (!currentType.value) return;
-  items.value = await queryDictItems(currentType.value.dictCode);
+  items.value = await queryDictItems(currentType.value.id);
 }
 onMounted(loadTypes);
 </script>
@@ -166,7 +175,7 @@ onMounted(loadTypes);
       ></a-row
     ><FormModal
       v-model:open="typeOpen"
-      :title="currentType ? '编辑字典类型' : '新增字典类型'"
+      :title="typeForm.id ? '编辑字典类型' : '新增字典类型'"
       :submitting="submitting"
       @submit="saveType"
       ><a-form layout="vertical" :model="typeForm"
@@ -176,7 +185,7 @@ onMounted(loadTypes);
           ><a-input v-model:value="typeForm.dictCode" /></a-form-item></a-form></FormModal
     ><FormModal
       v-model:open="itemOpen"
-      title="新增字典项"
+      :title="currentItem ? '编辑字典项' : '新增字典项'"
       :submitting="submitting"
       @submit="saveItem"
       ><a-form layout="vertical" :model="itemForm"

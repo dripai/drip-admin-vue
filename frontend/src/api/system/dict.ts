@@ -1,9 +1,12 @@
 import { del, get, post, put } from '@/utils/request';
-import type { ID } from '@/types/api';
+import type { ID, PageResult } from '@/types/api';
 import type { DictItem, DictTypeItem } from '@/types/system';
 import { statusValue, withNumericStatus } from './serialize';
-export function queryDictTypes() {
-  return get<DictTypeItem[]>('/system/dict/type');
+export async function queryDictTypes() {
+  const page = await get<PageResult<DictTypeItem>>('/system/dict/type', {
+    params: { page: 1, pageSize: 1000 },
+  });
+  return page.list;
 }
 export function createDictType(data: Partial<DictTypeItem>) {
   return post<void>('/system/dict/type', withNumericStatus(data as Record<string, unknown>));
@@ -14,8 +17,8 @@ export function updateDictType(id: ID, data: Partial<DictTypeItem>) {
 export function deleteDictType(id: ID) {
   return del<void>(`/system/dict/type/${id}`);
 }
-export function queryDictItems(typeCode: string) {
-  return get<DictItem[]>(`/system/dict/type/${typeCode}/item`);
+export function queryDictItems(dictTypeId: ID) {
+  return get<DictItem[]>(`/system/dict/type/${dictTypeId}/item`);
 }
 export function createDictItem(data: Partial<DictItem>) {
   return post<void>('/system/dict/item', withNumericStatus(data as Record<string, unknown>));

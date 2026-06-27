@@ -112,6 +112,7 @@ export interface DictTypeItem {
 }
 export interface DictItem {
   id: ID;
+  dictTypeId?: ID;
   typeCode: string;
   label: string;
   value: string;
