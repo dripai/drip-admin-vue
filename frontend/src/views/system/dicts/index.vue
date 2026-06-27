@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import type { TableColumnType } from 'ant-design-vue';
 import { message } from 'ant-design-vue';
+import {
+  EditOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
@@ -29,17 +35,18 @@ const typeForm = reactive<Partial<DictTypeItem>>({ dictName: '', dictCode: '', s
 const itemForm = reactive<Partial<DictItem>>({
   label: '',
   value: '',
-  color: '',
+  isDefault: 0,
   sort: 0,
   status: 'ENABLED',
+  builtin: 0,
 });
-const itemColumns = [
+const itemColumns: TableColumnType[] = [
   { title: '标签', dataIndex: 'label' },
   { title: '字典值', dataIndex: 'value' },
-  { title: '颜色', dataIndex: 'color' },
+  { title: '默认值', dataIndex: 'isDefault' },
   { title: '排序', dataIndex: 'sort' },
   { title: '状态', dataIndex: 'status' },
-  { title: '操作', dataIndex: 'action' },
+  { title: '操作', dataIndex: 'action', width: 120 },
 ];
 async function loadTypes() {
   types.value = await queryDictTypes();
@@ -57,7 +64,7 @@ async function selectType(row: DictTypeItem) {
 }
 function addType() {
   delete typeForm.id;
-  Object.assign(typeForm, { dictName: '', dictCode: '', status: 'ENABLED' });
+  Object.assign(typeForm, { dictName: '', dictCode: '', status: 'ENABLED', builtin: 0 });
   typeOpen.value = true;
 }
 function editType() {
@@ -79,6 +86,10 @@ async function saveType() {
 }
 async function removeType() {
   if (!currentType.value) return;
+  if (currentType.value.builtin === 1) {
+    message.warning('内置字典类型不能删除');
+    return;
+  }
   await deleteDictType(currentType.value.id);
   message.success('操作成功');
   currentType.value = undefined;
@@ -91,9 +102,10 @@ function addItem() {
     dictTypeId: currentType.value?.id,
     label: '',
     value: '',
-    color: '',
+    isDefault: 0,
     sort: 0,
     status: 'ENABLED',
+    builtin: 0,
   });
   itemOpen.value = true;
 }
@@ -115,6 +127,10 @@ async function saveItem() {
   }
 }
 async function removeItem(row: DictItem) {
+  if (row.builtin === 1) {
+    message.warning('内置字典项不能删除');
+    return;
+  }
   await deleteDictItem(row.id);
   message.success('操作成功');
   if (currentType.value) selectType(currentType.value);
@@ -130,76 +146,223 @@ async function reloadItems() {
 onMounted(loadTypes);
 </script>
 <template>
-  <PageContainer
-    ><a-row :gutter="16"
-      ><a-col :span="8"
-        ><div class="page-actions">
-          <a-button type="primary" @click="addType">新增字典类型</a-button
-          ><a-button :disabled="!currentType" @click="editType">编辑字典类型</a-button
-          ><ConfirmAction title="删除字典类型" danger @confirm="removeType">删除</ConfirmAction>
+  <PageContainer>
+    <div class="dict-layout">
+      <aside class="dict-types">
+        <div class="panel-header">
+          <div class="panel-title">字典类型</div>
+          <a-space :size="8">
+            <a-button type="primary" @click="addType"><PlusOutlined />新增</a-button>
+            <a-button :disabled="!currentType" @click="editType"><EditOutlined />编辑</a-button>
+            <ConfirmAction
+              title="删除字典类型"
+              danger
+              :disabled="!currentType || currentType.builtin === 1"
+              @confirm="removeType">
+              删除
+            </ConfirmAction>
+          </a-space>
         </div>
-        <a-list bordered :data-source="types"
-          ><template #renderItem="{ item }"
-            ><a-list-item :class="{ active: currentType?.id === item.id }" @click="selectType(item)"
-              >{{ item.dictName
-              }}<span class="text-muted"> / {{ item.dictCode }}</span></a-list-item
-            ></template
-          ></a-list
-        ></a-col
-      ><a-col :span="16"
-        ><DataTable
+        <div class="type-list">
+          <button
+            v-for="item in types"
+            :key="item.id"
+            class="type-item"
+            :class="{ active: currentType?.id === item.id }"
+            type="button"
+            @click="selectType(item)">
+            <span class="type-main">
+              <span class="type-name">{{ item.dictName }}</span>
+              <a-tag v-if="item.builtin === 1" class="builtin-tag">内置</a-tag>
+            </span>
+            <span class="type-code">{{ item.dictCode }}</span>
+          </button>
+          <a-empty v-if="types.length === 0" :image="undefined" description="暂无字典类型" />
+        </div>
+      </aside>
+      <section class="dict-items">
+        <div class="panel-header item-header">
+          <div class="panel-title">{{ currentType?.dictName || '字典项' }}</div>
+          <a-space>
+            <a-button :disabled="!currentType" @click="refresh"><ReloadOutlined />刷新缓存</a-button>
+            <a-button type="primary" :disabled="!currentType" @click="addItem"
+              ><PlusOutlined />新增</a-button
+            >
+          </a-space>
+        </div>
+        <DataTable
           :data-source="items"
           :columns="itemColumns"
           :pagination="false"
           table-key="system-dict-item"
-          @refresh="reloadItems"
-          ><template #toolbarLeft>
-            <a-space>
-              <a-button type="primary" :disabled="!currentType" @click="addItem">新增</a-button
-              ><a-button :disabled="!currentType" @click="refresh">刷新缓存</a-button>
-            </a-space>
-          </template>
-          <template #bodyCell="{ column, record }"
-            ><template v-if="column.dataIndex === 'status'"
-              ><StatusTag :status="record.status" /></template
-            ><template v-else-if="column.dataIndex === 'action'"
-              ><a-space
-                ><a-button type="link" @click="editItem(record)">编辑</a-button
-                ><ConfirmAction title="删除字典项？" danger @confirm="removeItem(record)"
+          @refresh="reloadItems">
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.dataIndex === 'isDefault'">
+              <a-tag v-if="record.isDefault === 1" color="blue">是</a-tag>
+              <span v-else>-</span>
+            </template>
+            <template v-else-if="column.dataIndex === 'status'">
+              <StatusTag :status="record.status" />
+            </template>
+            <template v-else-if="column.dataIndex === 'action'">
+              <a-space>
+                <a-button type="link" @click="editItem(record)">编辑</a-button>
+                <ConfirmAction
+                  title="删除字典项？"
+                  danger
+                  :disabled="record.builtin === 1"
+                  @confirm="removeItem(record)"
                   >删除</ConfirmAction
-                ></a-space
-              ></template
-            ></template
-          ></DataTable
-        ></a-col
-      ></a-row
-    ><FormModal
+                >
+              </a-space>
+            </template>
+          </template>
+        </DataTable>
+      </section>
+    </div>
+    <FormModal
       v-model:open="typeOpen"
       :title="typeForm.id ? '编辑字典类型' : '新增字典类型'"
       :submitting="submitting"
-      @submit="saveType"
-      ><a-form layout="vertical" :model="typeForm"
-        ><a-form-item label="字典名称" required
-          ><a-input v-model:value="typeForm.dictName" /></a-form-item
-        ><a-form-item label="字典编码" required
-          ><a-input v-model:value="typeForm.dictCode" /></a-form-item></a-form></FormModal
-    ><FormModal
+      @submit="saveType">
+      <a-form layout="vertical" :model="typeForm">
+        <a-form-item label="字典名称" required>
+          <a-input v-model:value="typeForm.dictName" />
+        </a-form-item>
+        <a-form-item label="字典编码" required>
+          <a-input v-model:value="typeForm.dictCode" />
+        </a-form-item>
+      </a-form>
+    </FormModal>
+    <FormModal
       v-model:open="itemOpen"
       :title="currentItem ? '编辑字典项' : '新增字典项'"
       :submitting="submitting"
-      @submit="saveItem"
-      ><a-form layout="vertical" :model="itemForm"
-        ><a-form-item label="字典标签" required
-          ><a-input v-model:value="itemForm.label" /></a-form-item
-        ><a-form-item label="字典值" required
-          ><a-input v-model:value="itemForm.value" /></a-form-item
-        ><a-form-item label="颜色"
-          ><a-input v-model:value="itemForm.color" /></a-form-item></a-form></FormModal
-  ></PageContainer>
+      @submit="saveItem">
+      <a-form layout="vertical" :model="itemForm">
+        <a-form-item label="字典标签" required>
+          <a-input v-model:value="itemForm.label" />
+        </a-form-item>
+        <a-form-item label="字典值" required>
+          <a-input v-model:value="itemForm.value" />
+        </a-form-item>
+        <a-form-item label="是否默认值">
+          <a-switch
+            :checked="itemForm.isDefault === 1"
+            checked-children="是"
+            un-checked-children="否"
+            @change="(checked: boolean) => (itemForm.isDefault = checked ? 1 : 0)" />
+        </a-form-item>
+        <a-form-item label="排序">
+          <a-input-number v-model:value="itemForm.sort" :min="0" class="form-number" />
+        </a-form-item>
+        <a-form-item label="状态">
+          <a-select v-model:value="itemForm.status">
+            <a-select-option value="ENABLED">启用</a-select-option>
+            <a-select-option value="DISABLED">禁用</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </FormModal>
+  </PageContainer>
 </template>
-<style scoped>
-.active {
-  background: #eef4ff;
+<style scoped lang="scss">
+.dict-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.dict-types,
+.dict-items {
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+.dict-types {
+  overflow: hidden;
+}
+.dict-items {
+  padding: 14px 16px 16px;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.item-header {
+  margin: -14px -16px 12px;
+}
+.panel-title {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+.type-list {
+  max-height: calc(100vh - 250px);
+  min-height: 220px;
+  overflow: auto;
+  padding: 8px;
+}
+.type-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
+  text-align: left;
+}
+.type-item:hover {
+  background: #f8fafc;
+}
+.type-item.active {
+  border-color: #91caff;
+  background: #e6f4ff;
+}
+.type-main {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+}
+.type-name {
+  overflow: hidden;
+  color: #111827;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.type-code {
+  overflow: hidden;
+  max-width: 48%;
+  color: #6b7280;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.builtin-tag {
+  margin-inline-end: 0;
+}
+.form-number {
+  width: 100%;
+}
+@media (max-width: 960px) {
+  .dict-layout {
+    grid-template-columns: 1fr;
+  }
+  .type-list {
+    max-height: none;
+  }
 }
 </style>

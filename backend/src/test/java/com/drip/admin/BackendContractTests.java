@@ -543,8 +543,6 @@ class BackendContractTests {
             SysRoleEntity.class,
             SysMenuEntity.class,
             SysDeptEntity.class,
-            SysDictTypeEntity.class,
-            SysDictItemEntity.class,
             SysJobEntity.class,
             SysConfigEntity.class
         );

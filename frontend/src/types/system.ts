@@ -108,6 +108,7 @@ export interface DictTypeItem {
   dictName: string;
   dictCode: string;
   status: Status;
+  builtin?: number;
   remark?: string;
 }
 export interface DictItem {
@@ -116,9 +117,10 @@ export interface DictItem {
   typeCode: string;
   label: string;
   value: string;
-  color?: string;
+  isDefault?: number;
   sort: number;
   status: Status;
+  builtin?: number;
 }
 export interface ConfigItem {
   id: ID;

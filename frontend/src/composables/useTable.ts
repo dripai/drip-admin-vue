@@ -49,9 +49,9 @@ export function useTable<T, Q extends Record<string, unknown>>(
     try {
       const result = await loader({ ...toRaw(query), page: page.value, pageSize: pageSize.value });
       dataSource.value = result.list;
-      total.value = result.total;
-      page.value = result.page;
-      pageSize.value = result.pageSize;
+      total.value = normalizeNumber(result.total, 0);
+      page.value = normalizeNumber(result.page, 1);
+      pageSize.value = normalizePageSize(result.pageSize);
       persist();
     } finally {
       loading.value = false;
@@ -76,6 +76,11 @@ export function useTable<T, Q extends Record<string, unknown>>(
   return { query, dataSource, loading, pagination, refresh, search, reset, handleTableChange };
 }
 
-function normalizePageSize(value?: number) {
+function normalizePageSize(value?: number | string) {
   return PAGE_SIZE_OPTIONS.includes(String(value)) ? Number(value) : DEFAULT_PAGE_SIZE;
+}
+
+function normalizeNumber(value: unknown, defaultValue: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
 }

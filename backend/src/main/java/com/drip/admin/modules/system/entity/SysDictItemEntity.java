@@ -2,7 +2,6 @@ package com.drip.admin.modules.system.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 
@@ -17,14 +16,13 @@ public class SysDictItemEntity {
 
     private String value;
 
-    private String color;
+    private Integer isDefault;
 
     private Integer sort;
 
     private Integer status;
 
-    @TableLogic(value = "0", delval = "1")
-    private Integer deleted;
+    private Integer builtin;
 
     private LocalDateTime createdAt;
 
@@ -62,12 +60,12 @@ public class SysDictItemEntity {
         this.value = value;
     }
 
-    public String getColor() {
-        return color;
+    public Integer getIsDefault() {
+        return isDefault;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setIsDefault(Integer isDefault) {
+        this.isDefault = isDefault;
     }
 
     public Integer getSort() {
@@ -86,12 +84,12 @@ public class SysDictItemEntity {
         this.status = status;
     }
 
-    public Integer getDeleted() {
-        return deleted;
+    public Integer getBuiltin() {
+        return builtin;
     }
 
-    public void setDeleted(Integer deleted) {
-        this.deleted = deleted;
+    public void setBuiltin(Integer builtin) {
+        this.builtin = builtin;
     }
 
     public LocalDateTime getCreatedAt() {

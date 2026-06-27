@@ -2,7 +2,6 @@ package com.drip.admin.modules.system.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 
@@ -17,10 +16,9 @@ public class SysDictTypeEntity {
 
     private Integer status;
 
-    private String remark;
+    private Integer builtin;
 
-    @TableLogic(value = "0", delval = "1")
-    private Integer deleted;
+    private String remark;
 
     private LocalDateTime createdAt;
 
@@ -58,20 +56,20 @@ public class SysDictTypeEntity {
         this.status = status;
     }
 
+    public Integer getBuiltin() {
+        return builtin;
+    }
+
+    public void setBuiltin(Integer builtin) {
+        this.builtin = builtin;
+    }
+
     public String getRemark() {
         return remark;
     }
 
     public void setRemark(String remark) {
         this.remark = remark;
-    }
-
-    public Integer getDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(Integer deleted) {
-        this.deleted = deleted;
     }
 
     public LocalDateTime getCreatedAt() {

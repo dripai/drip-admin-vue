@@ -9,5 +9,5 @@ const item = computed(() =>
 );
 </script>
 <template>
-  <a-tag :color="item?.color">{{ item?.label || value || '-' }}</a-tag>
+  <a-tag>{{ item?.label || value || '-' }}</a-tag>
 </template>
