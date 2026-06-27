@@ -32,7 +32,7 @@ mybatis-plus:
     map-underscore-to-camel-case: true
   global-config:
     db-config:
-      id-type: auto
+      id-type: assign_id
 
 sa-token:
   token-name: Authorization

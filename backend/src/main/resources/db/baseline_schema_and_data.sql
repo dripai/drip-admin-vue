@@ -8,7 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Table structure for `sys_dept`
 -- ----------------------------
 CREATE TABLE `sys_dept` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `parent_id` bigint NOT NULL DEFAULT '0',
   `dept_name` varchar(64) NOT NULL,
   `dept_code` varchar(64) NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE `sys_dept` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_dept_code` (`dept_code`),
   KEY `idx_sys_dept_parent` (`parent_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_user`
 -- ----------------------------
 CREATE TABLE `sys_user` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `username` varchar(64) NOT NULL,
   `password_hash` varchar(128) NOT NULL,
   `password_salt` varchar(64) NOT NULL,
@@ -46,13 +46,13 @@ CREATE TABLE `sys_user` (
   UNIQUE KEY `uk_sys_user_username` (`username`),
   KEY `idx_sys_user_dept` (`dept_id`),
   KEY `idx_sys_user_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_role`
 -- ----------------------------
 CREATE TABLE `sys_role` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `role_name` varchar(64) NOT NULL,
   `role_code` varchar(64) NOT NULL,
   `builtin` tinyint NOT NULL DEFAULT '0',
@@ -63,26 +63,26 @@ CREATE TABLE `sys_role` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_role_code` (`role_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_user_role`
 -- ----------------------------
 CREATE TABLE `sys_user_role` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `user_id` bigint NOT NULL,
   `role_id` bigint NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_user_role` (`user_id`,`role_id`),
   KEY `idx_sys_user_role_role` (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_menu`
 -- ----------------------------
 CREATE TABLE `sys_menu` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `parent_id` bigint NOT NULL DEFAULT '0',
   `name` varchar(64) NOT NULL,
   `type` varchar(16) NOT NULL,
@@ -100,26 +100,26 @@ CREATE TABLE `sys_menu` (
   UNIQUE KEY `uk_sys_menu_permission` (`permission_code`),
   KEY `idx_sys_menu_parent` (`parent_id`),
   KEY `idx_sys_menu_sort` (`sort`)
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_role_menu`
 -- ----------------------------
 CREATE TABLE `sys_role_menu` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `role_id` bigint NOT NULL,
   `menu_id` bigint NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_role_menu` (`role_id`,`menu_id`),
   KEY `idx_sys_role_menu_menu` (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_dict_type`
 -- ----------------------------
 CREATE TABLE `sys_dict_type` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `dict_name` varchar(64) NOT NULL,
   `dict_code` varchar(64) NOT NULL,
   `status` tinyint NOT NULL DEFAULT '1',
@@ -129,13 +129,13 @@ CREATE TABLE `sys_dict_type` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_dict_type_code` (`dict_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_dict_item`
 -- ----------------------------
 CREATE TABLE `sys_dict_item` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `dict_type_id` bigint NOT NULL,
   `label` varchar(64) NOT NULL,
   `value` varchar(64) NOT NULL,
@@ -148,13 +148,13 @@ CREATE TABLE `sys_dict_item` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_dict_item_value` (`dict_type_id`,`value`),
   KEY `idx_sys_dict_item_type` (`dict_type_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_config`
 -- ----------------------------
 CREATE TABLE `sys_config` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `config_name` varchar(64) NOT NULL,
   `config_key` varchar(128) NOT NULL,
   `config_value` varchar(1024) NOT NULL,
@@ -167,13 +167,13 @@ CREATE TABLE `sys_config` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_config_key` (`config_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_login_log`
 -- ----------------------------
 CREATE TABLE `sys_login_log` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `user_id` bigint DEFAULT NULL,
   `username` varchar(64) NOT NULL,
   `real_name` varchar(64) DEFAULT NULL,
@@ -188,13 +188,13 @@ CREATE TABLE `sys_login_log` (
   KEY `idx_sys_login_log_username` (`username`),
   KEY `idx_sys_login_log_status` (`status`),
   KEY `idx_sys_login_log_login_at` (`login_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_operation_log`
 -- ----------------------------
 CREATE TABLE `sys_operation_log` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `operator_id` bigint DEFAULT NULL,
   `operator_name` varchar(64) DEFAULT NULL,
   `module` varchar(64) NOT NULL,
@@ -210,13 +210,13 @@ CREATE TABLE `sys_operation_log` (
   KEY `idx_sys_operation_log_operator` (`operator_id`),
   KEY `idx_sys_operation_log_module` (`module`),
   KEY `idx_sys_operation_log_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_job`
 -- ----------------------------
 CREATE TABLE `sys_job` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `job_name` varchar(64) NOT NULL,
   `job_code` varchar(64) NOT NULL,
   `cron_expression` varchar(64) NOT NULL,
@@ -230,13 +230,13 @@ CREATE TABLE `sys_job` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_sys_job_code` (`job_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_job_run_log`
 -- ----------------------------
 CREATE TABLE `sys_job_run_log` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `job_id` bigint NOT NULL,
   `job_name` varchar(64) NOT NULL,
   `status` varchar(16) NOT NULL,
@@ -247,13 +247,13 @@ CREATE TABLE `sys_job_run_log` (
   PRIMARY KEY (`id`),
   KEY `idx_sys_job_run_log_job` (`job_id`),
   KEY `idx_sys_job_run_log_started` (`started_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for `sys_db_backup`
 -- ----------------------------
 CREATE TABLE `sys_db_backup` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` bigint NOT NULL,
   `backup_name` varchar(128) NOT NULL,
   `file_path` varchar(512) NOT NULL,
   `file_size` bigint NOT NULL DEFAULT '0',
@@ -263,7 +263,7 @@ CREATE TABLE `sys_db_backup` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_sys_db_backup_created_at` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Data for `sys_dept`

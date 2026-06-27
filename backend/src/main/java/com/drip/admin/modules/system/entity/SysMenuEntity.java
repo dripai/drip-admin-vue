@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @TableName("sys_menu")
 public class SysMenuEntity {
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long parentId;

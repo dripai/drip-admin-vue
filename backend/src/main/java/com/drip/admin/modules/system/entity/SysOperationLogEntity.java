@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @TableName("sys_operation_log")
 public class SysOperationLogEntity {
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long operatorId;

@@ -1,5 +1,6 @@
 package com.drip.admin;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -107,6 +108,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -335,6 +337,15 @@ class BackendContractTests {
 
         assertTrue(application.contains("is-concurrent: false"));
         assertTrue(application.contains("is-share: false"));
+        assertTrue(application.contains("id-type: assign_id"));
+    }
+
+    @Test
+    void baselineSchemaUsesApplicationAssignedSnowflakeIds() throws Exception {
+        String baselineSql = Files.readString(Path.of("src/main/resources/db/baseline_schema_and_data.sql"));
+
+        assertFalse(baselineSql.contains("AUTO_INCREMENT"));
+        assertFalse(baselineSql.matches("(?s).*ENGINE=InnoDB\\d+.*"));
     }
 
     @Test
@@ -445,6 +456,7 @@ class BackendContractTests {
             assertEquals(tableName, entityType.getAnnotation(TableName.class).value());
             assertTrue(BaseMapper.class.isAssignableFrom(mapperType));
             assertTrue(entityType.getDeclaredField("id").isAnnotationPresent(TableId.class));
+            assertEquals(IdType.ASSIGN_ID, entityType.getDeclaredField("id").getAnnotation(TableId.class).type());
             assertEquals(logicDeleteEntities.contains(entityType), hasTableLogicField(entityType));
         }
 

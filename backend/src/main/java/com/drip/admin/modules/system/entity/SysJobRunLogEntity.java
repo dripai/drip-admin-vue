@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @TableName("sys_job_run_log")
 public class SysJobRunLogEntity {
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private Long jobId;

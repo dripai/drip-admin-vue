@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @TableName("sys_dict_type")
 public class SysDictTypeEntity {
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     private String dictName;
