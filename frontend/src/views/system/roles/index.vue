@@ -56,8 +56,7 @@ const usersOpen = ref(false);
 const submitting = ref(false);
 const current = ref<RoleItem>();
 const menus = ref<MenuNode[]>([]);
-type TreeCheckedKeys = ID[] | { checked?: ID[]; halfChecked?: ID[] };
-const checkedKeys = ref<TreeCheckedKeys>([]);
+const checkedKeys = ref<ID[]>([]);
 const relatedUsers = ref<UserItem[]>([]);
 const form = reactive<RoleForm>({ roleName: '', roleCode: '', status: 'ENABLED', remark: '' });
 function openCreate() {
@@ -118,9 +117,8 @@ async function savePerm() {
     submitting.value = false;
   }
 }
-function normalizeCheckedKeys(value: TreeCheckedKeys) {
-  const keys = Array.isArray(value) ? value : value.checked || [];
-  return keys.filter((key): key is number => typeof key === 'number');
+function normalizeCheckedKeys(value: ID[]) {
+  return value.filter((key): key is number => typeof key === 'number');
 }
 onMounted(table.refresh);
 </script>
@@ -192,7 +190,6 @@ onMounted(table.refresh);
       ><a-tree
         v-model:checked-keys="checkedKeys"
         checkable
-        check-strictly
         :tree-data="menus"
         :field-names="{ title: 'name', key: 'id', children: 'children' }" /></FormModal
     ><a-modal v-model:open="usersOpen" title="关联用户" :footer="null" width="760"
