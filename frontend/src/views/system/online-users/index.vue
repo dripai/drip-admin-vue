@@ -2,12 +2,12 @@
 import { onMounted } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
 import { message } from 'ant-design-vue';
-import dayjs from 'dayjs';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import SearchForm from '@/components/form/SearchForm.vue';
 import DataTable from '@/components/table/DataTable.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import { forceOffline, queryOnlineUsers } from '@/api/system/onlineUser';
 import type { OnlineUserItem } from '@/types/system';
 
@@ -40,10 +40,6 @@ async function kick(row: OnlineUserItem) {
   table.refresh();
 }
 
-function formatTime(value?: string) {
-  return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '';
-}
-
 onMounted(table.refresh);
 </script>
 <template>
@@ -72,7 +68,7 @@ onMounted(table.refresh);
           v-else-if="
             ['loginAt', 'lastActiveAt', 'expireAt'].includes(String(column.dataIndex))
           "
-          >{{ formatTime(record[column.dataIndex as keyof OnlineUserItem] as string) }}</template
+          >{{ formatDateTime(record[column.dataIndex as keyof OnlineUserItem] as string) }}</template
         ><template v-else-if="column.dataIndex === 'action'"
           ><ConfirmAction
             v-if="!record.current"

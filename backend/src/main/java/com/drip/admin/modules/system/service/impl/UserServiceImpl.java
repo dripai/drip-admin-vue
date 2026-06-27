@@ -162,7 +162,7 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
 
     private void assertNotSuperAdminTarget(long userId) {
         if (roleCodes(currentUserId()).contains("SUPER_ADMIN")) return;
-        if (roleCodes(userId).contains("SUPER_ADMIN")) throw new BusinessException(403000, "operation failed");
+        if (roleCodes(userId).contains("SUPER_ADMIN")) throw new BusinessException(403000, "不能操作超级管理员");
     }
 
     private List<String> roleCodes(long userId) {

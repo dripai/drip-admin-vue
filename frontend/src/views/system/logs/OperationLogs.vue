@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
-import dayjs from 'dayjs';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import SearchForm from '@/components/form/SearchForm.vue';
 import DataTable from '@/components/table/DataTable.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import { getOperationLog, queryOperationLogs } from '@/api/system/log';
 import type { OperationLogItem } from '@/types/system';
 const fields = [
@@ -51,9 +51,6 @@ function statusText(status: OperationLogItem['status']) {
 function statusColor(status: OperationLogItem['status']) {
   return status === 'SUCCESS' ? 'green' : 'red';
 }
-function formatTime(value?: string) {
-  return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '';
-}
 onMounted(table.refresh);
 </script>
 <template>
@@ -76,7 +73,7 @@ onMounted(table.refresh);
         ><template v-if="column.dataIndex === 'status'"
           ><a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag></template
         ><template v-else-if="column.dataIndex === 'createdAt'">{{
-          formatTime(record.createdAt)
+          formatDateTime(record.createdAt)
         }}</template
         ><template v-else-if="column.dataIndex === 'detailAction'"
           ><a-button type="link" @click="openDetail(record)">详情</a-button></template

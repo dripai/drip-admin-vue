@@ -42,7 +42,7 @@ request.interceptors.response.use(
       return Promise.reject(error);
     }
     if (status === 403) {
-      message.error('没有权限执行该操作');
+      message.error(backendMessage || '没有权限执行该操作');
       return Promise.reject(error);
     }
     message.error(backendMessage || '网络或服务异常，请稍后重试');

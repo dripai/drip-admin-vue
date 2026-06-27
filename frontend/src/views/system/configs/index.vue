@@ -2,7 +2,6 @@
 import { onMounted, reactive, ref } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
 import { message } from 'ant-design-vue';
-import dayjs from 'dayjs';
 import PageContainer from '@/components/layout/PageContainer.vue';
 import SearchForm from '@/components/form/SearchForm.vue';
 import DataTable from '@/components/table/DataTable.vue';
@@ -10,6 +9,7 @@ import FormModal from '@/components/form/FormModal.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import {
   createConfig,
   deleteConfig,
@@ -114,10 +114,6 @@ async function status(row: ConfigItem) {
   table.refresh();
 }
 
-function formatTime(value?: string) {
-  return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '';
-}
-
 function valueTypeLabel(value?: string) {
   return valueTypeOptions.find((item) => item.value === value)?.label || '字符串';
 }
@@ -171,7 +167,7 @@ onMounted(table.refresh);
         ><template v-else-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
         ><template v-else-if="column.dataIndex === 'updatedAt'">{{
-          formatTime(record.updatedAt)
+          formatDateTime(record.updatedAt)
         }}</template
         ><template v-else-if="column.dataIndex === 'action'"
           ><a-space

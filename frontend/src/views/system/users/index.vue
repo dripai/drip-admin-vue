@@ -11,6 +11,7 @@ import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
 import StatusSwitch from '@/components/status/StatusSwitch.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import {
   assignUserRoles,
   createUser,
@@ -186,6 +187,12 @@ onMounted(() => {
         <template v-else-if="column.dataIndex === 'roles'">{{
           record.roles?.map((r: any) => r.roleName).join('，') || '-'
         }}</template>
+        <template v-else-if="column.dataIndex === 'createdAt'">{{
+          formatDateTime(record.createdAt)
+        }}</template>
+        <template v-else-if="column.dataIndex === 'lastLoginAt'">{{
+          formatDateTime(record.lastLoginAt)
+        }}</template>
         <template v-else-if="column.dataIndex === 'action'"
           ><a-space>
             <a-button type="link" @click="openEdit(record)">编辑</a-button
@@ -232,12 +239,17 @@ onMounted(() => {
       title="分配角色"
       :submitting="submitting"
       @submit="saveAssign"
-      ><a-select
+      ><a-checkbox-group
         v-model:value="form.roleIds"
-        mode="multiple"
         :options="roleOptions"
-        style="width: 100%"
-        placeholder="请选择角色"
+        class="role-checkbox-group"
     /></FormModal>
   </PageContainer>
 </template>
+<style scoped>
+.role-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+</style>

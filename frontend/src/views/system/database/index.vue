@@ -8,6 +8,7 @@ import DataTable from '@/components/table/DataTable.vue';
 import FormModal from '@/components/form/FormModal.vue';
 import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import {
   createDatabaseBackup,
   deleteDatabaseBackup,
@@ -93,7 +94,10 @@ onMounted(table.refresh);
         <a-button type="primary" @click="open = true">创建备份</a-button>
       </template>
       <template #bodyCell="{ column, record }"
-        ><template v-if="column.dataIndex === 'action'"
+        ><template v-if="column.dataIndex === 'createdAt'">{{
+          formatDateTime(record.createdAt)
+        }}</template
+        ><template v-else-if="column.dataIndex === 'action'"
           ><a-space
             ><ConfirmAction title="下载" @confirm="download(record)">删除</ConfirmAction
             ><ConfirmAction title="确认恢复该备份？" danger @confirm="restore(record)"

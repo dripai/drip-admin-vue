@@ -32,10 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.drip.admin.shared.utils.AdminUtils.currentUserId;
 import static com.drip.admin.shared.utils.AdminUtils.hashPassword;
@@ -124,7 +126,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         if (roleIds.isEmpty()) return List.of();
         List<Long> menuIds = roleMenuMapper.selectList(new QueryWrapper<SysRoleMenuEntity>().in("role_id", roleIds)).stream().map(SysRoleMenuEntity::getMenuId).distinct().toList();
         if (menuIds.isEmpty()) return List.of();
-        return menuMapper.selectBatchIds(menuIds).stream().filter(menu -> Objects.equals(menu.getDeleted(), 0) && Objects.equals(menu.getStatus(), 1) && menu.getPermissionCode() != null).map(SysMenuEntity::getPermissionCode).distinct().toList();
+        return menuRowsWithAncestors(menuIds).stream().filter(menu -> Objects.equals(menu.getDeleted(), 0) && Objects.equals(menu.getStatus(), 1) && menu.getPermissionCode() != null).map(SysMenuEntity::getPermissionCode).distinct().toList();
     }
 
     private SysUserEntity userDetail(long userId) { SysUserEntity user = getById(userId); if (user == null) throw new BusinessException(404000, "operation failed"); return user; }
@@ -139,9 +141,24 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
             if (roleIds.isEmpty()) return List.of();
             List<Long> menuIds = roleMenuMapper.selectList(new QueryWrapper<SysRoleMenuEntity>().in("role_id", roleIds)).stream().map(SysRoleMenuEntity::getMenuId).distinct().toList();
             if (menuIds.isEmpty()) return List.of();
-            rows = menuMapper.selectList(new QueryWrapper<SysMenuEntity>().in("id", menuIds).eq("status", 1).orderByAsc("sort", "id"));
+            rows = menuRowsWithAncestors(menuIds);
         }
         return buildTree(rows.stream().filter(row -> !"BUTTON".equals(row.getType())).map(this::toTreeVo).toList());
+    }
+
+    private List<SysMenuEntity> menuRowsWithAncestors(List<Long> menuIds) {
+        List<SysMenuEntity> allRows = menuMapper.selectList(new QueryWrapper<SysMenuEntity>().eq("status", 1).orderByAsc("sort", "id"));
+        Map<Long, SysMenuEntity> byId = new LinkedHashMap<>();
+        for (SysMenuEntity row : allRows) byId.put(row.getId(), row);
+        Set<Long> visibleIds = new HashSet<>();
+        for (Long menuId : menuIds) {
+            Long currentId = menuId;
+            while (currentId != null && currentId != 0 && byId.containsKey(currentId)) {
+                if (!visibleIds.add(currentId)) break;
+                currentId = byId.get(currentId).getParentId();
+            }
+        }
+        return allRows.stream().filter(row -> visibleIds.contains(row.getId())).toList();
     }
 
     private MenuTreeVo toTreeVo(SysMenuEntity entity) { MenuTreeVo vo = new MenuTreeVo(); vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setName(entity.getName()); vo.setType(entity.getType()); vo.setPath(entity.getPath()); vo.setComponent(entity.getComponent()); vo.setPermissionCode(entity.getPermissionCode()); vo.setIcon(entity.getIcon()); vo.setSort(entity.getSort()); vo.setVisible(entity.getVisible()); return vo; }

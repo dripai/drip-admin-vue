@@ -10,6 +10,7 @@ import ConfirmAction from '@/components/permission/ConfirmAction.vue';
 import PermissionButton from '@/components/permission/PermissionButton.vue';
 import StatusTag from '@/components/status/StatusTag.vue';
 import { useTable } from '@/composables/useTable';
+import { formatDateTime } from '@/utils/date';
 import {
   createRole,
   deleteRole,
@@ -146,6 +147,9 @@ onMounted(table.refresh);
       <template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
           ><StatusTag :status="record.status" /></template
+        ><template v-else-if="column.dataIndex === 'createdAt'">{{
+          formatDateTime(record.createdAt)
+        }}</template
         ><template v-else-if="column.dataIndex === 'relatedUsers'"
           ><a-button type="link" @click="openUsers(record)">查看</a-button></template
         ><template v-else-if="column.dataIndex === 'action'"
