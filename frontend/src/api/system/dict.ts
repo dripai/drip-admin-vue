@@ -4,7 +4,7 @@ import type { DictItem, DictTypeItem } from '@/types/system';
 import { statusValue, withNumericStatus } from './serialize';
 export async function queryDictTypes() {
   const page = await get<PageResult<DictTypeItem>>('/system/dict/type', {
-    params: { page: 1, pageSize: 1000 },
+    params: { page: 1, pageSize: 100 },
   });
   return page.list;
 }
