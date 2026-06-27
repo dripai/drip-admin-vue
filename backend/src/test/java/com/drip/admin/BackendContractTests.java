@@ -104,10 +104,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -375,6 +377,23 @@ class BackendContractTests {
             contains("insert into sys_operation_log (id,"),
             anyLong(), any(), any(), eq("module"), eq("action"), eq("POST"), eq("/demo"), eq("{}"), eq("SUCCESS"), any(), eq(12L)
         );
+    }
+
+    @Test
+    void rawSystemTableInsertsIncludeApplicationAssignedIds() throws Exception {
+        Pattern rawSystemInsert = Pattern.compile("(?is)insert\\s+into\\s+sys_[a-z_]+\\s*\\((?!\\s*id\\s*,)");
+        List<Path> violations = new ArrayList<>();
+
+        try (var paths = Files.walk(Path.of("src/main/java"))) {
+            for (Path path : paths.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(path);
+                if (rawSystemInsert.matcher(source).find()) {
+                    violations.add(path);
+                }
+            }
+        }
+
+        assertEquals(List.of(), violations);
     }
 
     @Test
