@@ -54,11 +54,11 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     private final LogService logService;
     private final OnlineSessionService onlineSessionService;
     private final LoginAttemptService loginAttemptService;
-    private final long idleTimeout;
-    private final long maxDuration;
+    private final long activeTimeout;
+    private final long tokenTimeout;
 
-    public AuthServiceImpl(SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper, SysMenuMapper menuMapper, SysRoleMenuMapper roleMenuMapper, LogService logService, OnlineSessionService onlineSessionService, LoginAttemptService loginAttemptService, @Value("${drip.session.idle-timeout-seconds}") long idleTimeout, @Value("${drip.session.max-duration-seconds}") long maxDuration) {
-        this.roleMapper = roleMapper; this.userRoleMapper = userRoleMapper; this.menuMapper = menuMapper; this.roleMenuMapper = roleMenuMapper; this.logService = logService; this.onlineSessionService = onlineSessionService; this.loginAttemptService = loginAttemptService; this.idleTimeout = idleTimeout; this.maxDuration = maxDuration;
+    public AuthServiceImpl(SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper, SysMenuMapper menuMapper, SysRoleMenuMapper roleMenuMapper, LogService logService, OnlineSessionService onlineSessionService, LoginAttemptService loginAttemptService, @Value("${sa-token.active-timeout}") long activeTimeout, @Value("${sa-token.timeout}") long tokenTimeout) {
+        this.roleMapper = roleMapper; this.userRoleMapper = userRoleMapper; this.menuMapper = menuMapper; this.roleMenuMapper = roleMenuMapper; this.logService = logService; this.onlineSessionService = onlineSessionService; this.loginAttemptService = loginAttemptService; this.activeTimeout = activeTimeout; this.tokenTimeout = tokenTimeout;
     }
 
     @Override
@@ -74,8 +74,8 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         StpUtil.getSession().set("deviceType", request.deviceType()); StpUtil.getSession().set("loginAt", now.toString()); StpUtil.getSession().set("lastActiveAt", now.toString()); StpUtil.getSession().set("tokenId", token); StpUtil.getSession().set("username", user.getUsername()); StpUtil.getSession().set("realName", user.getRealName());
         SysUserEntity update = new SysUserEntity(); update.setId(userId); update.setLastLoginAt(now); updateById(update);
         logService.login(userId, request.username(), user.getRealName(), "LOGIN", "SUCCESS", null, servletRequest, request.deviceType());
-        onlineSessionService.register(userId, toOnlineMap(user), token, request.deviceType(), idleTimeout, maxDuration, servletRequest);
-        return new AuthLoginVo(token, now.plusSeconds(idleTimeout).atZone(ZoneId.systemDefault()).toInstant().toString(), idleTimeout, maxDuration, request.deviceType());
+        onlineSessionService.register(userId, toOnlineMap(user), token, request.deviceType(), activeTimeout, servletRequest);
+        return new AuthLoginVo(token, now.plusSeconds(activeTimeout).atZone(ZoneId.systemDefault()).toInstant().toString(), activeTimeout, tokenTimeout, request.deviceType());
     }
 
     @Override

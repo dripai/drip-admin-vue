@@ -38,7 +38,7 @@ public class OnlineSessionService {
     }
 
     public void register(long userId, Map<String, Object> user, String tokenId, String deviceType,
-                         long idleTimeoutSeconds, long maxDurationSeconds, HttpServletRequest request) {
+                         long activeTimeoutSeconds, HttpServletRequest request) {
         LocalDateTime now = LocalDateTime.now();
         String normalizedDeviceType = normalizeDeviceType(deviceType);
         String sessionKey = key(userId, normalizedDeviceType);
@@ -57,11 +57,11 @@ public class OnlineSessionService {
         session.put("userAgent", request.getHeader("User-Agent"));
         session.put("loginAt", now.toString());
         session.put("lastActiveAt", now.toString());
-        session.put("expireAt", now.plusSeconds(idleTimeoutSeconds).atZone(ZoneId.systemDefault()).toInstant().toString());
-        write(sessionKey, session, Math.max(idleTimeoutSeconds, maxDurationSeconds));
+        session.put("expireAt", now.plusSeconds(activeTimeoutSeconds).atZone(ZoneId.systemDefault()).toInstant().toString());
+        write(sessionKey, session, activeTimeoutSeconds);
     }
 
-    public void touchCurrent(long idleTimeoutSeconds) {
+    public void touchCurrent(long activeTimeoutSeconds) {
         if (!StpUtil.isLogin()) {
             return;
         }
@@ -75,8 +75,8 @@ public class OnlineSessionService {
         }
         LocalDateTime now = LocalDateTime.now();
         session.put("lastActiveAt", now.toString());
-        session.put("expireAt", now.plusSeconds(idleTimeoutSeconds).atZone(ZoneId.systemDefault()).toInstant().toString());
-        write(key(longValue(session.get("userId")), string(session.get("deviceType"))), session, idleTimeoutSeconds);
+        session.put("expireAt", now.plusSeconds(activeTimeoutSeconds).atZone(ZoneId.systemDefault()).toInstant().toString());
+        write(key(longValue(session.get("userId")), string(session.get("deviceType"))), session, activeTimeoutSeconds);
     }
 
     public PageResult<Map<String, Object>> page(Map<String, String> q) {

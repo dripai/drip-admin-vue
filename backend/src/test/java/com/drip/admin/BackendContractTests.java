@@ -320,7 +320,7 @@ class BackendContractTests {
     @Test
     void sessionInterceptorSkipsAdminAndActuatorPathsBeforeSaToken() {
         OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        SessionInterceptor interceptor = new SessionInterceptor(28800L, 1800L, onlineSessionService);
+        SessionInterceptor interceptor = new SessionInterceptor(1800L, onlineSessionService);
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/admin/assets/sba.js"), new MockHttpServletResponse(), new Object()));
@@ -362,6 +362,9 @@ class BackendContractTests {
 
         assertTrue(application.contains("is-concurrent: false"));
         assertTrue(application.contains("is-share: false"));
+        assertTrue(application.contains("timeout: 28800"));
+        assertTrue(application.contains("active-timeout: 1800"));
+        assertFalse(application.contains("drip:\n  session:"));
         assertTrue(application.contains("id-type: assign_id"));
     }
 

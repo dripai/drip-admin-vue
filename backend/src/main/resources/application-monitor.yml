@@ -1,6 +1,7 @@
 spring:
   boot:
     admin:
+      context-path: /admin
       server:
         enabled: true
       client:

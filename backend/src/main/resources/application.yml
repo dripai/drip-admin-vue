@@ -10,16 +10,9 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
-  boot:
-    admin:
-      context-path: /admin
-      server:
-        enabled: false
-      client:
-        enabled: false
 
 server:
-  port: 8080
+  port: 9000
   servlet:
     context-path: /api
 
@@ -43,7 +36,7 @@ mybatis-plus:
 
 sa-token:
   token-name: Authorization
-  timeout: 7200
+  timeout: 28800
   active-timeout: 1800
   is-concurrent: false
   is-share: false
@@ -51,9 +44,6 @@ sa-token:
   is-log: false
 
 drip:
-  session:
-    idle-timeout-seconds: 1800
-    max-duration-seconds: 28800
   database:
     backup-dir: ./backups
     mysqldump-command: mysqldump
