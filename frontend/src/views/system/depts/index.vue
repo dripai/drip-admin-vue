@@ -128,7 +128,7 @@ function hasParentId(parentId?: ID | null) {
   return parentId !== undefined && parentId !== null && String(parentId) !== '0';
 }
 function updateExpandedRows(keys: Array<string | number>) {
-  expandedRowKeys.value = keys as ID[];
+  expandedRowKeys.value = keys.map(String);
 }
 onMounted(load);
 </script>
@@ -185,10 +185,9 @@ onMounted(load);
         ><a-form-item label="部门编码" required
           ><a-input v-model:value="form.deptCode" /></a-form-item
         ><a-form-item label="负责人ID"
-          ><a-input-number
+          ><a-input
             v-model:value="form.leaderUserId"
-            :min="1"
-            style="width: 100%" /></a-form-item
+            allow-clear /></a-form-item
         ><a-form-item label="排序"
           ><a-input-number
             v-model:value="form.sort"

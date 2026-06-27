@@ -121,7 +121,7 @@ function handleTypeChange(value: MenuType) {
 function menuPayload() {
   const type = form.type || 'MENU';
   return {
-    parentId: hasParentId(form.parentId) ? form.parentId : 0,
+    parentId: hasParentId(form.parentId) ? form.parentId : '0',
     name: form.name,
     type,
     path: type === 'BUTTON' ? '' : form.path,
@@ -218,7 +218,7 @@ function collapseAll() {
 }
 
 function updateExpandedRows(keys: Array<string | number>) {
-  expandedRowKeys.value = keys as ID[];
+  expandedRowKeys.value = keys.map(String);
 }
 
 onMounted(load);

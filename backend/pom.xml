@@ -22,6 +22,7 @@
         <sa-token.version>1.45.0</sa-token.version>
         <mybatis-plus.version>3.5.15</mybatis-plus.version>
         <springdoc.version>3.0.0</springdoc.version>
+        <spring-boot-admin.version>4.0.0</spring-boot-admin.version>
     </properties>
 
     <dependencies>
@@ -83,6 +84,16 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.codecentric</groupId>
+            <artifactId>spring-boot-admin-starter-server</artifactId>
+            <version>${spring-boot-admin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.codecentric</groupId>
+            <artifactId>spring-boot-admin-starter-client</artifactId>
+            <version>${spring-boot-admin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

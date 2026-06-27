@@ -1,11 +1,10 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DRIP_DB_URL}
-    username: ${DRIP_DB_USERNAME}
-    password: ${DRIP_DB_PASSWORD}
+    url: jdbc:mysql://localhost:3307/drip-manager?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
   data:
     redis:
-      host: ${DRIP_REDIS_HOST}
-      port: ${DRIP_REDIS_PORT:6379}
-      password: ${DRIP_REDIS_PASSWORD:}
+      host: localhost
+      port: 6379

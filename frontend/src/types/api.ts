@@ -17,4 +17,4 @@ export interface PageResult<T> {
 }
 
 export type Status = 'ENABLED' | 'DISABLED';
-export type ID = string | number;
+export type ID = string;

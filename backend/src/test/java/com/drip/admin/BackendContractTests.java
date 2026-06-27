@@ -15,6 +15,7 @@ import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.common.security.SessionInterceptor;
 import com.drip.admin.config.JacksonConfig;
 import com.drip.admin.config.MybatisPlusConfig;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
@@ -96,6 +97,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -315,6 +318,20 @@ class BackendContractTests {
     }
 
     @Test
+    void sessionInterceptorSkipsAdminAndActuatorPathsBeforeSaToken() {
+        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
+        SessionInterceptor interceptor = new SessionInterceptor(28800L, 1800L, onlineSessionService);
+
+        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/admin/assets/sba.js"), new MockHttpServletResponse(), new Object()));
+            assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/actuator/metrics/hikaricp.connections.active"), new MockHttpServletResponse(), new Object()));
+
+            stp.verify(StpUtil::checkLogin, never());
+            verifyNoInteractions(onlineSessionService);
+        }
+    }
+
+    @Test
     void rootEndpointRedirectsToSwaggerAndFaviconReturnsNoContent() {
         RootController controller = new RootController();
 
@@ -353,8 +370,39 @@ class BackendContractTests {
         record LongIdPayload(Long id, long parentId) {}
         JacksonConfig jacksonConfig = new JacksonConfig();
 
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(jacksonConfig.longAsStringModule());
+        ObjectMapper objectMapper = jacksonConfig.objectMapper(jacksonConfig.longAsStringModule());
         String json = objectMapper.writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+
+        assertTrue(json.contains("\"id\":\"1781234567890123456\""));
+        assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
+    }
+
+    @Test
+    void jackson3SerializesLongIdsAsStringsForMvcResponses() throws Exception {
+        record LongIdPayload(Long id, long parentId) {}
+        JacksonConfig jacksonConfig = new JacksonConfig();
+        tools.jackson.databind.json.JsonMapper.Builder builder = tools.jackson.databind.json.JsonMapper.builder();
+
+        jacksonConfig.jsonMapperBuilderCustomizer(jacksonConfig.jackson3LongAsStringModule()).customize(builder);
+        String json = builder.build().writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+
+        assertTrue(json.contains("\"id\":\"1781234567890123456\""));
+        assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
+    }
+
+    @Test
+    void mvcJsonConverterSerializesLongIdsAsStringsInApiResponses() throws Exception {
+        record LongIdPayload(Long id, long parentId) {}
+        JacksonConfig jacksonConfig = new JacksonConfig();
+        tools.jackson.databind.json.JsonMapper.Builder builder = tools.jackson.databind.json.JsonMapper.builder();
+        jacksonConfig.jsonMapperBuilderCustomizer(jacksonConfig.jackson3LongAsStringModule()).customize(builder);
+        org.springframework.http.converter.json.JacksonJsonHttpMessageConverter converter =
+            new org.springframework.http.converter.json.JacksonJsonHttpMessageConverter(builder);
+        org.springframework.mock.http.MockHttpOutputMessage output = new org.springframework.mock.http.MockHttpOutputMessage();
+
+        converter.write(ApiResponse.success(List.of(new LongIdPayload(1781234567890123456L, 1781234567890123457L))),
+            org.springframework.http.MediaType.APPLICATION_JSON, output);
+        String json = output.getBodyAsString();
 
         assertTrue(json.contains("\"id\":\"1781234567890123456\""));
         assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
@@ -562,6 +610,13 @@ class BackendContractTests {
         Method value = annotationType.getMethod("value");
 
         assertEquals(path, ((String[]) value.invoke(annotation))[0]);
+    }
+
+    private static MockHttpServletRequest request(String contextPath, String requestUri) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setContextPath(contextPath);
+        request.setRequestURI(requestUri);
+        return request;
     }
 
     private static boolean hasTableLogicField(Class<?> entityType) {

@@ -1,0 +1,21 @@
+spring:
+  boot:
+    admin:
+      server:
+        enabled: true
+      client:
+        enabled: true
+        url: http://localhost:${server.port}${server.servlet.context-path}/admin
+        instance:
+          name: ${spring.application.name}
+          service-base-url: http://localhost:${server.port}${server.servlet.context-path}
+          management-base-url: http://localhost:${server.port}${server.servlet.context-path}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers,threaddump
+  endpoint:
+    health:
+      show-details: always

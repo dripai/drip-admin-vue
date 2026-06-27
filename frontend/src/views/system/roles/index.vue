@@ -119,7 +119,7 @@ async function savePerm() {
   }
 }
 function normalizeCheckedKeys(value: ID[]) {
-  return value.filter((key): key is number => typeof key === 'number');
+  return value.map(String);
 }
 onMounted(table.refresh);
 </script>
