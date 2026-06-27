@@ -97,7 +97,7 @@ function openCreate() {
 function openEdit(row: MenuNode) {
   current.value = row;
   Object.assign(form, {
-    parentId: row.parentId || undefined,
+    parentId: hasParentId(row.parentId) ? row.parentId : undefined,
     name: row.name,
     type: row.type,
     path: row.path || '',
@@ -121,7 +121,7 @@ function handleTypeChange(value: MenuType) {
 function menuPayload() {
   const type = form.type || 'MENU';
   return {
-    parentId: form.parentId || 0,
+    parentId: hasParentId(form.parentId) ? form.parentId : 0,
     name: form.name,
     type,
     path: type === 'BUTTON' ? '' : form.path,
@@ -196,6 +196,10 @@ function findMenuById(nodes: MenuNode[], id: ID): MenuNode | undefined {
     if (child) return child;
   }
   return undefined;
+}
+
+function hasParentId(parentId?: ID | null) {
+  return parentId !== undefined && parentId !== null && String(parentId) !== '0';
 }
 
 function flattenMenuIds(nodes: MenuNode[]): ID[] {

@@ -14,6 +14,7 @@ import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.config.JacksonConfig;
 import com.drip.admin.config.MybatisPlusConfig;
 import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
@@ -344,6 +345,17 @@ class BackendContractTests {
         assertTrue(application.contains("is-concurrent: false"));
         assertTrue(application.contains("is-share: false"));
         assertTrue(application.contains("id-type: assign_id"));
+    }
+
+    @Test
+    void jacksonSerializesLongIdsAsStrings() throws Exception {
+        record LongIdPayload(Long id, long parentId) {}
+
+        String json = new JacksonConfig().objectMapper()
+            .writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+
+        assertTrue(json.contains("\"id\":\"1781234567890123456\""));
+        assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
     }
 
     @Test

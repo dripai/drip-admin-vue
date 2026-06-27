@@ -72,7 +72,7 @@ function add() {
 function edit(row: DeptItem) {
   current.value = row;
   Object.assign(form, {
-    parentId: row.parentId && row.parentId !== 0 ? row.parentId : null,
+    parentId: hasParentId(row.parentId) ? row.parentId : null,
     deptName: row.deptName,
     deptCode: row.deptCode,
     leaderUserId: row.leaderUserId || null,
@@ -123,6 +123,9 @@ function expandAll() {
 }
 function collapseAll() {
   expandedRowKeys.value = [];
+}
+function hasParentId(parentId?: ID | null) {
+  return parentId !== undefined && parentId !== null && String(parentId) !== '0';
 }
 function updateExpandedRows(keys: Array<string | number>) {
   expandedRowKeys.value = keys as ID[];
