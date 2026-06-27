@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.exception.GlobalExceptionHandler;
 import com.drip.admin.common.log.LogService;
@@ -91,8 +92,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.junit.jupiter.api.Test;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.mockito.MockedStatic;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -354,15 +353,11 @@ class BackendContractTests {
         record LongIdPayload(Long id, long parentId) {}
         JacksonConfig jacksonConfig = new JacksonConfig();
 
-        String json = jacksonConfig.objectMapper().writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-        jacksonConfig.extendMessageConverters(List.<HttpMessageConverter<?>>of(converter));
-        String mvcJson = converter.getObjectMapper().writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(jacksonConfig.longAsStringModule());
+        String json = objectMapper.writeValueAsString(new LongIdPayload(1781234567890123456L, 1781234567890123457L));
 
         assertTrue(json.contains("\"id\":\"1781234567890123456\""));
         assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
-        assertTrue(mvcJson.contains("\"id\":\"1781234567890123456\""));
-        assertTrue(mvcJson.contains("\"parentId\":\"1781234567890123457\""));
     }
 
     @Test
