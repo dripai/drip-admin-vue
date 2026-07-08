@@ -4,7 +4,6 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.drip.admin.common.exception.BusinessException;
-import com.drip.admin.common.log.LogService;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.dto.LoginRequest;
@@ -21,6 +20,7 @@ import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
 import com.drip.admin.modules.system.mapper.SysUserRoleMapper;
 import com.drip.admin.modules.system.service.AuthService;
+import com.drip.admin.modules.system.service.SystemLogWriteService;
 import com.drip.admin.modules.system.vo.AuthLoginVo;
 import com.drip.admin.modules.system.vo.AuthMeVo;
 import com.drip.admin.modules.system.vo.MenuTreeVo;
@@ -51,13 +51,13 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
     private final SysUserRoleMapper userRoleMapper;
     private final SysMenuMapper menuMapper;
     private final SysRoleMenuMapper roleMenuMapper;
-    private final LogService logService;
+    private final SystemLogWriteService logService;
     private final OnlineSessionService onlineSessionService;
     private final LoginAttemptService loginAttemptService;
     private final long activeTimeout;
     private final long tokenTimeout;
 
-    public AuthServiceImpl(SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper, SysMenuMapper menuMapper, SysRoleMenuMapper roleMenuMapper, LogService logService, OnlineSessionService onlineSessionService, LoginAttemptService loginAttemptService, @Value("${sa-token.active-timeout}") long activeTimeout, @Value("${sa-token.timeout}") long tokenTimeout) {
+    public AuthServiceImpl(SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper, SysMenuMapper menuMapper, SysRoleMenuMapper roleMenuMapper, SystemLogWriteService logService, OnlineSessionService onlineSessionService, LoginAttemptService loginAttemptService, @Value("${sa-token.active-timeout}") long activeTimeout, @Value("${sa-token.timeout}") long tokenTimeout) {
         this.roleMapper = roleMapper; this.userRoleMapper = userRoleMapper; this.menuMapper = menuMapper; this.roleMenuMapper = roleMenuMapper; this.logService = logService; this.onlineSessionService = onlineSessionService; this.loginAttemptService = loginAttemptService; this.activeTimeout = activeTimeout; this.tokenTimeout = tokenTimeout;
     }
 

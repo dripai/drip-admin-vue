@@ -9,12 +9,16 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.exception.GlobalExceptionHandler;
-import com.drip.admin.common.log.LogService;
+import com.drip.admin.common.export.ExcelExportService;
+import com.drip.admin.common.export.ExportColumn;
+import com.drip.admin.common.export.ExportColumnRequest;
+import com.drip.admin.common.log.OperationLogRecorder;
 import com.drip.admin.common.log.OperationLog;
 import com.drip.admin.common.log.OperationLogAspect;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.common.security.RequirePermission;
+import com.drip.admin.common.security.SessionActivityRecorder;
 import com.drip.admin.common.security.SessionInterceptor;
 import com.drip.admin.config.JacksonConfig;
 import com.drip.admin.config.MybatisPlusConfig;
@@ -80,6 +84,7 @@ import com.drip.admin.modules.system.service.OnlineUserService;
 import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
 import com.drip.admin.modules.system.controller.PrintTemplateController;
 import com.drip.admin.modules.system.service.PrintTemplateService;
+import com.drip.admin.modules.system.service.SystemLogWriteService;
 import com.drip.admin.modules.system.service.impl.ConfigServiceImpl;
 import com.drip.admin.modules.system.service.impl.DeptServiceImpl;
 import com.drip.admin.modules.system.service.impl.DictServiceImpl;
@@ -129,9 +134,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 
@@ -324,16 +327,15 @@ class BackendContractTests {
     }
 
     @Test
-    void sessionInterceptorSkipsAdminAndActuatorPathsBeforeSaToken() {
-        OnlineSessionService onlineSessionService = mock(OnlineSessionService.class);
-        SessionInterceptor interceptor = new SessionInterceptor(1800L, onlineSessionService);
+    void sessionInterceptorChecksLoginAndTouchesProtectedRequest() {
+        SessionActivityRecorder sessionActivityRecorder = mock(SessionActivityRecorder.class);
+        SessionInterceptor interceptor = new SessionInterceptor(1800L, sessionActivityRecorder);
 
         try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
-            assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/admin/assets/sba.js"), new MockHttpServletResponse(), new Object()));
-            assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/actuator/metrics/hikaricp.connections.active"), new MockHttpServletResponse(), new Object()));
+            assertDoesNotThrow(() -> interceptor.preHandle(request("/api", "/api/system/user"), new MockHttpServletResponse(), new Object()));
 
-            stp.verify(StpUtil::checkLogin, never());
-            verifyNoInteractions(onlineSessionService);
+            stp.verify(StpUtil::checkLogin);
+            verify(sessionActivityRecorder).touchCurrent(1800L);
         }
     }
 
@@ -428,7 +430,7 @@ class BackendContractTests {
     @Test
     void jdbcLogWritesIncludeApplicationAssignedIds() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        LogService logService = new LogService(jdbc);
+        SystemLogWriteService logService = new SystemLogWriteService(jdbc);
         HttpServletRequest request = mock(HttpServletRequest.class);
 
         when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1");
@@ -448,6 +450,41 @@ class BackendContractTests {
             contains("insert into sys_operation_log (id,"),
             anyLong(), any(), any(), eq("module"), eq("action"), eq("POST"), eq("/demo"), eq("{}"), eq("SUCCESS"), any(), eq(12L)
         );
+    }
+
+    @Test
+    void commonPackageDoesNotDependOnSystemOrInfrastructureImplementations() throws Exception {
+        List<Path> violations = new ArrayList<>();
+
+        try (var paths = Files.walk(Path.of("src/main/java/com/drip/admin/common"))) {
+            for (Path path : paths.filter(path -> path.toString().endsWith(".java")).toList()) {
+                String source = Files.readString(path);
+                if (source.contains("com.drip.admin.modules.") || source.contains("com.drip.admin.infrastructure.")) {
+                    violations.add(path);
+                }
+            }
+        }
+
+        assertEquals(List.of(), violations);
+    }
+
+    @Test
+    void excelExportRejectsRowsAboveCallerLimit() {
+        ExcelExportService exportService = new ExcelExportService();
+        ExportColumnRequest column = new ExportColumnRequest();
+        column.setKey("name");
+        column.setTitle("Name");
+
+        BusinessException error = assertThrows(BusinessException.class, () -> exportService.export(
+            new MockHttpServletResponse(),
+            "demo",
+            List.of("a", "b"),
+            1,
+            List.of(column),
+            Map.of("name", ExportColumn.<String>of(value -> value))
+        ));
+
+        assertEquals(400000, error.code());
     }
 
     @Test
@@ -505,8 +542,8 @@ class BackendContractTests {
 
     @Test
     void operationLogFailureDoesNotRollbackBusinessResult() throws Throwable {
-        LogService logService = mock(LogService.class);
-        OperationLogAspect aspect = new OperationLogAspect(logService);
+        OperationLogRecorder operationLogRecorder = mock(OperationLogRecorder.class);
+        OperationLogAspect aspect = new OperationLogAspect(operationLogRecorder);
         ProceedingJoinPoint point = mock(ProceedingJoinPoint.class);
         HttpServletRequest request = mock(HttpServletRequest.class);
         OperationLog operationLog = UserController.class.getMethod("createUser", UserSaveRequest.class).getAnnotation(OperationLog.class);
@@ -518,7 +555,7 @@ class BackendContractTests {
         when(point.proceed()).thenReturn("ok");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/api/system/users");
-        doThrow(new IllegalStateException("log store down")).when(logService)
+        doThrow(new IllegalStateException("log store down")).when(operationLogRecorder)
             .operation(any(), any(), any(), any(), any(), any(), any(), anyLong());
 
         try {

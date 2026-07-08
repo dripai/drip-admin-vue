@@ -1,17 +1,17 @@
-package com.drip.admin.common.export;
+package com.drip.admin.modules.system.service.impl;
 
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.modules.system.service.ConfigService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ExportLimitService {
+public class SystemExportLimitService {
     public static final String EXPORT_MAX_ROWS_KEY = "system.export.maxRows";
     private static final int DEFAULT_MAX_ROWS = 10000;
 
     private final ConfigService configService;
 
-    public ExportLimitService(ConfigService configService) {
+    public SystemExportLimitService(ConfigService configService) {
         this.configService = configService;
     }
 

@@ -3,6 +3,7 @@ package com.drip.admin.infrastructure.redis;
 import cn.dev33.satoken.stp.StpUtil;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.common.response.PageResult;
+import com.drip.admin.common.security.SessionActivityRecorder;
 import com.drip.admin.shared.utils.AdminUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +25,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class OnlineSessionService {
+public class OnlineSessionService implements SessionActivityRecorder {
     private static final String KEY_PREFIX = "drip:online:";
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
@@ -61,6 +62,7 @@ public class OnlineSessionService {
         write(sessionKey, session, activeTimeoutSeconds);
     }
 
+    @Override
     public void touchCurrent(long activeTimeoutSeconds) {
         if (!StpUtil.isLogin()) {
             return;

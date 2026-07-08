@@ -30,8 +30,10 @@ public class ExcelExportService {
             HttpServletResponse response,
             String fileName,
             List<T> rows,
+            int maxRows,
             List<ExportColumnRequest> selectedColumns,
             Map<String, ExportColumn<T>> allowedColumns) {
+        requireWithinLimit(rows, maxRows);
         List<ResolvedColumn<T>> columns = resolveColumns(selectedColumns, allowedColumns);
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -64,6 +66,11 @@ public class ExcelExportService {
 
     private static <T> List<Object> toExportRow(T row, List<ResolvedColumn<T>> columns) {
         return columns.stream().map(column -> column.column().value(row)).toList();
+    }
+
+    private static void requireWithinLimit(List<?> rows, int maxRows) {
+        if (maxRows <= 0) throw new BusinessException(500000, "excel export max rows invalid");
+        if (rows.size() > maxRows) throw new BusinessException(400000, "excel export rows exceed limit");
     }
 
     private static String sanitizeTitle(String value) {

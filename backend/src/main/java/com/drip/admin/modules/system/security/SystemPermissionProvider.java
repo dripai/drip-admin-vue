@@ -1,19 +1,16 @@
-package com.drip.admin.common.security;
+package com.drip.admin.modules.system.security;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.drip.admin.modules.system.service.AuthService;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-
-import static com.drip.admin.shared.utils.AdminUtils.*;
+import java.util.List;
 
 @Component
-public class PermissionProvider implements StpInterface {
+public class SystemPermissionProvider implements StpInterface {
     private final AuthService authService;
 
-    public PermissionProvider(AuthService authService) {
+    public SystemPermissionProvider(AuthService authService) {
         this.authService = authService;
     }
 
