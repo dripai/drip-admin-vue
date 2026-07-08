@@ -8,6 +8,7 @@ export const pageComponentMap: Record<string, () => Promise<Component>> = {
   'system/dept/index': () => import('@/views/system/depts/index.vue'),
   'system/dict/index': () => import('@/views/system/dicts/index.vue'),
   'system/config/index': () => import('@/views/system/configs/index.vue'),
+  'system/print-template/index': () => import('@/views/system/print-templates/index.vue'),
   'system/loginLog/index': () => import('@/views/system/logs/LoginLogs.vue'),
   'system/operationLog/index': () => import('@/views/system/logs/OperationLogs.vue'),
   'system/onlineUser/index': () => import('@/views/system/online-users/index.vue'),

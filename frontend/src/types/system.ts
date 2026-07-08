@@ -133,6 +133,17 @@ export interface ConfigItem {
   remark?: string;
   updatedAt: string;
 }
+export interface PrintTemplateItem {
+  id: ID;
+  code: string;
+  name: string;
+  paperType: string;
+  templateJson: string;
+  status: Status;
+  deleted?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 export interface LoginLogItem {
   id: ID;
   username: string;

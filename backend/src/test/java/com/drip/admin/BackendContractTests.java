@@ -33,6 +33,7 @@ import com.drip.admin.modules.system.entity.SysJobRunLogEntity;
 import com.drip.admin.modules.system.entity.SysLoginLogEntity;
 import com.drip.admin.modules.system.entity.SysMenuEntity;
 import com.drip.admin.modules.system.entity.SysOperationLogEntity;
+import com.drip.admin.modules.system.entity.SysPrintTemplateEntity;
 import com.drip.admin.modules.system.entity.SysRoleEntity;
 import com.drip.admin.modules.system.entity.SysRoleMenuEntity;
 import com.drip.admin.modules.system.entity.SysUserEntity;
@@ -46,6 +47,7 @@ import com.drip.admin.modules.system.mapper.SysJobRunLogMapper;
 import com.drip.admin.modules.system.mapper.SysLoginLogMapper;
 import com.drip.admin.modules.system.mapper.SysMenuMapper;
 import com.drip.admin.modules.system.mapper.SysOperationLogMapper;
+import com.drip.admin.modules.system.mapper.SysPrintTemplateMapper;
 import com.drip.admin.modules.system.mapper.SysRoleMapper;
 import com.drip.admin.modules.system.mapper.SysRoleMenuMapper;
 import com.drip.admin.modules.system.mapper.SysUserMapper;
@@ -76,6 +78,8 @@ import com.drip.admin.modules.system.service.impl.FileServiceImpl;
 import com.drip.admin.modules.system.controller.OnlineUserController;
 import com.drip.admin.modules.system.service.OnlineUserService;
 import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
+import com.drip.admin.modules.system.controller.PrintTemplateController;
+import com.drip.admin.modules.system.service.PrintTemplateService;
 import com.drip.admin.modules.system.service.impl.ConfigServiceImpl;
 import com.drip.admin.modules.system.service.impl.DeptServiceImpl;
 import com.drip.admin.modules.system.service.impl.DictServiceImpl;
@@ -240,6 +244,19 @@ class BackendContractTests {
     }
 
     @Test
+    void printTemplateControllerDelegatesWritesToPrintTemplateService() {
+        PrintTemplateService printTemplateService = mock(PrintTemplateService.class);
+        PrintTemplateController controller = new PrintTemplateController(printTemplateService);
+
+        PrintTemplateSaveRequest request = new PrintTemplateSaveRequest();
+        request.setName("Template");
+
+        controller.update(6L, request);
+
+        verify(printTemplateService).update(eq(6L), argThat(body -> "Template".equals(body.getName())));
+    }
+
+    @Test
     void logControllerDelegatesQueriesToLogQueryService() {
         SystemLogQueryService logQueryService = mock(SystemLogQueryService.class);
         SystemLogController controller = new SystemLogController(logQueryService);
@@ -334,6 +351,7 @@ class BackendContractTests {
         assertOperationLogged(UserController.class, "createUser", UserSaveRequest.class);
         assertOperationLogged(RoleController.class, "rolePermissions", long.class, MenuAssignRequest.class);
         assertOperationLogged(JobController.class, "runJob", long.class);
+        assertOperationLogged(PrintTemplateController.class, "create", PrintTemplateSaveRequest.class);
     }
 
     @Test
@@ -460,6 +478,10 @@ class BackendContractTests {
         assertPermission(DeptController.class, "createDept", "system:dept:create", DeptSaveRequest.class);
         assertPermission(DictController.class, "createDictType", "system:dict:create", DictTypeSaveRequest.class);
         assertPermission(ConfigController.class, "createConfig", "system:config:create", ConfigSaveRequest.class);
+        assertPermission(PrintTemplateController.class, "templates", "system:printTemplate:list", PrintTemplateQuery.class);
+        assertPermission(PrintTemplateController.class, "create", "system:printTemplate:create", PrintTemplateSaveRequest.class);
+        assertPermission(PrintTemplateController.class, "update", "system:printTemplate:update", long.class, PrintTemplateSaveRequest.class);
+        assertPermission(PrintTemplateController.class, "delete", "system:printTemplate:delete", long.class);
         assertPermission(SystemLogController.class, "loginLogs", "system:loginLog:list", LoginLogQuery.class);
         assertPermission(SystemLogController.class, "operationLogs", "system:operationLog:list", OperationLogQuery.class);
         assertPermission(JobController.class, "createJob", "system:job:create", JobSaveRequest.class);
@@ -477,6 +499,8 @@ class BackendContractTests {
         assertMapping(OnlineUserController.class, "onlineUsers", org.springframework.web.bind.annotation.GetMapping.class, "/onlineUser", OnlineUserQuery.class);
         assertMapping(JobController.class, "jobLogs", org.springframework.web.bind.annotation.GetMapping.class, "/job/{id}/runLog", long.class, JobRunLogQuery.class);
         assertMapping(JobController.class, "jobRunLogs", org.springframework.web.bind.annotation.GetMapping.class, "/jobRunLog", JobRunLogQuery.class);
+        assertEquals("/system/print-template", PrintTemplateController.class.getAnnotation(org.springframework.web.bind.annotation.RequestMapping.class).value()[0]);
+        assertMapping(PrintTemplateController.class, "status", org.springframework.web.bind.annotation.PutMapping.class, "/{id}/status", long.class, StatusUpdateRequest.class);
     }
 
     @Test
@@ -536,7 +560,8 @@ class BackendContractTests {
             {SysOperationLogEntity.class, SysOperationLogMapper.class, "sys_operation_log"},
             {SysJobEntity.class, SysJobMapper.class, "sys_job"},
             {SysJobRunLogEntity.class, SysJobRunLogMapper.class, "sys_job_run_log"},
-            {SysConfigEntity.class, SysConfigMapper.class, "sys_config"}
+            {SysConfigEntity.class, SysConfigMapper.class, "sys_config"},
+            {SysPrintTemplateEntity.class, SysPrintTemplateMapper.class, "sys_print_template"}
         };
         Set<Class<?>> logicDeleteEntities = Set.of(
             SysUserEntity.class,
@@ -544,10 +569,11 @@ class BackendContractTests {
             SysMenuEntity.class,
             SysDeptEntity.class,
             SysJobEntity.class,
-            SysConfigEntity.class
+            SysConfigEntity.class,
+            SysPrintTemplateEntity.class
         );
 
-        assertEquals(13, mappings.length);
+        assertEquals(14, mappings.length);
         for (Object[] mapping : mappings) {
             Class<?> entityType = (Class<?>) mapping[0];
             Class<?> mapperType = (Class<?>) mapping[1];
@@ -561,7 +587,8 @@ class BackendContractTests {
         }
 
         MapperScan mapperScan = MybatisPlusConfig.class.getAnnotation(MapperScan.class);
-        assertEquals("com.drip.admin.modules.system.mapper", mapperScan.value()[0]);
+        assertEquals("com.drip.admin.modules", mapperScan.basePackages()[0]);
+        assertEquals(BaseMapper.class, mapperScan.markerInterface());
     }
 
     @Test

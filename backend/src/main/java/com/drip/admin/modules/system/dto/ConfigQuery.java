@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.dto;
 
+import com.drip.admin.common.dto.PageQuery;
+
 public class ConfigQuery extends PageQuery {
     private String configName; private String configKey; private Integer status;
     public String getConfigName() { return configName; } public void setConfigName(String configName) { this.configName = configName; }

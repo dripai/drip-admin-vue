@@ -41,8 +41,10 @@ public class ConfigController {
     public ApiResponse<Map<String, String>> publicConfig() {
         return ApiResponse.success(Map.of(
             "systemName", configService.requiredValue("system.name"),
+            "companyFullName", configService.valueOrDefault("system.company.fullName", ""),
             "logoUrl", configService.valueOrDefault("system.logo", ""),
-            "watermarkEnabled", configService.valueOrDefault("system.watermark.enabled", "false")
+            "watermarkEnabled", configService.valueOrDefault("system.watermark.enabled", "false"),
+            "silentPrintEnabled", configService.valueOrDefault("print.silent.enabled", "false")
         ));
     }
 

@@ -161,7 +161,7 @@ public class AuthServiceImpl extends ServiceImpl<SysUserMapper, SysUserEntity> i
         return allRows.stream().filter(row -> visibleIds.contains(row.getId())).toList();
     }
 
-    private MenuTreeVo toTreeVo(SysMenuEntity entity) { MenuTreeVo vo = new MenuTreeVo(); vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setName(entity.getName()); vo.setType(entity.getType()); vo.setPath(entity.getPath()); vo.setComponent(entity.getComponent()); vo.setPermissionCode(entity.getPermissionCode()); vo.setIcon(entity.getIcon()); vo.setSort(entity.getSort()); vo.setVisible(entity.getVisible()); return vo; }
+    private MenuTreeVo toTreeVo(SysMenuEntity entity) { MenuTreeVo vo = new MenuTreeVo(); vo.setId(entity.getId()); vo.setParentId(entity.getParentId()); vo.setName(entity.getName()); vo.setType(entity.getType()); vo.setPath(entity.getPath()); vo.setComponent(entity.getComponent()); vo.setPermissionCode(entity.getPermissionCode()); vo.setIcon(entity.getIcon()); vo.setSort(entity.getSort()); vo.setVisible(entity.getVisible()); vo.setStatus(entity.getStatus()); return vo; }
     private static List<MenuTreeVo> buildTree(List<MenuTreeVo> rows) { Map<Long, MenuTreeVo> byId = new LinkedHashMap<>(); rows.forEach(row -> byId.put(row.getId(), row)); List<MenuTreeVo> roots = new ArrayList<>(); for (MenuTreeVo row : rows) { Long parentId = row.getParentId() == null ? 0L : row.getParentId(); if (parentId == 0 || !byId.containsKey(parentId)) roots.add(row); else byId.get(parentId).getChildren().add(row); } return roots; }
     private static Map<String, Object> toOnlineMap(SysUserEntity user) { Map<String, Object> map = new LinkedHashMap<>(); map.put("username", user.getUsername()); map.put("real_name", user.getRealName()); return map; }
 }

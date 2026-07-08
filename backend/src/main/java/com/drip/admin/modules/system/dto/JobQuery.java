@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.dto;
 
+import com.drip.admin.common.dto.PageQuery;
+
 public class JobQuery extends PageQuery {
     private String jobName; private String remark; private Integer status; private String createdAt;
     public String getJobName() { return jobName; } public void setJobName(String jobName) { this.jobName = jobName; }

@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.dto;
 
+import com.drip.admin.common.dto.PageQuery;
+
 public class RoleQuery extends PageQuery {
     private String roleName; private String roleCode; private Integer status; private String createdAt;
     public String getRoleName() { return roleName; } public void setRoleName(String roleName) { this.roleName = roleName; }

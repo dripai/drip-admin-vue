@@ -1,4 +1,4 @@
-package com.drip.admin.modules.system.dto;
+package com.drip.admin.common.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

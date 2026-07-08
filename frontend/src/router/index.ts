@@ -32,6 +32,24 @@ export const staticRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/error/NotFound.vue'),
         meta: { title: '页面不存在' },
       },
+      {
+        path: 'system/print-template/create',
+        name: 'system-print-template-create',
+        component: () => import('@/views/system/print-templates/form.vue'),
+        meta: { title: '新增打印模板', permissionCode: 'system:printTemplate:create' },
+      },
+      {
+        path: 'system/print-template/:id/design',
+        name: 'system-print-template-design',
+        component: () => import('@/views/system/print-templates/form.vue'),
+        meta: { title: '设计打印模板', permissionCode: 'system:printTemplate:update' },
+      },
+      {
+        path: 'system/print-template/:id',
+        name: 'system-print-template-detail',
+        component: () => import('@/views/system/print-templates/form.vue'),
+        meta: { title: '编辑打印模板', permissionCode: 'system:printTemplate:update' },
+      },
     ],
   },
 ];

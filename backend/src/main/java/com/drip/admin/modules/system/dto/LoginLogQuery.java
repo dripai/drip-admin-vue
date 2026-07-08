@@ -1,5 +1,7 @@
 package com.drip.admin.modules.system.dto;
 
+import com.drip.admin.common.dto.PageQuery;
+
 import java.time.LocalDateTime;
 
 public class LoginLogQuery extends PageQuery {

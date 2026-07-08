@@ -12,7 +12,7 @@ spring:
       max-request-size: 10MB
 
 server:
-  port: 9000
+  port: 9001
   servlet:
     context-path: /api
 
