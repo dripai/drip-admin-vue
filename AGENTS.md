@@ -112,7 +112,7 @@ Python 后端使用：
 
 ## 多后端目录布局
 
-新增后端语言时，以 Java 当前分层为基础做语言化映射，不创建 `migrations/` 目录。
+新增或重构 Go、Rust、Python 后端时，必须以 Java 当前分层为基础做语言化映射。目录结构是强制约束，不是建议；首版实现也必须符合本节规则，不允许以“先跑通”为理由把多个层或多个业务模块写进大文件。
 
 ```text
 backend-go/
@@ -121,18 +121,36 @@ backend-go/
 ├── internal/config/
 ├── internal/infrastructure/
 └── internal/modules/system/
+    ├── controller/
+    ├── dto/
+    ├── entity/
+    ├── service/
+    ├── vo/
+    └── router.go
 
 backend-rust/
 ├── src/common/
 ├── src/config/
 ├── src/infrastructure/
 └── src/modules/system/
+    ├── controller/
+    ├── dto/
+    ├── entity/
+    ├── service/
+    ├── vo/
+    └── router.rs
 
 backend-python/
 ├── app/common/
 ├── app/config/
 ├── app/infrastructure/
 └── app/modules/system/
+    ├── controller/
+    ├── dto/
+    ├── entity/
+    ├── service/
+    ├── vo/
+    └── router.py
 ```
 
 Java 当前分层：
@@ -145,7 +163,40 @@ backend/src/main/java/com/drip/admin/modules/system/
 backend/src/main/java/com/drip/admin/shared/
 ```
 
-业务模块继续按 `controller`、`dto`、`entity`、`mapper`、`service`、`vo` 分层组织。
+业务模块必须继续按 `controller`、`dto`、`entity`、`mapper`、`service`、`vo` 分层组织。非 Java 后端没有独立 `mapper` 层时，数据库访问逻辑必须放在 `service` 或明确的 repository/dao 层，不得写在 controller 中。
+
+分层职责：
+
+- `controller`：只处理路由入参、调用 service、返回 `ApiResponse`，不写业务规则和复杂数据库查询。
+- `dto`：只放请求 DTO、查询 DTO、参数校验结构。
+- `entity`：只放数据库表映射结构，文件名按表命名。
+- `service`：只放业务逻辑、事务、数据库查询、权限业务判断、外部资源调用。
+- `vo`：只放响应对象和前端展示对象。
+- `router`：只负责挂载路由和依赖装配，不写业务逻辑。
+
+文件粒度强制规则：
+
+- 每个业务模块必须独立文件，不得把多个业务模块合并到一个大文件。
+- `controller` 按业务拆分，例如 `user_controller.go`、`role_controller.go`、`menu_controller.go`、`dept_controller.go`、`config_controller.go`、`dict_controller.go`、`job_controller.go`、`log_controller.go`、`online_user_controller.go`、`print_template_controller.go`。
+- `service` 按业务拆分，例如 `user_service.go`、`role_service.go`、`menu_service.go`、`dept_service.go`、`config_service.go`。
+- `dto` 按业务拆分，例如 `user_dto.go`、`role_dto.go`、`menu_dto.go`。
+- `entity` 必须按表拆分，例如 `sys_user.go`、`sys_role.go`、`sys_menu.go`、`sys_dept.go`。
+- `vo` 按业务拆分，例如 `user_vo.go`、`auth_vo.go`、`menu_vo.go`。
+
+明确禁止：
+
+- 不得出现承载所有实体的 `models.go`、`entity.go`。
+- 不得出现承载多个业务模块的 `handlers.go`、`controllers.go`、`services.go`。
+- 不得把 `controller`、`service`、`entity`、`dto`、`vo` 混在同一个文件。
+- 不得在 `modules/system/` 根目录放主要业务实现文件；根目录只允许保留 `router`、模块装配文件和少量跨层常量。
+- 不得为了减少文件数量牺牲分层结构。
+
+结构验收：
+
+- 新增或重构任一后端后，必须检查分层目录是否存在。
+- 必须增加结构测试或静态检查，确保 `controller/`、`dto/`、`entity/`、`service/`、`vo/` 存在。
+- 必须检查系统模块根目录不存在大杂烩实现文件。
+- Go 后端完成验收时，`backend-go/internal/modules/system/` 根目录不得承载主要业务逻辑。
 
 ## API 契约
 
