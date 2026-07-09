@@ -3,12 +3,9 @@ package com.drip.admin.infrastructure.external;
 import com.drip.admin.common.exception.BusinessException;
 import com.drip.admin.modules.system.entity.SysJobEntity;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -20,20 +17,14 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class JobExecutorRegistry {
-    private final ApplicationContext applicationContext;
     private final Path scriptRoot;
 
-    public JobExecutorRegistry(ApplicationContext applicationContext, @Value("${drip.job.script-dir:./scripts}") String scriptDir) {
-        this.applicationContext = applicationContext;
+    public JobExecutorRegistry(@Value("${drip.job.script-dir:./scripts}") String scriptDir) {
         this.scriptRoot = Path.of(scriptDir).toAbsolutePath().normalize();
     }
 
     public void execute(SysJobEntity job) {
         String type = required(job.getExecutorType(), "executorType").toLowerCase(Locale.ROOT);
-        if ("java".equals(type)) {
-            executeJava(job);
-            return;
-        }
         executeScript(type, job);
     }
 
@@ -65,25 +56,6 @@ public class JobExecutorRegistry {
         }
         command.addAll(splitArgs(job.getScriptArgs()));
         runProcess(command);
-    }
-
-    private void executeJava(SysJobEntity job) {
-        try {
-            Class<?> type = Class.forName(required(job.getClassName(), "className"));
-            Object bean = applicationContext.getBean(type);
-            Method method = type.getMethod(required(job.getMethodName(), "methodName"));
-            method.invoke(bean);
-        } catch (ClassNotFoundException | NoSuchMethodException ex) {
-            throw new BusinessException(400000, "java job target is invalid");
-        } catch (InvocationTargetException ex) {
-            Throwable cause = ex.getTargetException();
-            if (cause instanceof RuntimeException runtimeException) {
-                throw runtimeException;
-            }
-            throw new BusinessException(500000, "java job execution failed: " + cause.getMessage());
-        } catch (IllegalAccessException ex) {
-            throw new BusinessException(500000, "java job execution failed: " + ex.getMessage());
-        }
     }
 
     private Path resolveScript(String scriptFile) {

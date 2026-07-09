@@ -21,10 +21,6 @@ public class SysJobEntity {
 
     private String scriptArgs;
 
-    private String className;
-
-    private String methodName;
-
     private Integer status;
 
     private String remark;
@@ -82,22 +78,6 @@ public class SysJobEntity {
 
     public void setScriptArgs(String scriptArgs) {
         this.scriptArgs = scriptArgs;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public String getMethodName() {
-        return methodName;
-    }
-
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
     }
 
     public Integer getStatus() {

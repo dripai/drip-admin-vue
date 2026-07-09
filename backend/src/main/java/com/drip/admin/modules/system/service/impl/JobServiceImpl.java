@@ -19,9 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class JobServiceImpl extends ServiceImpl<SysJobMapper, SysJobEntity> implements JobService {
+    private static final Set<String> SCRIPT_EXECUTOR_TYPES = Set.of("shell", "bat", "powershell", "ps1", "python");
     private final SysJobRunLogMapper jobRunLogMapper;
     private final JobExecutorRegistry jobExecutorRegistry;
     public JobServiceImpl(SysJobRunLogMapper jobRunLogMapper, JobExecutorRegistry jobExecutorRegistry) { this.jobRunLogMapper = jobRunLogMapper; this.jobExecutorRegistry = jobExecutorRegistry; }
@@ -36,11 +39,12 @@ public class JobServiceImpl extends ServiceImpl<SysJobMapper, SysJobEntity> impl
     @Override public PageResult<SysJobRunLogEntity> runLogs(long jobId, JobRunLogQuery query) { QueryWrapper<SysJobRunLogEntity> wrapper = runLogWrapper(query).eq("job_id", jobId); return runLogPage(query, wrapper); }
     @Override public PageResult<SysJobRunLogEntity> runLogs(JobRunLogQuery query) { return runLogPage(query, runLogWrapper(query)); }
     private void validateCron(String cron) { if (cron == null || cron.isBlank() || cron.length() > 64 || cron.split("\\s+").length < 5) throw new BusinessException(400000, "cronExpression format is invalid"); }
-    private static void apply(SysJobEntity entity, JobSaveRequest request) { entity.setJobName(request.getJobName()); entity.setCronExpression(request.getCronExpression()); entity.setExecutorType(request.getExecutorType()); entity.setScriptFile(request.getScriptFile()); entity.setScriptArgs(request.getScriptArgs()); entity.setClassName(request.getClassName()); entity.setMethodName(request.getMethodName()); entity.setStatus(request.getStatus()); entity.setRemark(request.getRemark()); }
+    private static void apply(SysJobEntity entity, JobSaveRequest request) { entity.setJobName(request.getJobName()); entity.setCronExpression(request.getCronExpression()); entity.setExecutorType(normalizeExecutorType(request.getExecutorType())); entity.setScriptFile(request.getScriptFile()); entity.setScriptArgs(request.getScriptArgs()); entity.setStatus(request.getStatus()); entity.setRemark(request.getRemark()); }
     private static void likeIfPresent(QueryWrapper<SysJobEntity> wrapper, String column, String value) { if (value != null && !value.isBlank()) wrapper.like(column, value); }
     private static void eqIfPresent(QueryWrapper<SysJobEntity> wrapper, String column, Object value) { if (value != null) wrapper.eq(column, value); }
     private static void requireText(String value, String field) { if (value == null || value.isBlank()) throw new BusinessException(400000, field + " is required"); }
-    private static void validateExecutor(JobSaveRequest request) { requireText(request.getExecutorType(), "executorType"); if ("java".equalsIgnoreCase(request.getExecutorType())) { requireText(request.getClassName(), "className"); requireText(request.getMethodName(), "methodName"); } else { requireText(request.getScriptFile(), "scriptFile"); } }
+    private static void validateExecutor(JobSaveRequest request) { String executorType = normalizeExecutorType(request.getExecutorType()); if (!SCRIPT_EXECUTOR_TYPES.contains(executorType)) throw new BusinessException(400000, "executorType is not supported"); requireText(request.getScriptFile(), "scriptFile"); }
+    private static String normalizeExecutorType(String executorType) { if (executorType == null || executorType.isBlank()) throw new BusinessException(400000, "executorType is required"); return executorType.trim().toLowerCase(Locale.ROOT); }
     private SysJobRunLogEntity insertRunLog(SysJobEntity job, String status, LocalDateTime started, long startedMs, String errorMessage) { SysJobRunLogEntity log = new SysJobRunLogEntity(); log.setJobId(job.getId()); log.setJobName(job.getJobName()); log.setStatus(status); log.setStartedAt(started); log.setCostMs(System.currentTimeMillis() - startedMs); log.setErrorMessage(truncate(errorMessage)); jobRunLogMapper.insert(log); return log; }
     private void updateRunLog(SysJobRunLogEntity log, String status, long startedMs, String errorMessage) { SysJobRunLogEntity update = new SysJobRunLogEntity(); update.setId(log.getId()); update.setStatus(status); update.setFinishedAt(LocalDateTime.now()); update.setCostMs(System.currentTimeMillis() - startedMs); update.setErrorMessage(truncate(errorMessage)); jobRunLogMapper.updateById(update); }
     private PageResult<SysJobRunLogEntity> runLogPage(JobRunLogQuery query, QueryWrapper<SysJobRunLogEntity> wrapper) { int page = query.pageOrDefault(); int pageSize = query.pageSizeOrDefault(); wrapper.orderByDesc("started_at"); Page<SysJobRunLogEntity> result = jobRunLogMapper.selectPage(new Page<>(page, pageSize), wrapper); return new PageResult<>(result.getRecords(), result.getTotal(), page, pageSize); }

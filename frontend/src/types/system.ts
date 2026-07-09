@@ -188,11 +188,9 @@ export interface JobItem {
   id: ID;
   jobName: string;
   cronExpression: string;
-  executorType: 'shell' | 'bat' | 'powershell' | 'python' | 'java';
+  executorType: 'shell' | 'bat' | 'powershell' | 'python';
   scriptFile?: string;
   scriptArgs?: string;
-  className?: string;
-  methodName: string;
   status: Status;
   remark?: string;
   createdAt?: string;

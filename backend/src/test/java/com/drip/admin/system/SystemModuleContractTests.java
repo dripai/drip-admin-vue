@@ -8,13 +8,16 @@ import com.drip.admin.common.log.OperationLogRecorder;
 import com.drip.admin.common.response.PageResult;
 import com.drip.admin.infrastructure.external.JobRunner;
 import com.drip.admin.infrastructure.external.JobScriptCatalog;
+import com.drip.admin.infrastructure.external.JobExecutorRegistry;
 import com.drip.admin.infrastructure.redis.LoginAttemptService;
 import com.drip.admin.infrastructure.redis.OnlineSessionService;
 import com.drip.admin.modules.system.controller.*;
 import com.drip.admin.modules.system.dto.*;
 import com.drip.admin.modules.system.entity.SysJobEntity;
+import com.drip.admin.modules.system.mapper.SysJobRunLogMapper;
 import com.drip.admin.modules.system.service.*;
 import com.drip.admin.modules.system.service.impl.FileServiceImpl;
+import com.drip.admin.modules.system.service.impl.JobServiceImpl;
 import com.drip.admin.modules.system.service.impl.OnlineUserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -200,6 +203,21 @@ class SystemModuleContractTests {
         controller.runJob(15L);
 
         verify(jobRunner).submit(job);
+    }
+
+    @Test
+    void jobServiceRejectsJavaExecutorType() {
+        JobServiceImpl service = new JobServiceImpl(mock(SysJobRunLogMapper.class), mock(JobExecutorRegistry.class));
+        JobSaveRequest request = new JobSaveRequest();
+        request.setJobName("Smoke");
+        request.setCronExpression("0 0 * * *");
+        request.setExecutorType("java");
+        request.setScriptFile("mysql-backup.py");
+
+        BusinessException error = assertThrows(BusinessException.class, () -> service.create(request));
+
+        assertEquals(400000, error.code());
+        assertEquals("executorType is not supported", error.getMessage());
     }
 
     @Test

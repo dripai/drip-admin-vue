@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
 import { message } from 'ant-design-vue';
 import PageContainer from '@/components/layout/PageContainer.vue';
@@ -50,30 +50,24 @@ const open = ref(false);
 const current = ref<JobItem>();
 const submitting = ref(false);
 const scriptFiles = ref<string[]>([]);
-const scriptExecutorTypes = ['shell', 'bat', 'powershell', 'python'];
 const form = reactive<Partial<JobItem>>({
   jobName: '',
   remark: '',
   cronExpression: '',
-  executorType: 'bat',
-  scriptFile: 'mysql-backup.cmd',
+  executorType: 'python',
+  scriptFile: 'mysql-backup.py',
   scriptArgs: '',
-  className: '',
-  methodName: '',
   status: 'ENABLED',
 });
-const isScriptJob = computed(() => scriptExecutorTypes.includes(form.executorType || ''));
 function add() {
   current.value = undefined;
   Object.assign(form, {
     jobName: '',
     remark: '',
     cronExpression: '',
-    executorType: 'bat',
-    scriptFile: 'mysql-backup.cmd',
+    executorType: 'python',
+    scriptFile: 'mysql-backup.py',
     scriptArgs: '',
-    className: '',
-    methodName: '',
     status: 'ENABLED',
   });
   open.value = true;
@@ -81,7 +75,15 @@ function add() {
 }
 function edit(row: JobItem) {
   current.value = row;
-  Object.assign(form, row);
+  Object.assign(form, {
+    jobName: row.jobName,
+    remark: row.remark,
+    cronExpression: row.cronExpression,
+    executorType: row.executorType,
+    scriptFile: row.scriptFile,
+    scriptArgs: row.scriptArgs,
+    status: row.status,
+  });
   open.value = true;
   loadScripts();
 }
@@ -94,12 +96,8 @@ async function submit() {
     message.error('请选择执行类型');
     return;
   }
-  if (isScriptJob.value && !form.scriptFile?.trim()) {
+  if (!form.scriptFile?.trim()) {
     message.error('请选择脚本文件');
-    return;
-  }
-  if (!isScriptJob.value && !form.className?.trim()) {
-    message.error('请输入方法名');
     return;
   }
   submitting.value = true;
@@ -128,7 +126,7 @@ async function run(row: JobItem) {
   message.success('操作成功');
 }
 async function loadScripts() {
-  if (!isScriptJob.value || !form.executorType) {
+  if (!form.executorType) {
     scriptFiles.value = [];
     return;
   }
@@ -193,26 +191,15 @@ onMounted(table.refresh);
             <a-select-option value="bat">Bat/Cmd</a-select-option>
             <a-select-option value="powershell">PowerShell</a-select-option>
             <a-select-option value="python">Python</a-select-option>
-            <a-select-option value="java">Java</a-select-option>
           </a-select></a-form-item
-        ><template v-if="isScriptJob">
-          <a-form-item label="脚本文件" required
-            ><a-select v-model:value="form.scriptFile" @focus="loadScripts">
-              <a-select-option v-for="file in scriptFiles" :key="file" :value="file">{{
-                file
-              }}</a-select-option>
-            </a-select></a-form-item
-          ><a-form-item label="脚本参数"
-            ><a-input v-model:value="form.scriptArgs" /></a-form-item
-        ></template>
-        <template v-else>
-          <a-form-item label="方法名" required
-            ><a-input
-              v-model:value="form.className"
-              placeholder="com.drip.admin.infrastructure.external.SystemHealthJob" /></a-form-item
-          ><a-form-item label="参数"
-            ><a-input v-model:value="form.methodName" placeholder="run" /></a-form-item
-        ></template
+        ><a-form-item label="脚本文件" required
+          ><a-select v-model:value="form.scriptFile" @focus="loadScripts">
+            <a-select-option v-for="file in scriptFiles" :key="file" :value="file">{{
+              file
+            }}</a-select-option>
+          </a-select></a-form-item
+        ><a-form-item label="脚本参数"
+          ><a-input v-model:value="form.scriptArgs" /></a-form-item
         ><a-form-item label="备注"
           ><a-input v-model:value="form.remark" /></a-form-item
         ></a-form></FormModal
