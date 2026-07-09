@@ -10,12 +10,12 @@
 
 ## 全局前置清单
 
-- [ ] 从 Java Controller 提取接口契约：路径、Method、Path 参数、Query 参数、Body、响应 VO、权限码。
-- [ ] 从 Java DTO 提取校验契约：必填、长度、枚举、正则、分页默认值。
-- [ ] 从 Java `GlobalExceptionHandler` 提取异常码和 HTTP 状态码映射。
-- [ ] 从 Java `ApiResponse`、`PageResult`、`JacksonConfig` 提取响应结构、分页结构和 Long 字符串序列化规则。
-- [ ] 从 `scripts/db/schema.sql` 提取表结构、字段类型、索引、种子数据和菜单权限码。
-- [ ] 明确所有语言后端都不创建 `migrations/` 目录，不在启动逻辑中执行建表、改表、删表。
+- [x] 从 Java Controller 提取接口契约：路径、Method、Path 参数、Query 参数、Body、响应 VO、权限码。
+- [x] 从 Java DTO 提取校验契约：必填、长度、枚举、正则、分页默认值。
+- [x] 从 Java `GlobalExceptionHandler` 提取异常码和 HTTP 状态码映射。
+- [x] 从 Java `ApiResponse`、`PageResult`、`JacksonConfig` 提取响应结构、分页结构和 Long 字符串序列化规则。
+- [x] 从 `scripts/db/schema.sql` 提取表结构、字段类型、索引、种子数据和菜单权限码。
+- [x] 明确所有语言后端都不创建 `migrations/` 目录，不在启动逻辑中执行建表、改表、删表。
 
 ## Go 后端开发清单
 
@@ -24,61 +24,61 @@
 状态：已完成首版实现，代码位于 `backend-go/`，并已通过 `go test ./...`。
 
 1. 工程骨架
-   - [ ] 创建 `backend-go/`。
-   - [ ] 创建 `cmd/server/`、`internal/common/`、`internal/config/`、`internal/infrastructure/`、`internal/modules/system/`。
-   - [ ] 初始化 `go.mod`，锁定 Gin、GORM、MySQL driver、go-redis、Viper、zap、swaggo、excelize、testify。
-   - [ ] 建立 `cmd/server/main.go`，统一挂载 `/api`。
-   - [ ] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
+   - [x] 创建 `backend-go/`。
+   - [x] 创建 `cmd/server/`、`internal/common/`、`internal/config/`、`internal/infrastructure/`、`internal/modules/system/`。
+   - [x] 初始化 `go.mod`，锁定 Gin、GORM、MySQL driver、go-redis、Viper、zap、swaggo、excelize、testify。
+   - [x] 建立 `cmd/server/main.go`，统一挂载 `/api`。
+   - [x] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
 
 2. 公共契约
-   - [ ] 实现 `ApiResponse{code,message,data}`，成功固定 `code=0`、`message=success`。
-   - [ ] 实现失败响应 `data=null`。
-   - [ ] 实现 `PageQuery`：`page` 空值默认 `1`，`pageSize` 空值默认 `10`，非法值返回 `400000`。
-   - [ ] 实现 `PageResult{list,total,page,pageSize}`，`total` 输出为字符串。
-   - [ ] 实现 ID、父 ID、总数等 int64 字段 JSON 字符串序列化。
-   - [ ] 实现统一异常码：`400000`、`401000`、`403000`、`404000`、`409000`、`500000`。
+   - [x] 实现 `ApiResponse{code,message,data}`，成功固定 `code=0`、`message=success`。
+   - [x] 实现失败响应 `data=null`。
+   - [x] 实现 `PageQuery`：`page` 空值默认 `1`，`pageSize` 空值默认 `10`，非法值返回 `400000`。
+   - [x] 实现 `PageResult{list,total,page,pageSize}`，`total` 输出为字符串。
+   - [x] 实现 ID、父 ID、总数等 int64 字段 JSON 字符串序列化。
+   - [x] 实现统一异常码：`400000`、`401000`、`403000`、`404000`、`409000`、`500000`。
 
 3. 基础设施
-   - [ ] MySQL 连接池使用 GORM，禁止 `AutoMigrate`。
-   - [ ] Redis 客户端用于登录会话、在线用户、登录失败次数和缓存。
-   - [ ] zap 日志接入请求日志、错误日志和操作日志写入。
-   - [ ] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
-   - [ ] 实现文件上传存储，接口字段对齐 Java。
-   - [ ] 实现定时任务脚本执行器，脚本目录对齐 Java `../scripts`。
+   - [x] MySQL 连接池使用 GORM，禁止 `AutoMigrate`。
+   - [x] Redis 客户端用于登录会话、在线用户、登录失败次数和缓存。
+   - [x] zap 日志接入请求日志、错误日志和操作日志写入。
+   - [x] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
+   - [x] 实现文件上传存储，接口字段对齐 Java。
+   - [x] 实现定时任务脚本执行器，脚本目录对齐 Java `../scripts`。
 
 4. 认证与权限
-   - [ ] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
-   - [ ] 实现 `/api/system/password`、`/api/system/profile`。
-   - [ ] Token 名称固定为 `Authorization`，token 风格为 uuid。
-   - [ ] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
-   - [ ] 实现 `SUPER_ADMIN` 拥有所有启用菜单权限码。
-   - [ ] 实现 Gin 权限中间件，权限码完全复用 Java `@RequirePermission`。
+   - [x] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
+   - [x] 实现 `/api/system/password`、`/api/system/profile`。
+   - [x] Token 名称固定为 `Authorization`，token 风格为 uuid。
+   - [x] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
+   - [x] 实现 `SUPER_ADMIN` 拥有所有启用菜单权限码。
+   - [x] 实现 Gin 权限中间件，权限码完全复用 Java `@RequirePermission`。
 
 5. 系统模块
-   - [ ] 健康检查和根路径：`/api/health`、`/api/`、`/api/favicon.ico`。
-   - [ ] 菜单模块：列表树、创建、更新、删除、状态切换。
-   - [ ] 角色模块：分页、详情、用户列表、权限详情、选项、创建、更新、删除、状态、授权。
-   - [ ] 部门模块：树、详情、创建、更新、删除、状态。
-   - [ ] 用户模块：分页、详情、创建、更新、删除、状态、解锁、分配角色、重置密码。
-   - [ ] 配置模块：分页、公开配置、创建、更新、删除、状态。
-   - [ ] 字典模块：字典类型、字典项、状态、缓存刷新。
-   - [ ] 在线用户模块：分页、详情、踢出。
-   - [ ] 日志模块：登录日志、操作日志分页和详情。
-   - [ ] 定时任务模块：任务分页、详情、脚本列表、创建、更新、删除、状态、手工运行、运行日志。
-   - [ ] 文件模块：上传。
-   - [ ] 打印模板模块：分页、详情、创建、复制、更新、删除、状态。
+   - [x] 健康检查和根路径：`/api/health`、`/api/`、`/api/favicon.ico`。
+   - [x] 菜单模块：列表树、创建、更新、删除、状态切换。
+   - [x] 角色模块：分页、详情、用户列表、权限详情、选项、创建、更新、删除、状态、授权。
+   - [x] 部门模块：树、详情、创建、更新、删除、状态。
+   - [x] 用户模块：分页、详情、创建、更新、删除、状态、解锁、分配角色、重置密码。
+   - [x] 配置模块：分页、公开配置、创建、更新、删除、状态。
+   - [x] 字典模块：字典类型、字典项、状态、缓存刷新。
+   - [x] 在线用户模块：分页、详情、踢出。
+   - [x] 日志模块：登录日志、操作日志分页和详情。
+   - [x] 定时任务模块：任务分页、详情、脚本列表、创建、更新、删除、状态、手工运行、运行日志。
+   - [x] 文件模块：上传。
+   - [x] 打印模板模块：分页、详情、创建、复制、更新、删除、状态。
 
 6. 导出与文档
-   - [ ] 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
-   - [ ] 实现 OpenAPI 文档，接口路径和模型与 Java 对齐。
-   - [ ] 增加 Go README，说明启动、配置、测试和数据库脚本使用方式。
+   - [x] 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
+   - [x] 实现 OpenAPI 文档，接口路径和模型与 Java 对齐。
+   - [x] 增加 Go README，说明启动、配置、测试和数据库脚本使用方式。
 
 7. 测试验收
-   - [ ] 路由契约测试：所有路径和 Method 与 Java 一致。
-   - [ ] 权限契约测试：所有权限码与 Java 一致。
-   - [ ] 响应契约测试：成功、失败、分页、Long 字符串序列化一致。
-   - [ ] 数据库契约测试：无 `AutoMigrate`、无 DDL、无 `migrations/`。
-   - [ ] 系统模块接口测试覆盖认证、权限、用户、角色、菜单、配置、字典、任务、日志、打印模板。
+   - [x] 路由契约测试：所有路径和 Method 与 Java 一致。
+   - [x] 权限契约测试：所有权限码与 Java 一致。
+   - [x] 响应契约测试：成功、失败、分页、Long 字符串序列化一致。
+   - [x] 数据库契约测试：无 `AutoMigrate`、无 DDL、无 `migrations/`。
+   - [x] 系统模块接口测试覆盖认证、权限、用户、角色、菜单、配置、字典、任务、日志、打印模板。
 
 ## Python 后端开发清单
 
