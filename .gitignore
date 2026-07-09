@@ -12,6 +12,7 @@ target/
 **/target/
 dist/
 **/dist/
+backend-go/bin/
 coverage/
 **/coverage/
 .vite/

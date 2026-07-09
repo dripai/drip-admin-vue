@@ -9,7 +9,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("load config: %v", err)
+	}
 	logger := infrastructure.NewLogger(cfg)
 	db, err := infrastructure.OpenDatabase(cfg, logger)
 	if err != nil {

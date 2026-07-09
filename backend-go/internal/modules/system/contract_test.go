@@ -16,7 +16,10 @@ import (
 
 func TestRouteContract(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	router := NewServer(config.Load(), nil, nil, nil).Router()
+	t.Setenv("DRIP_GO_CONFIG", filepath.Join("..", "..", "..", "config.yaml"))
+	cfg, err := config.Load()
+	require.NoError(t, err)
+	router := NewServer(cfg, nil, nil, nil).Router()
 	actual := map[string]bool{}
 	for _, route := range router.Routes() {
 		actual[route.Method+" "+route.Path] = true

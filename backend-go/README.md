@@ -31,10 +31,18 @@ backend-go/
 
 ```bash
 cd backend-go
-go run ./cmd/server
+./start.sh dev
+./start.sh build
+./start.sh prod
 ```
 
-默认配置与 Java 后端对齐：
+默认读取当前目录下的 `config.yaml`，也可以通过环境变量指定：
+
+```bash
+DRIP_GO_CONFIG=/path/to/config.yaml ./start.sh dev
+```
+
+`config.yaml` 中的默认配置与 Java 后端对齐：
 
 - API 基础路径：`/api`
 - 服务端口：`9001`

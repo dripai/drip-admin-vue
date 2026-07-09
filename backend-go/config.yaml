@@ -1,0 +1,24 @@
+server:
+  port: "9001"
+
+mysql:
+  host: "localhost"
+  port: 3307
+  database: "drip-manager"
+  username: "root"
+  password: "root"
+  params: "charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+token:
+  name: "Authorization"
+  timeout-seconds: 28800
+  active-timeout-seconds: 1800
+
+job:
+  script-dir: "../scripts"
