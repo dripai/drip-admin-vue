@@ -6,6 +6,9 @@ scripts/mysql-client.cnf
 # Dependencies
 node_modules/
 **/node_modules/
+__pycache__/
+*.egg-info/
+.venv/
 
 # Build outputs
 target/
