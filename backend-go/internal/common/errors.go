@@ -42,6 +42,7 @@ func HandleError(c *gin.Context, err error) {
 	if err == nil {
 		return
 	}
+	_ = c.Error(err)
 	var business BusinessError
 	if errors.As(err, &business) {
 		Fail(c, business.HTTPStatus(), business.Code, business.Message)

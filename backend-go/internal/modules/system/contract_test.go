@@ -2,6 +2,8 @@ package system
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sort"
@@ -27,6 +29,43 @@ func TestRouteContract(t *testing.T) {
 	for _, route := range expectedRoutes() {
 		require.True(t, actual[route], route)
 	}
+}
+
+func TestOpenAPIDocsContract(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Setenv("DRIP_GO_CONFIG", filepath.Join("..", "..", "..", "config.yaml"))
+	cfg, err := config.Load()
+	require.NoError(t, err)
+	router := NewServer(cfg, nil, nil, nil).Router()
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/v3/api-docs", nil)
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &payload))
+	require.Equal(t, "2.0", payload["swagger"])
+	paths, ok := payload["paths"].(map[string]any)
+	require.True(t, ok)
+	require.Contains(t, paths, "/system/login")
+	require.Contains(t, paths, "/system/user/{id}/resetPassword")
+	require.Contains(t, paths, "/system/print-template/{id}/status")
+}
+
+func TestSwaggerUIPathContract(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Setenv("DRIP_GO_CONFIG", filepath.Join("..", "..", "..", "config.yaml"))
+	cfg, err := config.Load()
+	require.NoError(t, err)
+	router := NewServer(cfg, nil, nil, nil).Router()
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/swagger-ui.html", nil)
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusFound, recorder.Code)
+	require.Equal(t, "swagger-ui/index.html", recorder.Header().Get("Location"))
 }
 
 func TestResponseContract(t *testing.T) {
@@ -71,6 +110,7 @@ func TestLayeredStructureContract(t *testing.T) {
 		"models.go",
 		"server.go",
 		"services.go",
+		"service/openapi_service.go",
 		"user_role_menu_dept.go",
 		"service/dict_log_job_print_service.go",
 		"service/user_role_menu_dept_service.go",
@@ -160,6 +200,7 @@ func expectedRoutes() []string {
 		"GET /api/favicon.ico",
 		"GET /api/health",
 		"GET /api/v3/api-docs",
+		"GET /api/swagger-ui.html",
 		"GET /api/swagger-ui/*any",
 		"GET /api/system/publicConfig",
 		"POST /api/system/login",

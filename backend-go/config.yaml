@@ -1,6 +1,9 @@
 server:
   port: "9001"
 
+logging:
+  level: "info"
+
 mysql:
   host: "localhost"
   port: 3307
@@ -18,7 +21,7 @@ redis:
 token:
   name: "Authorization"
   timeout-seconds: 28800
-  active-timeout-seconds: 1800
+  active-timeout-seconds: 7200
 
 job:
   script-dir: "../scripts"

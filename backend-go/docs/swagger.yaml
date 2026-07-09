@@ -1,0 +1,2938 @@
+basePath: /api
+definitions:
+  common.ApiResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  dto.ConfigSaveRequest:
+    properties:
+      configKey:
+        type: string
+      configName:
+        type: string
+      configValue:
+        type: string
+      remark:
+        type: string
+      status:
+        type: integer
+      valueType:
+        type: string
+    type: object
+  dto.DeptSaveRequest:
+    properties:
+      deptCode:
+        type: string
+      deptName:
+        type: string
+      leaderUserId:
+        type: integer
+      parentId:
+        type: integer
+      sort:
+        type: integer
+      status:
+        type: integer
+    type: object
+  dto.DictItemSaveRequest:
+    properties:
+      builtin:
+        type: integer
+      dictTypeId:
+        type: integer
+      isDefault:
+        type: integer
+      label:
+        type: string
+      sort:
+        type: integer
+      status:
+        type: integer
+      value:
+        type: string
+    type: object
+  dto.DictTypeSaveRequest:
+    properties:
+      builtin:
+        type: integer
+      dictCode:
+        type: string
+      dictName:
+        type: string
+      remark:
+        type: string
+      status:
+        type: integer
+    type: object
+  dto.JobSaveRequest:
+    properties:
+      className:
+        type: string
+      cronExpression:
+        type: string
+      executorType:
+        type: string
+      jobName:
+        type: string
+      methodName:
+        type: string
+      remark:
+        type: string
+      scriptArgs:
+        type: string
+      scriptFile:
+        type: string
+      status:
+        type: integer
+    type: object
+  dto.LoginRequest:
+    properties:
+      deviceType:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.MenuAssignRequest:
+    properties:
+      menuIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  dto.MenuSaveRequest:
+    properties:
+      component:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      path:
+        type: string
+      permissionCode:
+        type: string
+      sort:
+        type: integer
+      status:
+        type: integer
+      type:
+        type: string
+      visible:
+        type: integer
+    type: object
+  dto.PasswordRequest:
+    properties:
+      newPassword:
+        type: string
+      oldPassword:
+        type: string
+    type: object
+  dto.PasswordResetRequest:
+    properties:
+      password:
+        type: string
+    type: object
+  dto.PrintTemplateCopyRequest:
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  dto.PrintTemplateSaveRequest:
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+      paperType:
+        type: string
+      status:
+        type: integer
+      templateJson:
+        type: string
+    type: object
+  dto.ProfileUpdateRequest:
+    properties:
+      email:
+        type: string
+      phone:
+        type: string
+      realName:
+        type: string
+    type: object
+  dto.RoleAssignRequest:
+    properties:
+      roleIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  dto.RoleSaveRequest:
+    properties:
+      remark:
+        type: string
+      roleCode:
+        type: string
+      roleName:
+        type: string
+      status:
+        type: integer
+    type: object
+  dto.StatusUpdateRequest:
+    properties:
+      status:
+        type: integer
+    type: object
+  dto.UserSaveRequest:
+    properties:
+      deptId:
+        type: integer
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      realName:
+        type: string
+      remark:
+        type: string
+      status:
+        type: integer
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Go backend API aligned with the Java backend contract.
+  title: Drip Admin Go API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      responses:
+        "302":
+          description: Found
+      summary: API root
+      tags:
+      - common
+  /favicon.ico:
+    get:
+      responses:
+        "204":
+          description: No Content
+      summary: Favicon
+      tags:
+      - common
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      summary: Health check
+      tags:
+      - common
+  /swagger-ui.html:
+    get:
+      responses:
+        "302":
+          description: Found
+      summary: Swagger UI
+      tags:
+      - common
+  /system/config:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Config name
+        in: query
+        name: configName
+        type: string
+      - description: Config key
+        in: query
+        name: configKey
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List configs
+      tags:
+      - config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ConfigSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create config
+      tags:
+      - config
+  /system/config/{id}:
+    delete:
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete config
+      tags:
+      - config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ConfigSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update config
+      tags:
+      - config
+  /system/config/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update config status
+      tags:
+      - config
+  /system/dept:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List departments
+      tags:
+      - dept
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeptSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create department
+      tags:
+      - dept
+  /system/dept/{id}:
+    delete:
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete department
+      tags:
+      - dept
+    get:
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Department detail
+      tags:
+      - dept
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeptSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update department
+      tags:
+      - dept
+  /system/dept/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update department status
+      tags:
+      - dept
+  /system/dict/cache/refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Refresh dictionary cache
+      tags:
+      - dict
+  /system/dict/item:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DictItemSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create dictionary item
+      tags:
+      - dict
+  /system/dict/item/{id}:
+    delete:
+      parameters:
+      - description: Dictionary item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete dictionary item
+      tags:
+      - dict
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dictionary item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DictItemSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update dictionary item
+      tags:
+      - dict
+  /system/dict/item/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dictionary item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update dictionary item status
+      tags:
+      - dict
+  /system/dict/type:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List dictionary types
+      tags:
+      - dict
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DictTypeSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create dictionary type
+      tags:
+      - dict
+  /system/dict/type/{id}:
+    delete:
+      parameters:
+      - description: Dictionary type ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete dictionary type
+      tags:
+      - dict
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dictionary type ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DictTypeSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update dictionary type
+      tags:
+      - dict
+  /system/dict/type/{id}/item:
+    get:
+      parameters:
+      - description: Dictionary type ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List dictionary items
+      tags:
+      - dict
+  /system/files:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload file
+      tags:
+      - file
+  /system/job:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Job name
+        in: query
+        name: jobName
+        type: string
+      - description: Remark
+        in: query
+        name: remark
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: integer
+      - description: Created time
+        in: query
+        name: createdAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List jobs
+      tags:
+      - job
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JobSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create job
+      tags:
+      - job
+  /system/job/{id}:
+    delete:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete job
+      tags:
+      - job
+    get:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Job detail
+      tags:
+      - job
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.JobSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update job
+      tags:
+      - job
+  /system/job/{id}/run:
+    post:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Run job
+      tags:
+      - job
+  /system/job/{id}/runLog:
+    get:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Job run logs
+      tags:
+      - job
+  /system/job/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update job status
+      tags:
+      - job
+  /system/job/scripts:
+    get:
+      parameters:
+      - description: 'Executor type: python, shell, bat, powershell, ps1'
+        in: query
+        name: executorType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Job scripts
+      tags:
+      - job
+  /system/jobRunLog:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Job name
+        in: query
+        name: jobName
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List job run logs
+      tags:
+      - job
+  /system/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      summary: Login
+      tags:
+      - auth
+  /system/loginLog:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Username
+        in: query
+        name: username
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Login type
+        in: query
+        name: loginType
+        type: string
+      - description: Device type
+        in: query
+        name: deviceType
+        type: string
+      - description: IP
+        in: query
+        name: ip
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List login logs
+      tags:
+      - login-log
+  /system/loginLog/{id}:
+    get:
+      parameters:
+      - description: Login log ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Login log detail
+      tags:
+      - login-log
+  /system/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /system/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Current user
+      tags:
+      - auth
+  /system/menu:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List menus
+      tags:
+      - menu
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MenuSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create menu
+      tags:
+      - menu
+  /system/menu/{id}:
+    delete:
+      parameters:
+      - description: Menu ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete menu
+      tags:
+      - menu
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Menu ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MenuSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update menu
+      tags:
+      - menu
+  /system/menu/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Menu ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update menu status
+      tags:
+      - menu
+  /system/onlineUser:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Username
+        in: query
+        name: username
+        type: string
+      - description: IP
+        in: query
+        name: ip
+        type: string
+      - description: Device type
+        in: query
+        name: deviceType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List online users
+      tags:
+      - online-user
+  /system/onlineUser/{tokenId}:
+    get:
+      parameters:
+      - description: Token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Online user detail
+      tags:
+      - online-user
+  /system/onlineUser/{tokenId}/kickout:
+    post:
+      parameters:
+      - description: Token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Kick out online user
+      tags:
+      - online-user
+  /system/operationLog:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Operator
+        in: query
+        name: operator
+        type: string
+      - description: Module
+        in: query
+        name: module
+        type: string
+      - description: Action
+        in: query
+        name: action
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Path
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List operation logs
+      tags:
+      - operation-log
+  /system/operationLog/{id}:
+    get:
+      parameters:
+      - description: Operation log ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Operation log detail
+      tags:
+      - operation-log
+  /system/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Change password
+      tags:
+      - auth
+  /system/print-template:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Code
+        in: query
+        name: code
+        type: string
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List print templates
+      tags:
+      - print-template
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PrintTemplateSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create print template
+      tags:
+      - print-template
+  /system/print-template/{id}:
+    delete:
+      parameters:
+      - description: Print template ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete print template
+      tags:
+      - print-template
+    get:
+      parameters:
+      - description: Print template ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Print template detail
+      tags:
+      - print-template
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Print template ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PrintTemplateSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update print template
+      tags:
+      - print-template
+  /system/print-template/{id}/copy:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Print template ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PrintTemplateCopyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Copy print template
+      tags:
+      - print-template
+  /system/print-template/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Print template ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update print template status
+      tags:
+      - print-template
+  /system/profile:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProfileUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update profile
+      tags:
+      - auth
+  /system/publicConfig:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      summary: Public configs
+      tags:
+      - config
+  /system/role:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Role name
+        in: query
+        name: roleName
+        type: string
+      - description: Role code
+        in: query
+        name: roleCode
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: integer
+      - description: Created time
+        in: query
+        name: createdAt
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List roles
+      tags:
+      - role
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RoleSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create role
+      tags:
+      - role
+  /system/role/{id}:
+    delete:
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete role
+      tags:
+      - role
+    get:
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Role detail
+      tags:
+      - role
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RoleSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update role
+      tags:
+      - role
+  /system/role/{id}/permission:
+    get:
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Role permissions
+      tags:
+      - role
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MenuAssignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Assign role menus
+      tags:
+      - role
+  /system/role/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update role status
+      tags:
+      - role
+  /system/role/{id}/user:
+    get:
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Role users
+      tags:
+      - role
+  /system/role/option:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Role options
+      tags:
+      - role
+  /system/user:
+    get:
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Username
+        in: query
+        name: username
+        type: string
+      - description: Real name
+        in: query
+        name: realName
+        type: string
+      - description: Phone
+        in: query
+        name: phone
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: integer
+      - description: Department ID
+        in: query
+        name: deptId
+        type: string
+      - description: Role ID
+        in: query
+        name: roleId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List users
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create user
+      tags:
+      - user
+  /system/user/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete user
+      tags:
+      - user
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: User detail
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserSaveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update user
+      tags:
+      - user
+  /system/user/{id}/resetPassword:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Reset user password
+      tags:
+      - user
+  /system/user/{id}/role:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RoleAssignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Assign user roles
+      tags:
+      - user
+  /system/user/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StatusUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update user status
+      tags:
+      - user
+  /system/user/{id}/unlock:
+    post:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Unlock user
+      tags:
+      - user
+  /v3/api-docs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ApiResponse'
+      summary: OpenAPI document
+      tags:
+      - common
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

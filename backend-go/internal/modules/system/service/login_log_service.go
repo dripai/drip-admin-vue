@@ -3,6 +3,7 @@ package service
 import (
 	"drip-admin/backend-go/internal/common"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func (s *Server) writeLoginLog(c *gin.Context, userID *common.Int64String, username string, realName *string, loginType string, status string, reason string, deviceType string) {
@@ -24,5 +25,11 @@ func (s *Server) writeLoginLog(c *gin.Context, userID *common.Int64String, usern
 		UserAgent:     &userAgent,
 		DeviceType:    &deviceType,
 	}
-	_ = s.db.Create(&row).Error
+	if s.db == nil {
+		s.logger.Error("login log write failed", zap.String("reason", "database is not configured"), zap.String("username", username), zap.String("status", status))
+		return
+	}
+	if err := s.db.Create(&row).Error; err != nil {
+		s.logger.Error("login log write failed", zap.String("username", username), zap.String("status", status), zap.Error(err))
+	}
 }

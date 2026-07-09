@@ -10,15 +10,20 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
-	MySQL  MySQLConfig
-	Redis  RedisConfig
-	Token  TokenConfig
-	Job    JobConfig
+	Server  ServerConfig
+	Logging LoggingConfig
+	MySQL   MySQLConfig
+	Redis   RedisConfig
+	Token   TokenConfig
+	Job     JobConfig
 }
 
 type ServerConfig struct {
 	Port string
+}
+
+type LoggingConfig struct {
+	Level string
 }
 
 type MySQLConfig struct {
@@ -65,7 +70,8 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Server: ServerConfig{Port: v.GetString("server.port")},
+		Server:  ServerConfig{Port: v.GetString("server.port")},
+		Logging: LoggingConfig{Level: v.GetString("logging.level")},
 		MySQL: MySQLConfig{
 			Host:     v.GetString("mysql.host"),
 			Port:     v.GetInt("mysql.port"),
@@ -110,6 +116,7 @@ func configFile() string {
 
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.port", "9001")
+	v.SetDefault("logging.level", "info")
 	v.SetDefault("redis.host", "localhost")
 	v.SetDefault("redis.port", 6379)
 	v.SetDefault("redis.password", "")

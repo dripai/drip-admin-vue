@@ -42,6 +42,9 @@ type SessionData struct {
 }
 
 func NewServer(cfg config.Config, db *gorm.DB, redis *redis.Client, logger *zap.Logger) *Server {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
 	return &Server{cfg: cfg, db: db, redis: redis, logger: logger}
 }
 

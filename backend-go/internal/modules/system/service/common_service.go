@@ -13,6 +13,14 @@ import (
 )
 
 func (s *Server) Root(c *gin.Context) {
+	s.redirectSwaggerUI(c)
+}
+
+func (s *Server) SwaggerUI(c *gin.Context) {
+	s.redirectSwaggerUI(c)
+}
+
+func (s *Server) redirectSwaggerUI(c *gin.Context) {
 	c.Header("Location", "swagger-ui/index.html")
 	c.Status(http.StatusFound)
 }

@@ -1,6 +1,7 @@
 package system
 
 import (
+	_ "drip-admin/backend-go/docs"
 	"drip-admin/backend-go/internal/config"
 	"drip-admin/backend-go/internal/modules/system/controller"
 	"drip-admin/backend-go/internal/modules/system/service"
@@ -27,7 +28,8 @@ func NewServer(cfg config.Config, db *gorm.DB, redisClient *redis.Client, logger
 func (s *Server) Router() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	router.Use(gin.Recovery())
+	svc := service.NewServer(s.cfg, s.db, s.redis, s.logger)
+	router.Use(svc.RequestLoggerMiddleware(), svc.RecoveryMiddleware())
 	router.Use(cors.New(cors.Config{
 		AllowOriginFunc:  func(string) bool { return true },
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -35,13 +37,13 @@ func (s *Server) Router() *gin.Engine {
 		AllowCredentials: true,
 	}))
 
-	svc := service.NewServer(s.cfg, s.db, s.redis, s.logger)
 	ctl := controller.New(svc)
 	api := router.Group("/api")
 	api.GET("/", ctl.Root)
 	api.GET("/favicon.ico", ctl.Favicon)
 	api.GET("/health", ctl.Health)
 	api.GET("/v3/api-docs", ctl.OpenAPIDocs)
+	api.GET("/swagger-ui.html", ctl.SwaggerUI)
 	api.GET("/swagger-ui/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/api/v3/api-docs")))
 	api.GET("/system/publicConfig", ctl.PublicConfig)
 	api.POST("/system/login", ctl.Login)

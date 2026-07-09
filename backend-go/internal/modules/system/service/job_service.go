@@ -171,7 +171,7 @@ func (s *Server) saveJob(id common.Int64String, request JobSaveRequest, create b
 		return 0, err
 	}
 	if create {
-		row := SysJob{ID: common.NewID(), JobName: request.JobName, CronExpression: request.CronExpression, ExecutorType: request.ExecutorType, ScriptFile: optionalString(request.ScriptFile), ScriptArgs: optionalString(request.ScriptArgs), ClassName: optionalString(request.ClassName), MethodName: optionalString(request.MethodName), Status: intOrDefault(request.Status, 1), Remark: optionalString(request.Remark)}
+		row := SysJob{ID: common.NewID(), JobName: request.JobName, CronExpression: request.CronExpression, ExecutorType: request.ExecutorType, ScriptFile: optionalString(request.ScriptFile), ScriptArgs: optionalString(request.ScriptArgs), Status: intOrDefault(request.Status, 1), Remark: optionalString(request.Remark)}
 		return row.ID, s.db.Create(&row).Error
 	}
 	return id, s.db.Model(&SysJob{}).Where("id = ? and deleted = 0", id.Int64()).Updates(map[string]any{
@@ -180,8 +180,8 @@ func (s *Server) saveJob(id common.Int64String, request JobSaveRequest, create b
 		"executor_type":   request.ExecutorType,
 		"script_file":     optionalString(request.ScriptFile),
 		"script_args":     optionalString(request.ScriptArgs),
-		"class_name":      optionalString(request.ClassName),
-		"method_name":     optionalString(request.MethodName),
+		"class_name":      nil,
+		"method_name":     nil,
 		"status":          intOrDefault(request.Status, 1),
 		"remark":          optionalString(request.Remark),
 	}).Error
@@ -200,16 +200,17 @@ func validateJob(request JobSaveRequest) error {
 	if err := common.RequiredString(request.ExecutorType, "executorType"); err != nil {
 		return err
 	}
-	if strings.EqualFold(request.ExecutorType, "java") {
-		if err := common.RequiredString(request.ClassName, "className"); err != nil {
-			return err
-		}
-		return common.RequiredString(request.MethodName, "methodName")
+	if _, err := supportedScriptExtensions(request.ExecutorType); err != nil {
+		return err
 	}
 	return common.RequiredString(request.ScriptFile, "scriptFile")
 }
 
 func scriptExtensions(executorType string) (map[string]bool, error) {
+	return supportedScriptExtensions(executorType)
+}
+
+func supportedScriptExtensions(executorType string) (map[string]bool, error) {
 	switch strings.ToLower(strings.TrimSpace(executorType)) {
 	case "shell":
 		return map[string]bool{".sh": true}, nil
@@ -250,8 +251,8 @@ func (s *Server) executeJob(job SysJob) {
 
 func (s *Server) executeJobTarget(job SysJob) error {
 	executorType := strings.ToLower(strings.TrimSpace(job.ExecutorType))
-	if executorType == "java" {
-		return nil
+	if _, err := supportedScriptExtensions(executorType); err != nil {
+		return err
 	}
 	if job.ScriptFile == nil || strings.TrimSpace(*job.ScriptFile) == "" {
 		return common.NewBusinessError(400000, "scriptFile is required")
