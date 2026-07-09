@@ -11,13 +11,21 @@ import type { LoginLogItem } from '@/types/system';
 const fields = [
   { label: '用户名', field: 'username', component: 'input' as const },
   {
+    label: '登录类型',
+    field: 'loginType',
+    component: 'select' as const,
+    options: [
+      { label: '登录', value: 'LOGIN' },
+      { label: '登出', value: 'LOGOUT' },
+    ],
+  },
+  {
     label: '状态',
     field: 'status',
     component: 'select' as const,
     options: [
       { label: '成功', value: 'SUCCESS' },
-      { label: '失败', value: 'FAILED' },
-      { label: '登出', value: 'LOGOUT' },
+      { label: '失败', value: 'FAIL' },
     ],
   },
   { label: 'IP', field: 'ip', component: 'input' as const },
@@ -25,6 +33,7 @@ const fields = [
 ];
 const columns: TableColumnType[] = [
   { title: '用户名', dataIndex: 'username' },
+  { title: '登录类型', dataIndex: 'loginType', width: 100 },
   { title: '状态', dataIndex: 'status' },
   { title: 'IP', dataIndex: 'ip' },
   { title: '客户端', dataIndex: 'userAgent', ellipsis: true },
@@ -45,13 +54,14 @@ async function openDetail(row: LoginLogItem) {
 }
 function statusText(status: LoginLogItem['status']) {
   if (status === 'SUCCESS') return '成功';
-  if (status === 'FAILED') return '失败';
-  return '登出';
+  return '失败';
 }
 function statusColor(status: LoginLogItem['status']) {
   if (status === 'SUCCESS') return 'green';
-  if (status === 'FAILED') return 'red';
-  return 'default';
+  return 'red';
+}
+function loginTypeText(loginType: LoginLogItem['loginType']) {
+  return loginType === 'LOGOUT' ? '登出' : '登录';
 }
 onMounted(table.refresh);
 </script>
@@ -73,7 +83,12 @@ onMounted(table.refresh);
       @refresh="table.refresh"
       ><template #bodyCell="{ column, record }"
         ><template v-if="column.dataIndex === 'status'"
-          ><a-tag :color="statusColor(record.status)">{{ statusText(record.status) }}</a-tag></template
+          ><a-tag :color="statusColor(record.status)">{{
+            statusText(record.status)
+          }}</a-tag></template
+        ><template v-else-if="column.dataIndex === 'loginType'">{{
+          loginTypeText(record.loginType)
+        }}</template
         ><template v-else-if="column.dataIndex === 'userAgent'"
           ><a-tooltip :title="record.userAgent"
             ><span class="user-agent">{{ record.userAgent }}</span></a-tooltip

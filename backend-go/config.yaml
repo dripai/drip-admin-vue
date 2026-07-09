@@ -21,7 +21,7 @@ redis:
 token:
   name: "Authorization"
   timeout-seconds: 28800
-  active-timeout-seconds: 7200
+  active-timeout-seconds: 1800
 
 job:
   script-dir: "../scripts"

@@ -73,5 +73,5 @@ func (s *Server) OperationLog(c *gin.Context) {
 }
 
 func toOperationLogVo(row SysOperationLog) OperationLogVo {
-	return OperationLogVo{ID: row.ID, OperatorID: row.OperatorID, OperatorName: row.OperatorName, Module: row.Module, Action: row.Action, Method: row.Method, Path: row.Path, RequestParams: row.RequestParams, ResponseStatus: row.ResponseStatus, ErrorMessage: row.ErrorMessage, CostMs: row.CostMs, CreatedAt: row.CreatedAt}
+	return OperationLogVo{ID: row.ID, OperatorID: row.OperatorID, Operator: row.OperatorName, Module: row.Module, Action: row.Action, Method: row.Method, Path: row.Path, RequestParams: row.RequestParams, Status: row.ResponseStatus, ErrorMessage: row.ErrorMessage, Duration: row.CostMs, CreatedAt: row.CreatedAt}
 }

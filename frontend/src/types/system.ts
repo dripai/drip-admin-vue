@@ -146,10 +146,14 @@ export interface PrintTemplateItem {
 }
 export interface LoginLogItem {
   id: ID;
+  userId?: ID;
   username: string;
-  status: 'SUCCESS' | 'FAILED' | 'LOGOUT';
+  realName?: string;
+  loginType: 'LOGIN' | 'LOGOUT';
+  status: 'SUCCESS' | 'FAIL';
   ip: string;
   userAgent: string;
+  deviceType?: string;
   failureReason?: string;
   loginAt: string;
 }
