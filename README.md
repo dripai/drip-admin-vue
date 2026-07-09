@@ -60,10 +60,22 @@ cd backend
 mvn spring-boot:run
 ```
 
-数据库初始化脚本：
+数据库 SQL 由根目录 `scripts/db` 维护，不随 Java 后端资源打包。当前只保留一份完整初始化脚本：
 
 ```text
-backend/src/main/resources/db/baseline_schema_and_data.sql
+scripts/db/schema.sql
+```
+
+导出当前本地库为基线 SQL：
+
+```bash
+python scripts/db/manage_database.py export-baseline
+```
+
+手工应用 SQL 文件：
+
+```bash
+python scripts/db/manage_database.py apply scripts/db/schema.sql
 ```
 
 ## 前端说明
