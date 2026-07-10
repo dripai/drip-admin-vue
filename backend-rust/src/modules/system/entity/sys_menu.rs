@@ -1,4 +1,5 @@
 use crate::common::I64String;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,4 +17,6 @@ pub struct SysMenu {
     pub visible: i32,
     pub status: i32,
     pub deleted: i32,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }

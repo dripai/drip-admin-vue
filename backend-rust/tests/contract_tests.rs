@@ -2,6 +2,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use drip_admin_rust::common::{ApiResponse, I64String, PageParams, PageQuery, PageResult};
 use drip_admin_rust::config::Settings;
+use drip_admin_rust::modules::system::dto::menu_request::MenuSaveRequest;
 use drip_admin_rust::modules::system::{AppState, router};
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
@@ -149,6 +150,24 @@ fn dict_response_contract() {
     assert!(payload["data"].is_array());
     assert!(payload["data"]["list"].is_null());
     assert_eq!(payload["data"][0]["id"], "1");
+}
+
+#[test]
+fn menu_request_contract_uses_java_type_field() {
+    let request: MenuSaveRequest = serde_json::from_value(json!({
+        "parentId": 0,
+        "name": "菜单管理",
+        "type": "MENU",
+        "path": "/system/menu",
+        "component": "system/menu/index",
+        "permissionCode": "system:menu:list",
+        "icon": "menu",
+        "sort": 30,
+        "visible": 1,
+        "status": 1
+    }))
+    .unwrap();
+    assert_eq!(request.r#type, "MENU");
 }
 
 #[tokio::test]
