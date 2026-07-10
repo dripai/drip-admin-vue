@@ -1,4 +1,5 @@
 use crate::common::I64String;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,4 +16,6 @@ pub struct SysUser {
     pub status: i32,
     pub dept_id: Option<I64String>,
     pub deleted: i32,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
 }

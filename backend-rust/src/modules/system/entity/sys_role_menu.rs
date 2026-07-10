@@ -1,4 +1,5 @@
 use crate::common::I64String;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -7,4 +8,5 @@ pub struct SysRoleMenu {
     pub id: I64String,
     pub role_id: I64String,
     pub menu_id: I64String,
+    pub created_at: Option<NaiveDateTime>,
 }

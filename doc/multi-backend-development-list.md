@@ -145,7 +145,7 @@
 
 技术栈：Axum、Tokio、Tower、Rbatis、rbdc-mysql、deadpool-redis、config、tracing、tracing-subscriber、validator、utoipa、utoipa-swagger-ui、rust_xlsxwriter、cargo test。
 
-状态：已完成首版工程骨架、公共契约、分层文件结构、全量路由挂载、Redis 会话基础设施、菜单模块、配置模块、字典模块、部门模块和契约测试；其余业务服务仍需继续按模块接入数据库和完整业务语义。
+状态：已完成首版工程骨架、公共契约、分层文件结构、全量路由挂载、Redis 会话基础设施、菜单模块、角色模块、配置模块、字典模块、部门模块和契约测试；其余业务服务仍需继续按模块接入数据库和完整业务语义。
 
 1. 工程骨架
    - [x] 创建 `backend-rust/`。
@@ -181,7 +181,7 @@
 5. 系统模块
    - [x] 健康检查和根路径。
    - [x] 菜单模块。
-   - [ ] 角色模块。
+   - [x] 角色模块。
    - [x] 部门模块。
    - [ ] 用户模块。
    - [x] 配置模块。
