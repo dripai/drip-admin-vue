@@ -24,6 +24,8 @@ from app.infrastructure.script_executor import ScriptExecutor
 from app.main import create_app
 from app.modules.system.dto.config_request import ConfigSaveRequest
 from app.modules.system.entity.base import Base
+from app.modules.system.entity.sys_menu import SysMenu
+from app.modules.system.service.menu_service import MenuService, _rows_with_ancestors
 
 EXPECTED_ROUTES = {
     "/api/system/publicConfig": {"get"},
@@ -183,6 +185,90 @@ def test_permission_contract() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in controllers.glob("*.py"))
     for permission in EXPECTED_PERMISSIONS:
         assert f'require_permission("{permission}")' in source, permission
+
+
+def test_auth_menu_tree_excludes_buttons_and_keeps_ancestors() -> None:
+    rows = [
+        SysMenu(
+            id=1,
+            parent_id=0,
+            name="System",
+            type="DIRECTORY",
+            path="/system",
+            component=None,
+            permission_code="system",
+            icon="settings",
+            sort=1,
+            visible=1,
+            status=1,
+            deleted=0,
+        ),
+        SysMenu(
+            id=2,
+            parent_id=1,
+            name="Users",
+            type="MENU",
+            path="/system/user",
+            component="system/user/index",
+            permission_code="system:user:list",
+            icon="user",
+            sort=2,
+            visible=1,
+            status=1,
+            deleted=0,
+        ),
+        SysMenu(
+            id=3,
+            parent_id=2,
+            name="Create User",
+            type="BUTTON",
+            path=None,
+            component=None,
+            permission_code="system:user:create",
+            icon=None,
+            sort=3,
+            visible=0,
+            status=1,
+            deleted=0,
+        ),
+    ]
+
+    auth_rows = _rows_with_ancestors([3], rows)
+    auth_tree = MenuService(db=None)._tree(auth_rows, include_buttons=False)  # type: ignore[arg-type]
+    assert auth_tree == [
+        {
+            "id": "1",
+            "parentId": "0",
+            "name": "System",
+            "type": "DIRECTORY",
+            "path": "/system",
+            "component": None,
+            "permissionCode": "system",
+            "icon": "settings",
+            "sort": 1,
+            "visible": 1,
+            "status": 1,
+            "children": [
+                {
+                    "id": "2",
+                    "parentId": "1",
+                    "name": "Users",
+                    "type": "MENU",
+                    "path": "/system/user",
+                    "component": "system/user/index",
+                    "permissionCode": "system:user:list",
+                    "icon": "user",
+                    "sort": 2,
+                    "visible": 1,
+                    "status": 1,
+                    "children": [],
+                }
+            ],
+        }
+    ]
+
+    management_tree = MenuService(db=None)._tree(rows)  # type: ignore[arg-type]
+    assert management_tree[0]["children"][0]["children"][0]["type"] == "BUTTON"
 
 
 def test_python_layered_structure_contract() -> None:

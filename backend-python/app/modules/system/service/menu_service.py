@@ -16,23 +16,43 @@ class MenuService:
     async def menu_tree_for_user(self, user_id: int) -> list[dict]:
         roles = await self.permissions.role_codes(user_id)
         if "SUPER_ADMIN" in roles:
-            query = select(SysMenu).where(SysMenu.status == 1, SysMenu.deleted == 0)
-        else:
-            query = (
-                select(SysMenu)
-                .join(SysRoleMenu, SysRoleMenu.menu_id == SysMenu.id)
-                .join(SysRole, SysRole.id == SysRoleMenu.role_id)
-                .join(SysUserRole, SysUserRole.role_id == SysRole.id)
-                .where(
-                    SysUserRole.user_id == user_id,
-                    SysRole.status == 1,
-                    SysRole.deleted == 0,
-                    SysMenu.status == 1,
-                    SysMenu.deleted == 0,
-                )
+            rows = list(
+                (
+                    await self.db.scalars(
+                        select(SysMenu)
+                        .where(SysMenu.status == 1, SysMenu.deleted == 0)
+                        .order_by(SysMenu.sort, SysMenu.id)
+                    )
+                ).all()
             )
-        rows = list((await self.db.scalars(query)).unique().all())
-        return self._tree(rows)
+        else:
+            menu_ids = list(
+                (
+                    await self.db.scalars(
+                        select(SysRoleMenu.menu_id)
+                        .join(SysRole, SysRole.id == SysRoleMenu.role_id)
+                        .join(SysUserRole, SysUserRole.role_id == SysRole.id)
+                        .where(
+                            SysUserRole.user_id == user_id,
+                            SysRole.status == 1,
+                            SysRole.deleted == 0,
+                        )
+                    )
+                ).unique().all()
+            )
+            if not menu_ids:
+                return []
+            all_rows = list(
+                (
+                    await self.db.scalars(
+                        select(SysMenu)
+                        .where(SysMenu.status == 1, SysMenu.deleted == 0)
+                        .order_by(SysMenu.sort, SysMenu.id)
+                    )
+                ).all()
+            )
+            rows = _rows_with_ancestors(menu_ids, all_rows)
+        return self._tree(rows, include_buttons=False)
 
     async def all_tree(self) -> list[dict]:
         rows = list(
@@ -119,8 +139,11 @@ class MenuService:
             raise not_found()
         return row
 
-    def _tree(self, rows: list[SysMenu]) -> list[dict]:
-        ordered = sorted(rows, key=lambda row: (row.sort, row.id))
+    def _tree(self, rows: list[SysMenu], include_buttons: bool = True) -> list[dict]:
+        ordered = sorted(
+            (row for row in rows if include_buttons or row.type != "BUTTON"),
+            key=lambda row: (row.sort, row.id),
+        )
         nodes = {row.id: self._node(row) for row in ordered}
         roots: list[dict] = []
         for row in ordered:
@@ -148,6 +171,19 @@ class MenuService:
             "status": row.status,
             "children": [],
         }
+
+
+def _rows_with_ancestors(menu_ids: list[int], rows: list[SysMenu]) -> list[SysMenu]:
+    by_id = {row.id: row for row in rows}
+    visible_ids: set[int] = set()
+    for menu_id in menu_ids:
+        current_id = menu_id
+        while current_id and current_id in by_id:
+            if current_id in visible_ids:
+                break
+            visible_ids.add(current_id)
+            current_id = by_id[current_id].parent_id
+    return [row for row in rows if row.id in visible_ids]
 
 
 def _descendants(parent_id: int, rows: list[tuple[int, int]]) -> set[int]:

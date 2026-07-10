@@ -14,12 +14,27 @@ templates, OpenAPI documentation, and the shared Excel export service.
 
 ## Run
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-uvicorn app.main:app --host 0.0.0.0 --port 9001
+```bash
+./setup.sh
 ```
+
+Default startup uses the `dev` command:
+
+```bash
+./start.sh
+```
+
+Explicit commands:
+
+```bash
+./start.sh dev
+./start.sh prod
+./start.sh build
+```
+
+`dev` starts `uvicorn app.main:app --reload` on port `9001` by default. `prod` starts the same ASGI app without reload.
+Override startup settings with environment variables such as `APP_HOST=127.0.0.1`, `APP_PORT=9002`,
+`APP_MODULE=app.main:app`, `VENV_DIR=.venv`, or `PYTHON_BIN=python3`.
 
 The API is mounted at `/api`; OpenAPI is available at `/api/v3/api-docs` and Swagger UI at `/api/swagger-ui.html`.
 
