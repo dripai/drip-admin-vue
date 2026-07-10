@@ -128,6 +128,29 @@ async fn response_pagination_long_and_error_contract() {
     );
 }
 
+#[test]
+fn dict_response_contract() {
+    let payload = json!({
+        "code": 0,
+        "message": "success",
+        "data": [
+            {
+                "id": I64String(1),
+                "dictName": "状态",
+                "dictCode": "common_status",
+                "status": 1,
+                "builtin": 1,
+                "remark": "通用启停状态",
+                "createdAt": null,
+                "updatedAt": null
+            }
+        ]
+    });
+    assert!(payload["data"].is_array());
+    assert!(payload["data"]["list"].is_null());
+    assert_eq!(payload["data"][0]["id"], "1");
+}
+
 #[tokio::test]
 async fn auth_error_contract() {
     let response = app()
