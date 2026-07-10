@@ -1,0 +1,15 @@
+pub mod sys_config;
+pub mod sys_db_backup;
+pub mod sys_dept;
+pub mod sys_dict_item;
+pub mod sys_dict_type;
+pub mod sys_job;
+pub mod sys_job_run_log;
+pub mod sys_login_log;
+pub mod sys_menu;
+pub mod sys_operation_log;
+pub mod sys_print_template;
+pub mod sys_role;
+pub mod sys_role_menu;
+pub mod sys_user;
+pub mod sys_user_role;

@@ -1,0 +1,10 @@
+pub mod auth_request;
+pub mod config_request;
+pub mod dept_request;
+pub mod dict_request;
+pub mod job_request;
+pub mod menu_request;
+pub mod print_template_request;
+pub mod role_request;
+pub mod status_update_request;
+pub mod user_request;

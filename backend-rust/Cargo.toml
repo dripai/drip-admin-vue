@@ -1,0 +1,30 @@
+[package]
+name = "drip-admin-rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.9", features = ["multipart"] }
+chrono = { version = "0.4.42", features = ["serde"] }
+config = "0.15.25"
+deadpool-redis = "0.23.0"
+hex = "0.4.3"
+rbatis = "4.9.6"
+rbdc-mysql = "4.9.6"
+rbs = "4.8.4"
+rust_xlsxwriter = "0.96.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sha2 = "0.10.9"
+tokio = { version = "1.52.3", features = ["full"] }
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.6.7", features = ["cors", "trace"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+utoipa = { version = "5.5.0", features = ["chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
+uuid = { version = "1.19.0", features = ["serde", "v4"] }
+validator = { version = "0.20.0", features = ["derive"] }
+
+[dev-dependencies]
+http-body-util = "0.1.3"

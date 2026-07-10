@@ -143,46 +143,48 @@
 
 ## Rust 后端开发清单
 
-技术栈：Axum、Tokio、Tower、SeaORM、SeaORM MySQL backend、deadpool-redis、config、tracing、tracing-subscriber、validator、utoipa、utoipa-swagger-ui、cargo test。
+技术栈：Axum、Tokio、Tower、Rbatis、rbdc-mysql、deadpool-redis、config、tracing、tracing-subscriber、validator、utoipa、utoipa-swagger-ui、rust_xlsxwriter、cargo test。
+
+状态：已完成首版工程骨架、公共契约、分层文件结构、全量路由挂载、Redis 会话基础设施、配置模块和契约测试；其余业务服务仍需继续按模块接入数据库和完整业务语义。
 
 1. 工程骨架
-   - [ ] 创建 `backend-rust/`。
-   - [ ] 创建 `src/common/`、`src/config/`、`src/infrastructure/`、`src/modules/system/`。
-   - [ ] 初始化 Cargo 项目，锁定 Axum、Tokio、Tower、SeaORM、MySQL、Redis、config、tracing、validator、utoipa。
-   - [ ] 建立服务入口，统一挂载 `/api`。
-   - [ ] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
+   - [x] 创建 `backend-rust/`。
+   - [x] 创建 `src/common/`、`src/config/`、`src/infrastructure/`、`src/modules/system/`。
+   - [x] 初始化 Cargo 项目，锁定 Axum、Tokio、Tower、Rbatis、rbdc-mysql、Redis、config、tracing、validator、utoipa、rust_xlsxwriter。
+   - [x] 建立服务入口，统一挂载 `/api`。
+   - [x] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
 
 2. 公共契约
-   - [ ] 实现 `ApiResponse<T>`，字段固定为 `code`、`message`、`data`。
-   - [ ] 失败响应使用 `Option<T>::None` 序列化为 JSON `null`。
-   - [ ] 实现 `PageQuery`：空值默认，非法值返回 `400000`。
-   - [ ] 实现 `PageResult<T>`：`list`、`total`、`page`、`pageSize`。
-   - [ ] 实现 ID、父 ID、总数等 i64 字段输出为字符串。
-   - [ ] 实现统一错误类型和 HTTP 状态码映射。
+   - [x] 实现 `ApiResponse<T>`，字段固定为 `code`、`message`、`data`。
+   - [x] 失败响应使用 `Option<T>::None` 序列化为 JSON `null`。
+   - [x] 实现 `PageQuery`：空值默认，非法值返回 `400000`。
+   - [x] 实现 `PageResult<T>`：`list`、`total`、`page`、`pageSize`。
+   - [x] 实现 ID、父 ID、总数等 i64 字段输出为字符串。
+   - [x] 实现统一错误类型和 HTTP 状态码映射。
 
 3. 基础设施
-   - [ ] SeaORM 连接 MySQL，禁止引入 `sea-orm-migration`。
-   - [ ] deadpool-redis 管理会话、在线用户、登录失败次数和缓存。
+   - [x] Rbatis 连接 MySQL，禁止引入 ORM migration、建表或改表逻辑。
+   - [x] deadpool-redis 管理会话、在线用户、登录失败次数和缓存。
    - [ ] tracing 接入请求日志、错误日志和操作日志写入。
-   - [ ] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
-   - [ ] 实现文件上传存储。
+   - [x] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
+   - [x] 实现文件上传存储。
    - [ ] 实现定时任务脚本执行器。
 
 4. 认证与权限
    - [ ] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
    - [ ] 实现 `/api/system/password`、`/api/system/profile`。
-   - [ ] Token 名称固定为 `Authorization`，token 风格为 uuid。
-   - [ ] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
+   - [x] Token 名称固定为 `Authorization`，token 风格为 uuid。
+   - [x] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
    - [ ] 实现 `SUPER_ADMIN` 权限规则。
    - [ ] 实现 Tower middleware 权限校验，权限码完全复用 Java。
 
 5. 系统模块
-   - [ ] 健康检查和根路径。
+   - [x] 健康检查和根路径。
    - [ ] 菜单模块。
    - [ ] 角色模块。
    - [ ] 部门模块。
    - [ ] 用户模块。
-   - [ ] 配置模块。
+   - [x] 配置模块。
    - [ ] 字典模块。
    - [ ] 在线用户模块。
    - [ ] 登录日志和操作日志模块。
@@ -191,15 +193,15 @@
    - [ ] 打印模板模块。
 
 6. 导出与文档
-   - [ ] 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
+   - [x] 使用 rust_xlsxwriter 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
    - [ ] 使用 utoipa 输出 OpenAPI 文档，字段和响应模型与 Java 对齐。
-   - [ ] 增加 Rust README，说明启动、配置、测试和数据库脚本使用方式。
+   - [x] 增加 Rust README，说明启动、配置、测试和数据库脚本使用方式。
 
 7. 测试验收
-   - [ ] cargo test 路由契约测试。
-   - [ ] 权限码契约测试。
-   - [ ] 成功、失败、分页、Long 字符串序列化契约测试。
-   - [ ] 数据库契约测试：无 `sea-orm-migration`、无 DDL、无 `migrations/`。
+   - [x] cargo test 路由契约测试。
+   - [x] 权限码契约测试。
+   - [x] 成功、失败、分页、Long 字符串序列化契约测试。
+   - [x] 数据库契约测试：无 ORM migration、无 DDL、无 `migrations/`。
    - [ ] 系统模块接口测试覆盖核心业务。
 
 ## 完成定义
