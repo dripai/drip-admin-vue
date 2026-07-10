@@ -2,17 +2,17 @@ from pydantic import BaseModel, Field
 
 
 class UserSaveRequest(BaseModel):
-    username: str
-    real_name: str = Field(alias="realName")
-    phone: str | None = None
-    email: str | None = None
-    status: int | None = None
+    username: str = Field(min_length=1, max_length=64)
+    real_name: str = Field(alias="realName", min_length=1, max_length=64)
+    phone: str | None = Field(default=None, max_length=32)
+    email: str | None = Field(default=None, max_length=128)
+    status: int | None = Field(default=None, ge=0, le=1)
     dept_id: int | None = Field(default=None, alias="deptId")
-    remark: str | None = None
-    password: str | None = None
+    remark: str | None = Field(default=None, max_length=255)
+    password: str | None = Field(default=None, max_length=64)
 
 class StatusUpdateRequest(BaseModel):
-    status: int
+    status: int | None = Field(default=None, ge=0, le=1)
 
 
 class RoleAssignRequest(BaseModel):
@@ -20,4 +20,4 @@ class RoleAssignRequest(BaseModel):
 
 
 class PasswordResetRequest(BaseModel):
-    password: str | None = None
+    password: str | None = Field(default=None, max_length=64)

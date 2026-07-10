@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
@@ -9,6 +11,7 @@ from app.common.password import hash_password, new_salt
 from app.modules.system.dto.user_request import PasswordResetRequest, RoleAssignRequest, StatusUpdateRequest, UserSaveRequest
 from app.modules.system.entity import SysDept, SysRole, SysUser, SysUserRole
 from app.modules.system.service.permission_service import PermissionService
+from app.modules.system.service.login_security_service import LoginSecurityService
 from app.modules.system.vo.user_vo import DeptSummaryVo, RoleSummaryVo, UserDetailVo, UserListVo
 
 
@@ -20,7 +23,10 @@ class UserService:
 
     async def list_users(
         self, page: PageQuery, username: str | None, real_name: str | None, phone: str | None, status: int | None,
-        dept_id: int | None, role_id: int | None,
+        dept_id: int | None,
+        role_id: int | None,
+        created_from: datetime | None,
+        created_to: datetime | None,
     ) -> PageResult[UserListVo]:
         filters = [SysUser.deleted == 0]
         if username:
@@ -35,6 +41,10 @@ class UserService:
             filters.append(SysUser.dept_id == dept_id)
         if role_id is not None:
             filters.append(SysUser.id.in_(select(SysUserRole.user_id).where(SysUserRole.role_id == role_id)))
+        if created_from is not None:
+            filters.append(SysUser.created_at >= created_from)
+        if created_to is not None:
+            filters.append(SysUser.created_at <= created_to)
 
         total = await self.db.scalar(select(func.count()).select_from(SysUser).where(*filters)) or 0
         rows = (await self.db.scalars(
@@ -100,7 +110,7 @@ class UserService:
 
     async def unlock(self, user_id: int) -> None:
         user = await self._find_user(user_id)
-        await self.redis.delete(f"drip:login:fail:{user.username}")
+        await LoginSecurityService(self.db, self.redis).clear(user.username)
 
     async def assign_roles(self, current_user_id: int, user_id: int, request: RoleAssignRequest) -> None:
         await self._assert_not_super_admin_target(current_user_id, user_id)

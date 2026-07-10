@@ -15,7 +15,7 @@ async def login(request: Request, body: LoginRequest, service: AuthService = Dep
 
 @router.post("/logout", response_model=ApiResponse)
 async def logout(session: dict = Depends(current_session), service: AuthService = Depends(get_auth_service)) -> ApiResponse:
-    await service.logout(session["tokenId"])
+    await service.logout(session)
     return success()
 
 
@@ -38,4 +38,3 @@ async def update_profile(
 ) -> ApiResponse:
     await service.update_profile(session, body)
     return success()
-

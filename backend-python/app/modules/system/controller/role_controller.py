@@ -9,25 +9,108 @@ from app.modules.system.router import get_db, require_permission
 from app.modules.system.service.role_service import RoleService
 
 router = APIRouter(tags=["role"])
-def service(db: AsyncSession = Depends(get_db)) -> RoleService: return RoleService(db)
+
+
+def service(db: AsyncSession = Depends(get_db)) -> RoleService:
+    return RoleService(db)
+
 
 @router.get("/role", response_model=ApiResponse)
-async def roles(page: PageQuery = Depends(), role_name: str|None = Query(None, alias="roleName"), role_code: str|None = Query(None, alias="roleCode"), status: int|None = None, _:dict=Depends(require_permission("system:role:list")), svc:RoleService=Depends(service))->ApiResponse: return success(await svc.list(page,role_name,role_code,status))
+async def roles(
+    page: PageQuery = Depends(),
+    role_name: str | None = Query(default=None, alias="roleName"),
+    role_code: str | None = Query(default=None, alias="roleCode"),
+    status: int | None = None,
+    created_at: str | None = Query(default=None, alias="createdAt"),
+    _: dict = Depends(require_permission("system:role:list")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.list_roles(page, role_name, role_code, status, created_at))
+
+
 @router.get("/role/option", response_model=ApiResponse)
-async def options(_:dict=Depends(require_permission("system:role:list")), svc:RoleService=Depends(service))->ApiResponse: return success(await svc.options())
-@router.get("/role/{role_id}", response_model=ApiResponse)
-async def role(role_id:int,_:dict=Depends(require_permission("system:role:list")),svc:RoleService=Depends(service))->ApiResponse:return success(await svc.detail(role_id))
-@router.get("/role/{role_id}/user", response_model=ApiResponse)
-async def users(role_id:int,page:PageQuery=Depends(),_:dict=Depends(require_permission("system:role:list")),svc:RoleService=Depends(service))->ApiResponse:return success(await svc.users(role_id,page))
-@router.get("/role/{role_id}/permission", response_model=ApiResponse)
-async def permissions(role_id:int,_:dict=Depends(require_permission("system:role:permission")),svc:RoleService=Depends(service))->ApiResponse:return success(await svc.permissions(role_id))
+async def role_options(
+    _: dict = Depends(require_permission("system:role:list")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.options())
+
+
+@router.get("/role/{id}", response_model=ApiResponse)
+async def role_detail(
+    id: int,
+    _: dict = Depends(require_permission("system:role:list")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.detail(id))
+
+
+@router.get("/role/{id}/user", response_model=ApiResponse)
+async def role_users(
+    id: int,
+    page: PageQuery = Depends(),
+    _: dict = Depends(require_permission("system:role:list")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.users(id, page))
+
+
+@router.get("/role/{id}/permission", response_model=ApiResponse)
+async def role_permissions(
+    id: int,
+    _: dict = Depends(require_permission("system:role:permission")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.permissions(id))
+
+
 @router.post("/role", response_model=ApiResponse)
-async def create(body:RoleSaveRequest,_:dict=Depends(require_permission("system:role:create")),svc:RoleService=Depends(service))->ApiResponse:return success(await svc.create(body))
-@router.put("/role/{role_id}", response_model=ApiResponse)
-async def update(role_id:int,body:RoleSaveRequest,_:dict=Depends(require_permission("system:role:update")),svc:RoleService=Depends(service))->ApiResponse: await svc.update(role_id,body); return success()
-@router.delete("/role/{role_id}", response_model=ApiResponse)
-async def delete(role_id:int,_:dict=Depends(require_permission("system:role:delete")),svc:RoleService=Depends(service))->ApiResponse: await svc.delete(role_id); return success()
-@router.put("/role/{role_id}/status", response_model=ApiResponse)
-async def status(role_id:int,body:StatusUpdateRequest,_:dict=Depends(require_permission("system:role:update")),svc:RoleService=Depends(service))->ApiResponse: await svc.update_status(role_id,body.status); return success()
-@router.put("/role/{role_id}/permission", response_model=ApiResponse)
-async def assign(role_id:int,body:MenuAssignRequest,_:dict=Depends(require_permission("system:role:permission")),svc:RoleService=Depends(service))->ApiResponse: await svc.assign_menus(role_id,body); return success()
+async def create_role(
+    body: RoleSaveRequest,
+    _: dict = Depends(require_permission("system:role:create")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    return success(await current.create(body))
+
+
+@router.put("/role/{id}", response_model=ApiResponse)
+async def update_role(
+    id: int,
+    body: RoleSaveRequest,
+    _: dict = Depends(require_permission("system:role:update")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    await current.update(id, body)
+    return success()
+
+
+@router.delete("/role/{id}", response_model=ApiResponse)
+async def delete_role(
+    id: int,
+    _: dict = Depends(require_permission("system:role:delete")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    await current.delete(id)
+    return success()
+
+
+@router.put("/role/{id}/status", response_model=ApiResponse)
+async def role_status(
+    id: int,
+    body: StatusUpdateRequest,
+    _: dict = Depends(require_permission("system:role:update")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    await current.update_status(id, body.status)
+    return success()
+
+
+@router.put("/role/{id}/permission", response_model=ApiResponse)
+async def assign_role_permissions(
+    id: int,
+    body: MenuAssignRequest,
+    _: dict = Depends(require_permission("system:role:permission")),
+    current: RoleService = Depends(service),
+) -> ApiResponse:
+    await current.assign_menus(id, body)
+    return success()

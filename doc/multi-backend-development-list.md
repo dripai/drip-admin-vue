@@ -85,61 +85,61 @@
 技术栈：FastAPI、Uvicorn、SQLAlchemy 2 async、asyncmy、redis-py asyncio、Pydantic v2、pydantic-settings、FastAPI OpenAPI、openpyxl、pytest、httpx。
 
 1. 工程骨架
-   - [ ] 创建 `backend-python/`。
-   - [ ] 创建 `app/common/`、`app/config/`、`app/infrastructure/`、`app/modules/system/`。
-   - [ ] 初始化 Python 项目依赖，锁定 FastAPI、Uvicorn、SQLAlchemy 2、asyncmy、redis、Pydantic、openpyxl、pytest、httpx。
-   - [ ] 建立 ASGI 入口，统一挂载 `/api`。
-   - [ ] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
+   - [x] 创建 `backend-python/`。
+   - [x] 创建 `app/common/`、`app/config/`、`app/infrastructure/`、`app/modules/system/`。
+   - [x] 初始化 Python 项目依赖，锁定 FastAPI、Uvicorn、SQLAlchemy 2、asyncmy、redis、Pydantic、openpyxl、pytest、httpx。
+   - [x] 建立 ASGI 入口，统一挂载 `/api`。
+   - [x] 建立配置加载，默认对齐 Java：端口 `9001`、MySQL、Redis、Token、任务脚本目录。
 
 2. 公共契约
-   - [ ] 实现 `ApiResponse` Pydantic 模型，字段固定为 `code`、`message`、`data`。
-   - [ ] 实现失败响应 `data=None` 并序列化为 JSON `null`。
-   - [ ] 实现 `PageQuery`：空值默认，非法值返回 `400000`。
-   - [ ] 实现 `PageResult`：`list`、`total`、`page`、`pageSize`。
-   - [ ] 实现 ID、父 ID、总数等整型字段输出为字符串。
-   - [ ] 实现统一异常处理和 HTTP 状态码映射。
+   - [x] 实现 `ApiResponse` Pydantic 模型，字段固定为 `code`、`message`、`data`。
+   - [x] 实现失败响应 `data=None` 并序列化为 JSON `null`。
+   - [x] 实现 `PageQuery`：空值默认，非法值返回 `400000`。
+   - [x] 实现 `PageResult`：`list`、`total`、`page`、`pageSize`。
+   - [x] 实现 ID、父 ID、总数等整型字段输出为字符串。
+   - [x] 实现统一异常处理和 HTTP 状态码映射。
 
 3. 基础设施
-   - [ ] SQLAlchemy 2 async 连接 MySQL，禁止 `Base.metadata.create_all()`。
-   - [ ] redis-py asyncio 管理会话、在线用户、登录失败次数和缓存。
-   - [ ] 接入结构化日志和操作日志写入。
-   - [ ] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
-   - [ ] 实现文件上传存储。
-   - [ ] 实现定时任务脚本执行器。
+   - [x] SQLAlchemy 2 async 连接 MySQL，禁止 `Base.metadata.create_all()`。
+   - [x] redis-py asyncio 管理会话、在线用户、登录失败次数和缓存。
+   - [x] 接入结构化日志和操作日志写入。
+   - [x] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
+   - [x] 实现文件上传存储。
+   - [x] 实现定时任务脚本执行器。
 
 4. 认证与权限
-   - [ ] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
-   - [ ] 实现 `/api/system/password`、`/api/system/profile`。
-   - [ ] Token 名称固定为 `Authorization`，token 风格为 uuid。
-   - [ ] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
-   - [ ] 实现 `SUPER_ADMIN` 权限规则。
-   - [ ] 实现 FastAPI dependency 权限校验，权限码完全复用 Java。
+   - [x] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
+   - [x] 实现 `/api/system/password`、`/api/system/profile`。
+   - [x] Token 名称固定为 `Authorization`，token 风格为 uuid。
+   - [x] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
+   - [x] 实现 `SUPER_ADMIN` 权限规则。
+   - [x] 实现 FastAPI dependency 权限校验，权限码完全复用 Java。
 
 5. 系统模块
-   - [ ] 健康检查和根路径。
-   - [ ] 菜单模块。
-   - [ ] 角色模块。
-   - [ ] 部门模块。
-   - [ ] 用户模块。
-   - [ ] 配置模块。
-   - [ ] 字典模块。
-   - [ ] 在线用户模块。
-   - [ ] 登录日志和操作日志模块。
-   - [ ] 定时任务和运行日志模块。
-   - [ ] 文件上传模块。
-   - [ ] 打印模板模块。
+   - [x] 健康检查和根路径。
+   - [x] 菜单模块。
+   - [x] 角色模块。
+   - [x] 部门模块。
+   - [x] 用户模块。
+   - [x] 配置模块。
+   - [x] 字典模块。
+   - [x] 在线用户模块。
+   - [x] 登录日志和操作日志模块。
+   - [x] 定时任务和运行日志模块。
+   - [x] 文件上传模块。
+   - [x] 打印模板模块。
 
 6. 导出与文档
-   - [ ] 使用 openpyxl 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
-   - [ ] 使用 FastAPI OpenAPI 输出接口文档，字段和响应模型与 Java 对齐。
-   - [ ] 增加 Python README，说明启动、配置、测试和数据库脚本使用方式。
+   - [x] 使用 openpyxl 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
+   - [x] 使用 FastAPI OpenAPI 输出接口文档，字段和响应模型与 Java 对齐。
+   - [x] 增加 Python README，说明启动、配置、测试和数据库脚本使用方式。
 
 7. 测试验收
-   - [ ] pytest + httpx 路由契约测试。
-   - [ ] 权限码契约测试。
-   - [ ] 成功、失败、分页、Long 字符串序列化契约测试。
-   - [ ] 数据库契约测试：无 `create_all`、无 DDL、无 `migrations/`。
-   - [ ] 系统模块接口测试覆盖核心业务。
+   - [x] pytest + httpx 路由契约测试。
+   - [x] 权限码契约测试。
+   - [x] 成功、失败、分页、Long 字符串序列化契约测试。
+   - [x] 数据库契约测试：无 `create_all`、无 DDL、无 `migrations/`。
+   - [x] 系统模块接口测试覆盖核心业务。
 
 ## Rust 后端开发清单
 

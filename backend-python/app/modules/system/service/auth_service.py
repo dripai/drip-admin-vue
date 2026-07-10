@@ -11,8 +11,10 @@ from app.common.password import hash_password, new_salt
 from app.config.settings import Settings
 from app.modules.system.dto.auth_request import LoginRequest, PasswordRequest, ProfileUpdateRequest
 from app.modules.system.entity import SysUser
-from app.modules.system.service.permission_service import PermissionService
+from app.modules.system.service.login_log_service import LoginLogService
+from app.modules.system.service.login_security_service import LoginSecurityService
 from app.modules.system.service.menu_service import MenuService
+from app.modules.system.service.permission_service import PermissionService
 from app.modules.system.vo.auth_vo import AuthLoginVo, AuthMeVo
 
 SESSION_PREFIX = "drip:online:"
@@ -25,6 +27,8 @@ class AuthService:
         self.redis = redis
         self.settings = settings
         self.permissions = PermissionService(db)
+        self.security = LoginSecurityService(db, redis)
+        self.login_logs = LoginLogService(db)
 
     async def login(self, request: LoginRequest, client_ip: str, user_agent: str) -> AuthLoginVo:
         username = request.username.strip()
@@ -36,11 +40,28 @@ class AuthService:
             raise bad_request("deviceType is required")
 
         user = await self.db.scalar(select(SysUser).where(SysUser.username == username))
-        if user is None or user.status != 1 or user.deleted == 1:
+        if user is None:
+            await self.login_logs.write(
+                None, username, None, "LOGIN", "FAIL", "invalid username or password",
+                client_ip, user_agent, request.device_type,
+            )
             raise unauthorized("\u7528\u6237\u540d\u6216\u5bc6\u7801\u9519\u8bef")
+        if user.status != 1 or user.deleted == 1:
+            await self.login_logs.write(
+                user.id, username, user.real_name, "LOGIN", "FAIL", "\u8d26\u53f7\u5df2\u7981\u7528",
+                client_ip, user_agent, request.device_type,
+            )
+            raise unauthorized("\u8d26\u53f7\u5df2\u7981\u7528")
+        await self.security.assert_not_locked(username)
         if hash_password(request.password, user.password_salt) != user.password_hash:
-            raise unauthorized("\u7528\u6237\u540d\u6216\u5bc6\u7801\u9519\u8bef")
+            await self.login_logs.write(
+                user.id, username, user.real_name, "LOGIN", "FAIL", "\u7528\u6237\u540d\u6216\u5bc6\u7801\u9519\u8bef",
+                client_ip, user_agent, request.device_type,
+            )
+            remaining = await self.security.record_failure(username)
+            raise unauthorized(f"\u7528\u6237\u540d\u6216\u5bc6\u7801\u9519\u8bef\uff0c\u8fd8\u5269{remaining}\u6b21\u673a\u4f1a")
 
+        await self.security.clear(username)
         device_type = normalize_device_type(request.device_type)
         now = datetime.now(UTC)
         token = str(uuid4())
@@ -59,7 +80,10 @@ class AuthService:
         }
         await self._write_session(session)
         user.last_login_at = now.replace(tzinfo=None)
-        await self.db.commit()
+        await self.login_logs.write(
+            user.id, user.username, user.real_name, "LOGIN", "SUCCESS", None,
+            client_ip, user_agent, request.device_type,
+        )
         return AuthLoginVo(
             token=token,
             expireAt=session["expireAt"],
@@ -85,10 +109,16 @@ class AuthService:
         await self._write_session(session)
         return session
 
-    async def logout(self, token: str) -> None:
+    async def logout(self, session: dict) -> None:
+        token = session["tokenId"]
         payload = await self.redis.get(f"{TOKEN_PREFIX}{token}")
         if payload:
-            session = json.loads(payload)
+            current = json.loads(payload)
+            await self.login_logs.write(
+                int(current["userId"]), current["username"], current.get("realName"),
+                "LOGOUT", "SUCCESS", None, current.get("ip", ""),
+                current.get("userAgent", ""), current.get("deviceType", ""),
+            )
             await self.redis.delete(f"{TOKEN_PREFIX}{token}", self._session_key(session))
 
     async def me(self, session: dict) -> AuthMeVo:
@@ -127,6 +157,8 @@ class AuthService:
         user.phone = request.phone.strip() if request.phone else None
         user.email = request.email.strip() if request.email else None
         await self.db.commit()
+        session["realName"] = user.real_name
+        await self._write_session(session)
 
     async def _write_session(self, session: dict) -> None:
         token_expire_at = datetime.fromisoformat(session["tokenExpireAt"])

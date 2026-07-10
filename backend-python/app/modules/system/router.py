@@ -24,7 +24,9 @@ async def current_session(
     service: AuthService = Depends(get_auth_service),
 ) -> dict:
     token_name = request.app.state.settings.token.name
-    return await service.current_session(request.headers.get(token_name, ""))
+    session = await service.current_session(request.headers.get(token_name, ""))
+    request.state.session = session
+    return session
 
 
 def require_permission(permission: str):

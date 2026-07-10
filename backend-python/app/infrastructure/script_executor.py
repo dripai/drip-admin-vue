@@ -18,6 +18,7 @@ class ScriptExecutor:
         self.root = Path(script_dir).resolve()
 
     def list_scripts(self, executor_type: str) -> list[str]:
+        executor_type = executor_type.strip().lower()
         extensions = self._extensions(executor_type)
         if not self.root.is_dir():
             return []
@@ -26,6 +27,10 @@ class ScriptExecutor:
     def execute(self, executor_type: str, script_file: str, script_args: str | None = None) -> None:
         command = self.command(executor_type, script_file, script_args)
         subprocess.run(command, cwd=self.root, timeout=1800, check=True)
+
+    def validate_script_file(self, executor_type: str, script_file: str) -> None:
+        extensions = self._extensions(executor_type)
+        self._candidate(script_file, extensions)
 
     def command(self, executor_type: str, script_file: str, script_args: str | None = None) -> list[str]:
         executor_type = executor_type.strip().lower()
@@ -41,16 +46,21 @@ class ScriptExecutor:
 
     @staticmethod
     def _extensions(executor_type: str) -> set[str]:
+        executor_type = executor_type.strip().lower()
         if executor_type not in _EXTENSIONS:
             raise bad_request("executorType is not supported")
         return _EXTENSIONS[executor_type]
 
     def _resolve_script(self, script_file: str, extensions: set[str]) -> Path:
+        candidate = self._candidate(script_file, extensions)
+        if not candidate.is_file():
+            raise bad_request("scriptFile does not exist")
+        return candidate
+
+    def _candidate(self, script_file: str, extensions: set[str]) -> Path:
         if not script_file.strip():
             raise bad_request("scriptFile is required")
         candidate = (self.root / script_file).resolve()
         if self.root not in candidate.parents or candidate.suffix.lower() not in extensions:
             raise bad_request("script path is not allowed")
-        if not candidate.is_file():
-            raise bad_request("scriptFile does not exist")
         return candidate

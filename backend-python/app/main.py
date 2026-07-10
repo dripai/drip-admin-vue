@@ -11,12 +11,29 @@ from app.common.errors import (
 )
 from app.config.settings import Settings, load_settings
 from app.infrastructure.database import create_session_factory
+from app.infrastructure.logging_config import configure_logging
+from app.infrastructure.operation_logging import OperationLoggingMiddleware
 from app.infrastructure.redis_client import create_redis_client
 from app.infrastructure.request_logging import RequestLoggingMiddleware
-from app.modules.system.controller import auth_controller, common_controller, config_controller, dept_controller, dict_controller, job_controller, menu_controller, role_controller, user_controller
+from app.modules.system.controller import (
+    auth_controller,
+    common_controller,
+    config_controller,
+    dept_controller,
+    dict_controller,
+    file_controller,
+    job_controller,
+    log_controller,
+    menu_controller,
+    online_user_controller,
+    print_template_controller,
+    role_controller,
+    user_controller,
+)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    configure_logging()
     resolved_settings = settings or load_settings()
 
     @asynccontextmanager
@@ -44,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
     app.add_middleware(RequestLoggingMiddleware)
+    app.add_middleware(OperationLoggingMiddleware)
     app.include_router(common_controller.router, prefix="/api")
     app.include_router(auth_controller.router, prefix="/api/system")
     app.include_router(config_controller.router, prefix="/api/system")
@@ -53,6 +71,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dept_controller.router, prefix="/api/system")
     app.include_router(dict_controller.router, prefix="/api/system")
     app.include_router(job_controller.router, prefix="/api/system")
+    app.include_router(online_user_controller.router, prefix="/api/system")
+    app.include_router(log_controller.router, prefix="/api/system")
+    app.include_router(file_controller.router, prefix="/api/system")
+    app.include_router(print_template_controller.router, prefix="/api/system")
     return app
 
 

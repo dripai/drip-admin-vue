@@ -13,15 +13,26 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception:
-            logger.exception("http request failed method=%s path=%s ip=%s", request.method, request.url.path, _client_ip(request))
+            logger.exception(
+                "http request failed",
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "ip": _client_ip(request),
+                    "userAgent": request.headers.get("user-agent", ""),
+                },
+            )
             raise
         logger.info(
-            "http request completed method=%s path=%s status=%s costMs=%d ip=%s",
-            request.method,
-            request.url.path,
-            response.status_code,
-            (time.perf_counter() - started) * 1000,
-            _client_ip(request),
+            "http request completed",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "costMs": int((time.perf_counter() - started) * 1000),
+                "ip": _client_ip(request),
+                "userAgent": request.headers.get("user-agent", ""),
+            },
         )
         return response
 
