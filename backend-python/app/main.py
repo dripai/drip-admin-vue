@@ -12,7 +12,8 @@ from app.common.errors import (
 from app.config.settings import Settings, load_settings
 from app.infrastructure.database import create_session_factory
 from app.infrastructure.redis_client import create_redis_client
-from app.modules.system.controller import auth_controller, common_controller, config_controller
+from app.infrastructure.request_logging import RequestLoggingMiddleware
+from app.modules.system.controller import auth_controller, common_controller, config_controller, dept_controller, dict_controller, job_controller, menu_controller, role_controller, user_controller
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -42,9 +43,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(BusinessError, business_error_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
+    app.add_middleware(RequestLoggingMiddleware)
     app.include_router(common_controller.router, prefix="/api")
     app.include_router(auth_controller.router, prefix="/api/system")
     app.include_router(config_controller.router, prefix="/api/system")
+    app.include_router(user_controller.router, prefix="/api/system")
+    app.include_router(role_controller.router, prefix="/api/system")
+    app.include_router(menu_controller.router, prefix="/api/system")
+    app.include_router(dept_controller.router, prefix="/api/system")
+    app.include_router(dict_controller.router, prefix="/api/system")
+    app.include_router(job_controller.router, prefix="/api/system")
     return app
 
 

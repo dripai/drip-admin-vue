@@ -1,4 +1,6 @@
-from typing import Generic, TypeVar
+from __future__ import annotations
+
+from typing import Generic, List, TypeVar
 
 from fastapi import Query
 from pydantic import BaseModel, Field
@@ -21,8 +23,7 @@ class PageQuery:
 
 
 class PageResult(BaseModel, Generic[T]):
-    list: list[T] = Field(default_factory=list)
+    list: List[T] = Field(default_factory=list)
     total: str
     page: int
     page_size: int = Field(alias="pageSize")
-

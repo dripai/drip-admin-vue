@@ -22,7 +22,18 @@ def test_public_response_contract() -> None:
 
     assert response.status_code == 200
     assert response.json() == {"code": 0, "message": "success", "data": {"status": "UP"}}
-    assert "/api/system/publicConfig" in app.openapi()["paths"]
+    paths = app.openapi()["paths"]
+    assert "/api/system/publicConfig" in paths
+    expected_methods = {
+        "/api/system/user": {"get", "post"},
+        "/api/system/user/{user_id}": {"get", "put", "delete"},
+        "/api/system/user/{user_id}/status": {"put"},
+        "/api/system/user/{user_id}/unlock": {"post"},
+        "/api/system/user/{user_id}/role": {"put"},
+        "/api/system/user/{user_id}/resetPassword": {"post"},
+    }
+    for path, methods in expected_methods.items():
+        assert methods <= set(paths[path])
 
 
 def test_python_layered_structure_contract() -> None:

@@ -12,6 +12,7 @@ from app.config.settings import Settings
 from app.modules.system.dto.auth_request import LoginRequest, PasswordRequest, ProfileUpdateRequest
 from app.modules.system.entity import SysUser
 from app.modules.system.service.permission_service import PermissionService
+from app.modules.system.service.menu_service import MenuService
 from app.modules.system.vo.auth_vo import AuthLoginVo, AuthMeVo
 
 SESSION_PREFIX = "drip:online:"
@@ -54,6 +55,7 @@ class AuthService:
             "loginAt": now.isoformat(),
             "lastActiveAt": now.isoformat(),
             "expireAt": (now + timedelta(seconds=self.settings.token.active_timeout_seconds)).isoformat(),
+            "tokenExpireAt": (now + timedelta(seconds=self.settings.token.timeout_seconds)).isoformat(),
         }
         await self._write_session(session)
         user.last_login_at = now.replace(tzinfo=None)
@@ -74,6 +76,10 @@ class AuthService:
             raise unauthorized()
         session = json.loads(payload)
         now = datetime.now(UTC)
+        token_expire_at = datetime.fromisoformat(session["tokenExpireAt"])
+        if now >= token_expire_at:
+            await self.redis.delete(f"{TOKEN_PREFIX}{token}", self._session_key(session))
+            raise unauthorized()
         session["lastActiveAt"] = now.isoformat()
         session["expireAt"] = (now + timedelta(seconds=self.settings.token.active_timeout_seconds)).isoformat()
         await self._write_session(session)
@@ -92,10 +98,11 @@ class AuthService:
             raise unauthorized()
         roles = await self.permissions.role_codes(user_id)
         permissions = await self.permissions.permission_codes(user_id)
+        menus = await MenuService(self.db).menu_tree_for_user(user_id)
         return AuthMeVo(
             id=str(user.id), username=user.username, realName=user.real_name, phone=user.phone, email=user.email,
             avatar=user.avatar, deptId=str(user.dept_id) if user.dept_id is not None else None,
-            roles=roles, permissions=permissions, menus=[],
+            roles=roles, permissions=permissions, menus=menus,
         )
 
     async def change_password(self, session: dict, request: PasswordRequest) -> None:
@@ -122,7 +129,12 @@ class AuthService:
         await self.db.commit()
 
     async def _write_session(self, session: dict) -> None:
-        ttl = self.settings.token.active_timeout_seconds
+        token_expire_at = datetime.fromisoformat(session["tokenExpireAt"])
+        remaining_seconds = int((token_expire_at - datetime.now(UTC)).total_seconds())
+        if remaining_seconds <= 0:
+            await self.redis.delete(f"{TOKEN_PREFIX}{session['tokenId']}", self._session_key(session))
+            raise unauthorized()
+        ttl = min(self.settings.token.active_timeout_seconds, remaining_seconds)
         key = self._session_key(session)
         previous = await self.redis.get(key)
         if previous:
@@ -145,4 +157,3 @@ def normalize_device_type(value: str) -> str:
     if normalized in {"pad", "ipad", "tablet"}:
         return "tablet"
     return "unknown"
-
