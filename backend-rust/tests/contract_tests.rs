@@ -215,6 +215,25 @@ fn permission_contract() {
 }
 
 #[test]
+fn core_system_module_implementation_contract() {
+    let root = project_root().join("src/modules/system/service");
+    for file in [
+        "permission_service.rs",
+        "job_service.rs",
+        "login_log_service.rs",
+        "operation_log_service.rs",
+        "print_template_service.rs",
+    ] {
+        let source = fs::read_to_string(root.join(file)).unwrap();
+        assert!(!source.contains("not_implemented"), "{file}");
+    }
+    let permission = fs::read_to_string(root.join("permission_service.rs")).unwrap();
+    assert!(permission.contains("SUPER_ADMIN"));
+    assert!(permission.contains("sys_role_menu"));
+    assert!(permission.contains("AppError::forbidden"));
+}
+
+#[test]
 fn layered_structure_contract() {
     let system = project_root().join("src/modules/system");
     for dir in ["controller", "dto", "entity", "service", "vo"] {
