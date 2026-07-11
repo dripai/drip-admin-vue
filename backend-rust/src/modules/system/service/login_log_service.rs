@@ -1,10 +1,5 @@
-use crate::common::{AppError, PageParams, PageResult};
-use serde_json::Value;
-
-pub async fn list(params: PageParams) -> Result<PageResult<Value>, AppError> {
-    Ok(PageResult::empty(params))
-}
-
-pub async fn detail() -> Result<Value, AppError> {
-    Err(AppError::not_found("资源不存在"))
-}
+use crate::common::{AppError, I64String, PageResult}; use crate::modules::system::dto::log_request::LogQuery; use rbatis::RBatis; use serde::{Deserialize, Serialize}; use std::sync::Arc;
+#[derive(Debug, Deserialize, Serialize)] #[serde(rename_all = "camelCase")] pub struct LoginLog { pub id: I64String, pub user_id: Option<I64String>, pub username: String, pub real_name: Option<String>, pub login_type: String, pub status: String, pub failure_reason: Option<String>, pub ip: Option<String>, pub user_agent: Option<String>, pub device_type: Option<String>, pub login_at: Option<chrono::NaiveDateTime> }
+#[derive(Deserialize)] struct Count { total: i64 }
+pub async fn list(db: Option<&Arc<RBatis>>, q: &LogQuery) -> Result<PageResult<LoginLog>, AppError> { let db=db.map(AsRef::as_ref).ok_or_else(||AppError::system("Rbatis database is not configured"))?;let p=q.page()?;let rows:Vec<LoginLog>=db.exec_decode("select id,user_id,username,real_name,login_type,status,failure_reason,ip,user_agent,device_type,login_at from sys_login_log order by login_at desc limit ? offset ?",vec![rbs::value!(p.page_size),rbs::value!(((p.page-1)*p.page_size) as i64)]).await.map_err(|e|AppError::system(e.to_string()))?;let total:Vec<Count>=db.exec_decode("select count(*) total from sys_login_log",vec![]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(PageResult{list:rows,total:I64String(total.first().map(|v|v.total).unwrap_or(0)),page:p.page,page_size:p.page_size}) }
+pub async fn detail(db: Option<&Arc<RBatis>>, id:i64)->Result<LoginLog,AppError>{let db=db.map(AsRef::as_ref).ok_or_else(||AppError::system("Rbatis database is not configured"))?;let rows:Vec<LoginLog>=db.exec_decode("select id,user_id,username,real_name,login_type,status,failure_reason,ip,user_agent,device_type,login_at from sys_login_log where id=?",vec![rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;rows.into_iter().next().ok_or_else(||AppError::not_found("资源不存在"))}

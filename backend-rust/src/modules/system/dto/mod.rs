@@ -3,6 +3,7 @@ pub mod config_request;
 pub mod dept_request;
 pub mod dict_request;
 pub mod job_request;
+pub mod log_request;
 pub mod menu_request;
 pub mod print_template_request;
 pub mod role_request;
