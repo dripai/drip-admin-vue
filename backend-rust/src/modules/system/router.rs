@@ -5,6 +5,7 @@ use super::controller::{
     print_template_controller, role_controller, user_controller,
 };
 use super::service::permission_service::{auth_required, require_permission};
+use super::service::request_log_service::record_request;
 use axum::Router;
 use axum::middleware;
 use axum::routing::{delete, get, post, put};
@@ -91,6 +92,7 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/api/", get(common_controller::root))
         .nest("/api", public.merge(protected))
+        .layer(middleware::from_fn_with_state(state.clone(), record_request))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state)

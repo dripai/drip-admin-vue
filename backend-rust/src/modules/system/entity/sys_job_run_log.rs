@@ -8,5 +8,8 @@ pub struct SysJobRunLog {
     pub job_id: I64String,
     pub job_name: String,
     pub status: String,
-    pub duration_ms: i64,
+    pub started_at: chrono::NaiveDateTime,
+    pub finished_at: Option<chrono::NaiveDateTime>,
+    pub cost_ms: i64,
+    pub error_message: Option<String>,
 }

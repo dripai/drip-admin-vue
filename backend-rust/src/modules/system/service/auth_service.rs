@@ -3,7 +3,7 @@ use crate::modules::system::AppState;
 use crate::modules::system::dto::auth_request::{LoginRequest, PasswordRequest, ProfileUpdateRequest};
 use crate::modules::system::entity::sys_menu::SysMenu;
 use crate::modules::system::entity::sys_user::SysUser;
-use crate::modules::system::service::{login_security_service, session_service, user_service};
+use crate::modules::system::service::{login_log_service, login_security_service, session_service, user_service};
 use crate::modules::system::service::session_service::SessionData;
 use crate::modules::system::vo::auth_vo::{AuthLoginVo, AuthMeVo};
 use crate::modules::system::vo::menu_tree_vo::MenuTreeVo;
@@ -15,26 +15,27 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn login(state: &AppState, request: LoginRequest, _headers: &HeaderMap) -> Result<AuthLoginVo, AppError> {
+pub async fn login(state: &AppState, request: LoginRequest, headers: &HeaderMap) -> Result<AuthLoginVo, AppError> {
     let database = require_database(state.database.as_ref())?;
     let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?;
     let username = request.username.trim();
     if username.is_empty() || request.password.trim().is_empty() { return Err(AppError::bad_request("username and password are required")); }
     login_security_service::assert_not_locked(redis, username).await?;
-    let user = find_by_username(database, username).await?.ok_or_else(|| AppError::unauthorized("用户名或密码错误"))?;
-    if user.deleted != 0 || user.status != 1 { return Err(AppError::unauthorized("账号已禁用")); }
-    if hash_password(&request.password, &user.password_salt) != user.password_hash { let remaining = login_security_service::record_failure(redis, username).await?; return Err(AppError::unauthorized(format!("用户名或密码错误，还剩{remaining}次机会"))); }
+    let Some(user) = find_by_username(database, username).await? else { login_log_service::write(state.database.as_ref(),None,username,None,"LOGIN","FAIL",Some("用户名或密码错误"),request.device_type.as_deref().unwrap_or("web"),headers.get("x-forwarded-for").and_then(|v|v.to_str().ok()),headers.get("user-agent").and_then(|v|v.to_str().ok())).await; return Err(AppError::unauthorized("用户名或密码错误")); };
+    if user.deleted != 0 || user.status != 1 { login_log_service::write(state.database.as_ref(),Some(user.id.value()),&user.username,Some(&user.real_name),"LOGIN","FAIL",Some("账号已禁用"),request.device_type.as_deref().unwrap_or("web"),headers.get("x-forwarded-for").and_then(|v|v.to_str().ok()),headers.get("user-agent").and_then(|v|v.to_str().ok())).await; return Err(AppError::unauthorized("账号已禁用")); }
+    if hash_password(&request.password, &user.password_salt) != user.password_hash { let remaining = login_security_service::record_failure(redis, username).await?; login_log_service::write(state.database.as_ref(),Some(user.id.value()),&user.username,Some(&user.real_name),"LOGIN","FAIL",Some("用户名或密码错误"),request.device_type.as_deref().unwrap_or("web"),headers.get("x-forwarded-for").and_then(|v|v.to_str().ok()),headers.get("user-agent").and_then(|v|v.to_str().ok())).await; return Err(AppError::unauthorized(format!("用户名或密码错误，还剩{remaining}次机会"))); }
     login_security_service::clear_failures(redis, username).await?;
     let now = Utc::now(); let token = Uuid::new_v4().to_string(); let device_type = normalize_device_type(request.device_type.as_deref().unwrap_or("web"));
     let session = SessionData { user_id: user.id.clone(), username: user.username.clone(), real_name: user.real_name.clone(), token: token.clone(), device_type: device_type.clone(), login_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true), last_active_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true) };
     session_service::register_session(redis, &session, state.settings.token.timeout_seconds, state.settings.token.active_timeout_seconds).await?;
     database.exec("update sys_user set last_login_at = now() where id = ? and deleted = 0", vec![rbs::value!(user.id.value())]).await.map_err(map_database_error)?;
+    login_log_service::write(state.database.as_ref(),Some(user.id.value()),&user.username,Some(&user.real_name),"LOGIN","SUCCESS",None,&device_type,headers.get("x-forwarded-for").and_then(|v|v.to_str().ok()),headers.get("user-agent").and_then(|v|v.to_str().ok())).await;
     Ok(AuthLoginVo { token, expires_at: (now + Duration::seconds(state.settings.token.active_timeout_seconds)).to_rfc3339_opts(chrono::SecondsFormat::Millis, true), active_timeout_seconds: state.settings.token.active_timeout_seconds, token_timeout_seconds: state.settings.token.timeout_seconds, device_type })
 }
 
 pub async fn current_session(state: &AppState, headers: &HeaderMap) -> Result<SessionData, AppError> { let token = headers.get(&state.settings.token.name).and_then(|v| v.to_str().ok()).filter(|v| !v.trim().is_empty()).ok_or_else(|| AppError::unauthorized("未登录或 token 失效"))?; let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?; session_service::load_session(redis, token, state.settings.token.active_timeout_seconds).await }
 pub async fn current_user_id(state: &AppState, headers: &HeaderMap) -> Result<i64, AppError> { Ok(current_session(state, headers).await?.user_id.value()) }
-pub async fn logout(state: &AppState, headers: &HeaderMap) -> Result<(), AppError> { let session = current_session(state, headers).await?; let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?; session_service::remove_session(redis, &session.token, session.user_id.value()).await }
+pub async fn logout(state: &AppState, headers: &HeaderMap) -> Result<(), AppError> { let session = current_session(state, headers).await?; let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?; login_log_service::write(state.database.as_ref(),Some(session.user_id.value()),&session.username,Some(&session.real_name),"LOGOUT","SUCCESS",None,&session.device_type,headers.get("x-forwarded-for").and_then(|v|v.to_str().ok()),headers.get("user-agent").and_then(|v|v.to_str().ok())).await; session_service::remove_session(redis, &session.token, session.user_id.value()).await }
 
 pub async fn me(state: &AppState, headers: &HeaderMap) -> Result<AuthMeVo, AppError> { let session = current_session(state, headers).await?; let database = require_database(state.database.as_ref())?; let user = find_user(database, session.user_id.value()).await?; let roles = user_service::role_codes(database, user.id.value()).await?; let permissions = permission_codes(database, user.id.value(), &roles).await?; let menus = menu_tree(database, user.id.value(), &roles).await?; Ok(AuthMeVo { id: user.id, username: user.username, real_name: user.real_name, phone: user.phone, email: user.email, avatar: user.avatar, dept_id: user.dept_id, roles, permissions, menus }) }
 

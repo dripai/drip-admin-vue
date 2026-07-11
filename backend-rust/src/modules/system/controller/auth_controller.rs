@@ -13,11 +13,11 @@ use axum::http::HeaderMap;
 
 pub async fn login(
     State(state): State<AppState>,
+    headers: HeaderMap,
     payload: Result<Json<LoginRequest>, JsonRejection>,
 ) -> Result<Json<ApiResponse<AuthLoginVo>>, AppError> {
     let Json(request) = payload.map_err(|_| AppError::bad_request("请求体 JSON 格式错误"))?;
-    let _ = &state.settings.token;
-    Ok(ok(auth_service::login(&state, request, &HeaderMap::new()).await?))
+    Ok(ok(auth_service::login(&state, request, &headers).await?))
 }
 
 pub async fn logout(

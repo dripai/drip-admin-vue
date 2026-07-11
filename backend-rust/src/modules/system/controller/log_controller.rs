@@ -7,7 +7,6 @@ use crate::modules::system::service::operation_log_service::OperationLog;
 use crate::modules::system::service::{login_log_service, operation_log_service};
 use axum::Json;
 use axum::extract::{Path, Query, State};
-use serde_json::Value;
 
 pub async fn login_logs(
     State(state): State<AppState>, Query(query): Query<LogQuery>,
