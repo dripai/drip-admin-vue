@@ -7,5 +7,4 @@ pub struct RoleSummaryVo {
     pub id: I64String,
     pub role_name: String,
     pub role_code: String,
-    pub status: i32,
 }

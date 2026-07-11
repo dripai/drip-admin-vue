@@ -16,40 +16,39 @@ pub async fn login(
     payload: Result<Json<LoginRequest>, JsonRejection>,
 ) -> Result<Json<ApiResponse<AuthLoginVo>>, AppError> {
     let Json(request) = payload.map_err(|_| AppError::bad_request("请求体 JSON 格式错误"))?;
-    Ok(ok(auth_service::login(
-        request,
-        &state.settings.token,
-        state.redis_pool.as_ref(),
-    )
-    .await?))
+    let _ = &state.settings.token;
+    Ok(ok(auth_service::login(&state, request, &HeaderMap::new()).await?))
 }
 
 pub async fn logout(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
-    let token = headers
-        .get(&state.settings.token.name)
-        .and_then(|value| value.to_str().ok())
-        .ok_or_else(|| AppError::unauthorized("未登录或 token 失效"))?;
-    auth_service::logout(state.redis_pool.as_ref(), token).await?;
+    auth_service::logout(&state, &headers).await?;
     Ok(ok_null())
 }
 
-pub async fn me() -> Result<Json<ApiResponse<AuthMeVo>>, AppError> {
-    Ok(ok(auth_service::me().await?))
+pub async fn me(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<AuthMeVo>>, AppError> {
+    Ok(ok(auth_service::me(&state, &headers).await?))
 }
 
 pub async fn password(
+    State(state): State<AppState>,
+    headers: HeaderMap,
     Json(request): Json<PasswordRequest>,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
-    auth_service::change_password(request).await?;
+    auth_service::change_password(&state, &headers, request).await?;
     Ok(ok_null())
 }
 
 pub async fn profile(
+    State(state): State<AppState>,
+    headers: HeaderMap,
     Json(request): Json<ProfileUpdateRequest>,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
-    auth_service::update_profile(request).await?;
+    auth_service::update_profile(&state, &headers, request).await?;
     Ok(ok_null())
 }

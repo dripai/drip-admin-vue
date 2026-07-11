@@ -171,11 +171,11 @@
    - [ ] 实现定时任务脚本执行器。
 
 4. 认证与权限
-   - [ ] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
-   - [ ] 实现 `/api/system/password`、`/api/system/profile`。
+   - [x] 实现 `/api/system/login`、`/api/system/logout`、`/api/system/me`。
+   - [x] 实现 `/api/system/password`、`/api/system/profile`。
    - [x] Token 名称固定为 `Authorization`，token 风格为 uuid。
    - [x] 实现超时 `28800` 秒、活跃超时 `1800` 秒、不允许并发登录、不共享 token。
-   - [ ] 实现 `SUPER_ADMIN` 权限规则。
+   - [x] 实现 `SUPER_ADMIN` 权限规则。
    - [ ] 实现 Tower middleware 权限校验，权限码完全复用 Java。
 
 5. 系统模块
@@ -183,13 +183,13 @@
    - [x] 菜单模块。
    - [x] 角色模块。
    - [x] 部门模块。
-   - [ ] 用户模块。
+   - [x] 用户模块。
    - [x] 配置模块。
    - [x] 字典模块。
-   - [ ] 在线用户模块。
+   - [x] 在线用户模块。
    - [ ] 登录日志和操作日志模块。
    - [ ] 定时任务和运行日志模块。
-   - [ ] 文件上传模块。
+   - [x] 文件上传模块。
    - [ ] 打印模板模块。
 
 6. 导出与文档

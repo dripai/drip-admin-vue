@@ -1,83 +1,52 @@
-use crate::common::{AppError, I64String};
-use crate::config::TokenSettings;
-use crate::modules::system::dto::auth_request::{
-    LoginRequest, PasswordRequest, ProfileUpdateRequest,
-};
+use crate::common::{AppError, hash_password};
+use crate::modules::system::AppState;
+use crate::modules::system::dto::auth_request::{LoginRequest, PasswordRequest, ProfileUpdateRequest};
+use crate::modules::system::entity::sys_menu::SysMenu;
+use crate::modules::system::entity::sys_user::SysUser;
+use crate::modules::system::service::{login_security_service, session_service, user_service};
 use crate::modules::system::service::session_service::SessionData;
-use crate::modules::system::service::{login_security_service, session_service};
 use crate::modules::system::vo::auth_vo::{AuthLoginVo, AuthMeVo};
 use crate::modules::system::vo::menu_tree_vo::MenuTreeVo;
+use axum::http::HeaderMap;
 use chrono::{Duration, Utc};
-use deadpool_redis::Pool;
+use rbatis::RBatis;
+use serde::Deserialize;
+use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn login(
-    request: LoginRequest,
-    token_settings: &TokenSettings,
-    redis_pool: Option<&Pool>,
-) -> Result<AuthLoginVo, AppError> {
-    let redis_pool = redis_pool.ok_or_else(|| AppError::system("Redis pool is not configured"))?;
-    if request.username.trim().is_empty() || request.password.trim().is_empty() {
-        let _ = login_security_service::record_failure(redis_pool, &request.username).await;
-        return Err(AppError::unauthorized("用户名或密码错误"));
-    }
-    login_security_service::assert_not_locked(redis_pool, &request.username).await?;
-    login_security_service::clear_failures(redis_pool, &request.username).await?;
-    let now = Utc::now();
-    let expires_at = now + Duration::seconds(token_settings.active_timeout_seconds);
-    let token = Uuid::new_v4().to_string();
-    let device_type = request.device_type.unwrap_or_else(|| "web".to_string());
-    let session = SessionData {
-        user_id: I64String(0),
-        username: request.username,
-        real_name: String::new(),
-        token: token.clone(),
-        device_type: device_type.clone(),
-        login_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-        last_active_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-    };
-    session_service::register_session(
-        redis_pool,
-        &session,
-        token_settings.timeout_seconds,
-        token_settings.active_timeout_seconds,
-    )
-    .await?;
-    Ok(AuthLoginVo {
-        token,
-        expires_at: expires_at.to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-        active_timeout: token_settings.active_timeout_seconds,
-        timeout: token_settings.timeout_seconds,
-        device_type,
-    })
+pub async fn login(state: &AppState, request: LoginRequest, _headers: &HeaderMap) -> Result<AuthLoginVo, AppError> {
+    let database = require_database(state.database.as_ref())?;
+    let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?;
+    let username = request.username.trim();
+    if username.is_empty() || request.password.trim().is_empty() { return Err(AppError::bad_request("username and password are required")); }
+    login_security_service::assert_not_locked(redis, username).await?;
+    let user = find_by_username(database, username).await?.ok_or_else(|| AppError::unauthorized("用户名或密码错误"))?;
+    if user.deleted != 0 || user.status != 1 { return Err(AppError::unauthorized("账号已禁用")); }
+    if hash_password(&request.password, &user.password_salt) != user.password_hash { let remaining = login_security_service::record_failure(redis, username).await?; return Err(AppError::unauthorized(format!("用户名或密码错误，还剩{remaining}次机会"))); }
+    login_security_service::clear_failures(redis, username).await?;
+    let now = Utc::now(); let token = Uuid::new_v4().to_string(); let device_type = normalize_device_type(request.device_type.as_deref().unwrap_or("web"));
+    let session = SessionData { user_id: user.id.clone(), username: user.username.clone(), real_name: user.real_name.clone(), token: token.clone(), device_type: device_type.clone(), login_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true), last_active_at: now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true) };
+    session_service::register_session(redis, &session, state.settings.token.timeout_seconds, state.settings.token.active_timeout_seconds).await?;
+    database.exec("update sys_user set last_login_at = now() where id = ? and deleted = 0", vec![rbs::value!(user.id.value())]).await.map_err(map_database_error)?;
+    Ok(AuthLoginVo { token, expires_at: (now + Duration::seconds(state.settings.token.active_timeout_seconds)).to_rfc3339_opts(chrono::SecondsFormat::Millis, true), active_timeout_seconds: state.settings.token.active_timeout_seconds, token_timeout_seconds: state.settings.token.timeout_seconds, device_type })
 }
 
-pub async fn logout(redis_pool: Option<&Pool>, token: &str) -> Result<(), AppError> {
-    let redis_pool = redis_pool.ok_or_else(|| AppError::system("Redis pool is not configured"))?;
-    let session = session_service::load_session(redis_pool, token, 1).await?;
-    session_service::remove_session(redis_pool, token, session.user_id.value()).await?;
-    Ok(())
-}
+pub async fn current_session(state: &AppState, headers: &HeaderMap) -> Result<SessionData, AppError> { let token = headers.get(&state.settings.token.name).and_then(|v| v.to_str().ok()).filter(|v| !v.trim().is_empty()).ok_or_else(|| AppError::unauthorized("未登录或 token 失效"))?; let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?; session_service::load_session(redis, token, state.settings.token.active_timeout_seconds).await }
+pub async fn current_user_id(state: &AppState, headers: &HeaderMap) -> Result<i64, AppError> { Ok(current_session(state, headers).await?.user_id.value()) }
+pub async fn logout(state: &AppState, headers: &HeaderMap) -> Result<(), AppError> { let session = current_session(state, headers).await?; let redis = state.redis_pool.as_ref().ok_or_else(|| AppError::system("Redis pool is not configured"))?; session_service::remove_session(redis, &session.token, session.user_id.value()).await }
 
-pub async fn me() -> Result<AuthMeVo, AppError> {
-    Ok(AuthMeVo {
-        id: I64String(0),
-        username: String::new(),
-        real_name: String::new(),
-        phone: None,
-        email: None,
-        avatar: None,
-        dept_id: None,
-        role_codes: Vec::new(),
-        permission_codes: Vec::new(),
-        menus: Vec::<MenuTreeVo>::new(),
-    })
-}
+pub async fn me(state: &AppState, headers: &HeaderMap) -> Result<AuthMeVo, AppError> { let session = current_session(state, headers).await?; let database = require_database(state.database.as_ref())?; let user = find_user(database, session.user_id.value()).await?; let roles = user_service::role_codes(database, user.id.value()).await?; let permissions = permission_codes(database, user.id.value(), &roles).await?; let menus = menu_tree(database, user.id.value(), &roles).await?; Ok(AuthMeVo { id: user.id, username: user.username, real_name: user.real_name, phone: user.phone, email: user.email, avatar: user.avatar, dept_id: user.dept_id, roles, permissions, menus }) }
 
-pub async fn change_password(_request: PasswordRequest) -> Result<(), AppError> {
-    Err(AppError::not_implemented())
-}
+pub async fn change_password(state: &AppState, headers: &HeaderMap, request: PasswordRequest) -> Result<(), AppError> { let id = current_user_id(state, headers).await?; if request.old_password.trim().is_empty() || request.new_password.trim().is_empty() { return Err(AppError::bad_request("password is required")); } if !(8..=64).contains(&request.new_password.chars().count()) { return Err(AppError::bad_request("newPassword length must be 8 to 64")); } let database = require_database(state.database.as_ref())?; let user = find_user(database, id).await?; if hash_password(&request.old_password, &user.password_salt) != user.password_hash { return Err(AppError::bad_request("旧密码错误")); } let salt = format!("salt{}", Uuid::new_v4().simple()); database.exec("update sys_user set password_salt = ?, password_hash = ? where id = ?", vec![rbs::value!(&salt), rbs::value!(hash_password(&request.new_password, &salt)), rbs::value!(id)]).await.map_err(map_database_error)?; Ok(()) }
+pub async fn update_profile(state: &AppState, headers: &HeaderMap, request: ProfileUpdateRequest) -> Result<(), AppError> { if request.real_name.trim().is_empty() { return Err(AppError::bad_request("realName is required")); } let session = current_session(state, headers).await?; let database = require_database(state.database.as_ref())?; find_user(database, session.user_id.value()).await?; database.exec("update sys_user set real_name = ?, phone = ?, email = ? where id = ? and deleted = 0", vec![rbs::value!(request.real_name.trim()), rbs::value!(empty_to_none(request.phone)), rbs::value!(empty_to_none(request.email)), rbs::value!(session.user_id.value())]).await.map_err(map_database_error)?; Ok(()) }
 
-pub async fn update_profile(_request: ProfileUpdateRequest) -> Result<(), AppError> {
-    Err(AppError::not_implemented())
-}
+async fn find_by_username(database: &RBatis, username: &str) -> Result<Option<SysUser>, AppError> { let rows: Vec<SysUser> = database.exec_decode("select id, username, password_hash, password_salt, real_name, phone, email, avatar, status, dept_id, remark, last_login_at, deleted, created_at, updated_at from sys_user where username = ?", vec![rbs::value!(username)]).await.map_err(map_database_error)?; Ok(rows.into_iter().next()) }
+async fn find_user(database: &RBatis, id: i64) -> Result<SysUser, AppError> { let rows: Vec<SysUser> = database.exec_decode("select id, username, password_hash, password_salt, real_name, phone, email, avatar, status, dept_id, remark, last_login_at, deleted, created_at, updated_at from sys_user where id = ? and deleted = 0", vec![rbs::value!(id)]).await.map_err(map_database_error)?; rows.into_iter().next().ok_or_else(|| AppError::unauthorized("未登录或 token 失效")) }
+async fn permission_codes(database: &RBatis, user_id: i64, roles: &[String]) -> Result<Vec<String>, AppError> { #[derive(Deserialize)] struct Row { permission_code: Option<String> } let sql = if roles.iter().any(|role| role == "SUPER_ADMIN") { "select permission_code from sys_menu where deleted = 0 and status = 1 and permission_code is not null" } else { "select distinct m.permission_code from sys_menu m inner join sys_role_menu rm on rm.menu_id = m.id inner join sys_user_role ur on ur.role_id = rm.role_id where ur.user_id = ? and m.deleted = 0 and m.status = 1 and m.permission_code is not null" }; let args = if roles.iter().any(|role| role == "SUPER_ADMIN") { vec![] } else { vec![rbs::value!(user_id)] }; let rows: Vec<Row> = database.exec_decode(sql, args).await.map_err(map_database_error)?; Ok(rows.into_iter().filter_map(|row| row.permission_code).collect()) }
+async fn menu_tree(database: &RBatis, user_id: i64, roles: &[String]) -> Result<Vec<MenuTreeVo>, AppError> { let sql = if roles.iter().any(|role| role == "SUPER_ADMIN") { "select id, parent_id, name, type, path, component, permission_code, icon, sort, visible, status, deleted, created_at, updated_at from sys_menu where deleted = 0 and status = 1 order by sort, id" } else { "select distinct m.id, m.parent_id, m.name, m.type, m.path, m.component, m.permission_code, m.icon, m.sort, m.visible, m.status, m.deleted, m.created_at, m.updated_at from sys_menu m inner join sys_role_menu rm on rm.menu_id = m.id inner join sys_user_role ur on ur.role_id = rm.role_id where ur.user_id = ? and m.deleted = 0 and m.status = 1 order by m.sort, m.id" }; let args = if roles.iter().any(|role| role == "SUPER_ADMIN") { vec![] } else { vec![rbs::value!(user_id)] }; let rows: Vec<SysMenu> = database.exec_decode(sql, args).await.map_err(map_database_error)?; let ids: BTreeSet<i64> = rows.iter().map(|row| row.id.value()).collect(); let mut by_parent: BTreeMap<i64, Vec<SysMenu>> = BTreeMap::new(); for row in rows.into_iter().filter(|row| row.r#type != "BUTTON") { let parent_id = row.parent_id.value(); by_parent.entry(if parent_id == 0 || !ids.contains(&parent_id) { 0 } else { parent_id }).or_default().push(row); } Ok(build_menu_children(0, &mut by_parent)) }
+fn build_menu_children(parent: i64, by_parent: &mut BTreeMap<i64, Vec<SysMenu>>) -> Vec<MenuTreeVo> { by_parent.remove(&parent).unwrap_or_default().into_iter().map(|row| { let id = row.id.value(); MenuTreeVo { id: row.id, parent_id: row.parent_id, name: row.name, r#type: row.r#type, path: row.path, component: row.component, permission_code: row.permission_code, icon: row.icon, sort: row.sort, visible: row.visible, status: row.status, children: build_menu_children(id, by_parent) } }).collect() }
+fn require_database(database: Option<&Arc<RBatis>>) -> Result<&RBatis, AppError> { database.map(AsRef::as_ref).ok_or_else(|| AppError::system("Rbatis database is not configured")) }
+fn normalize_device_type(value: &str) -> String { match value.trim().to_ascii_lowercase().as_str() { "web" | "desktop" | "windows" | "mac" | "linux" | "pc" => "pc".to_string(), "phone" | "mobile" => "mobile".to_string(), "pad" | "ipad" | "tablet" => "tablet".to_string(), _ => "unknown".to_string() } }
+fn empty_to_none(value: Option<String>) -> Option<String> { value.and_then(|v| { let value = v.trim(); (!value.is_empty()).then(|| value.to_string()) }) }
+fn map_database_error(err: rbatis::Error) -> AppError { AppError::system(err.to_string()) }

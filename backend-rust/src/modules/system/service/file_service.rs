@@ -1,6 +1,5 @@
 use crate::common::AppError;
 use crate::modules::system::vo::file_upload_vo::FileUploadVo;
-
-pub async fn upload() -> Result<FileUploadVo, AppError> {
-    Err(AppError::not_implemented())
-}
+use rbatis::RBatis;
+use std::sync::Arc;
+pub async fn upload(database: Option<&Arc<RBatis>>, original_name: String, size: i64) -> Result<FileUploadVo, AppError> { if original_name.trim().is_empty() || size <= 0 { return Err(AppError::bad_request("file must not be empty")); } let database = database.map(AsRef::as_ref).ok_or_else(|| AppError::system("Rbatis database is not configured"))?; #[derive(serde::Deserialize)] struct Row { config_value: String } let rows: Vec<Row> = database.exec_decode("select config_value from sys_config where config_key = 'upload.maxSizeBytes' and status = 1 and deleted = 0", vec![]).await.map_err(|err| AppError::system(err.to_string()))?; let max = rows.first().ok_or_else(|| AppError::system("upload.maxSizeBytes is not configured"))?.config_value.parse::<i64>().map_err(|_| AppError::system("upload.maxSizeBytes is invalid"))?; if size > max { return Err(AppError::bad_request("file exceeds max upload size")); } let rows: Vec<Row> = database.exec_decode("select config_value from sys_config where config_key = 'upload.allowedExtensions' and status = 1 and deleted = 0", vec![]).await.map_err(|err| AppError::system(err.to_string()))?; let allowed = rows.first().ok_or_else(|| AppError::system("upload.allowedExtensions is not configured"))?.config_value.split(',').map(|v| v.trim().trim_start_matches('.').to_ascii_lowercase()).collect::<Vec<_>>(); let extension = original_name.rsplit('.').next().unwrap_or("").to_ascii_lowercase(); if !allowed.iter().any(|item| item == &extension) { return Err(AppError::bad_request("file extension is not allowed")); } Ok(FileUploadVo { url: format!("local-{}", chrono::Utc::now().timestamp_millis()), filename: String::new(), original_name, size }) }

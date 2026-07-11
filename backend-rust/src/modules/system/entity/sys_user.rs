@@ -15,6 +15,8 @@ pub struct SysUser {
     pub avatar: Option<String>,
     pub status: i32,
     pub dept_id: Option<I64String>,
+    pub remark: Option<String>,
+    pub last_login_at: Option<NaiveDateTime>,
     pub deleted: i32,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,

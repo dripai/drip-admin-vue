@@ -1,14 +1,11 @@
 use crate::common::{AppError, PageParams, PageResult};
-use serde_json::Value;
+use crate::modules::system::service::session_service::SessionData;
+use crate::modules::system::vo::online_user_vo::OnlineUserVo;
+use deadpool_redis::Pool;
+use deadpool_redis::redis::{AsyncCommands, cmd};
 
-pub async fn list(params: PageParams) -> Result<PageResult<Value>, AppError> {
-    Ok(PageResult::empty(params))
-}
-
-pub async fn detail() -> Result<Value, AppError> {
-    Err(AppError::not_found("资源不存在"))
-}
-
-pub async fn kickout() -> Result<(), AppError> {
-    Err(AppError::not_implemented())
-}
+pub async fn list(pool: Option<&Pool>, params: PageParams, username: Option<&str>) -> Result<PageResult<OnlineUserVo>, AppError> { let mut sessions = sessions(pool).await?; if let Some(username) = username.map(str::trim).filter(|v| !v.is_empty()) { sessions.retain(|item| item.username.contains(username) || item.real_name.contains(username)); } sessions.sort_by(|a, b| b.login_at.cmp(&a.login_at)); let total = sessions.len() as i64; let offset = ((params.page - 1) * params.page_size) as usize; Ok(PageResult { list: sessions.into_iter().skip(offset).take(params.page_size as usize).map(to_vo).collect(), total: total.into(), page: params.page, page_size: params.page_size }) }
+pub async fn detail(pool: Option<&Pool>, token: &str) -> Result<OnlineUserVo, AppError> { sessions(pool).await?.into_iter().find(|item| item.token == token).map(to_vo).ok_or_else(|| AppError::not_found("资源不存在")) }
+pub async fn kickout(pool: Option<&Pool>, token: &str) -> Result<(), AppError> { let pool = pool.ok_or_else(|| AppError::system("Redis pool is not configured"))?; let mut connection = pool.get().await.map_err(|err| AppError::system(err.to_string()))?; let payload: Option<String> = connection.get(format!("drip:session:{token}")).await.map_err(|err| AppError::system(err.to_string()))?; let session: SessionData = payload.ok_or_else(|| AppError::not_found("资源不存在")).and_then(|value| serde_json::from_str(&value).map_err(|err| AppError::system(err.to_string())))?; let _: () = connection.del(format!("drip:session:{token}")).await.map_err(|err| AppError::system(err.to_string()))?; let _: () = connection.del(format!("drip:user-token:{}", session.user_id.value())).await.map_err(|err| AppError::system(err.to_string()))?; Ok(()) }
+async fn sessions(pool: Option<&Pool>) -> Result<Vec<SessionData>, AppError> { let pool = pool.ok_or_else(|| AppError::system("Redis pool is not configured"))?; let mut connection = pool.get().await.map_err(|err| AppError::system(err.to_string()))?; let keys: Vec<String> = cmd("KEYS").arg("drip:session:*").query_async(&mut connection).await.map_err(|err| AppError::system(err.to_string()))?; let mut rows = Vec::new(); for key in keys { if let Some(payload) = connection.get::<_, Option<String>>(&key).await.map_err(|err| AppError::system(err.to_string()))? { if let Ok(session) = serde_json::from_str(&payload) { rows.push(session); } } } Ok(rows) }
+fn to_vo(session: SessionData) -> OnlineUserVo { OnlineUserVo { user_id: session.user_id, token_id: session.token, username: session.username, real_name: session.real_name, device_type: session.device_type } }

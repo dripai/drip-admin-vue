@@ -6,5 +6,4 @@ use serde::Serialize;
 pub struct DeptSummaryVo {
     pub id: I64String,
     pub dept_name: String,
-    pub dept_code: String,
 }

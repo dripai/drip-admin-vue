@@ -7,8 +7,8 @@ use serde::Serialize;
 pub struct AuthLoginVo {
     pub token: String,
     pub expires_at: String,
-    pub active_timeout: i64,
-    pub timeout: i64,
+    pub active_timeout_seconds: i64,
+    pub token_timeout_seconds: i64,
     pub device_type: String,
 }
 
@@ -22,7 +22,7 @@ pub struct AuthMeVo {
     pub email: Option<String>,
     pub avatar: Option<String>,
     pub dept_id: Option<I64String>,
-    pub role_codes: Vec<String>,
-    pub permission_codes: Vec<String>,
+    pub roles: Vec<String>,
+    pub permissions: Vec<String>,
     pub menus: Vec<MenuTreeVo>,
 }
