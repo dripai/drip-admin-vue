@@ -1,9 +1,8 @@
 use crate::common::I64String;
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 pub struct SysRole {
     pub id: I64String,
     pub role_name: String,
@@ -12,6 +11,6 @@ pub struct SysRole {
     pub status: i32,
     pub remark: Option<String>,
     pub deleted: i32,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
 }

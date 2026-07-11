@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::common::{AppError, PageParams};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigQuery {
     pub page: Option<i32>,
@@ -29,7 +29,7 @@ impl ConfigQuery {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigSaveRequest {
     pub config_name: String,

@@ -2,8 +2,8 @@ use crate::common::I64String;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 pub struct SysPrintTemplate {
     pub id: I64String,
     pub template_code: String,

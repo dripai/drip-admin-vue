@@ -1,7 +1,7 @@
 use crate::common::{AppError, PageParams};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserSaveRequest {
     pub username: String,
@@ -15,7 +15,7 @@ pub struct UserSaveRequest {
     pub password: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserQuery {
     pub page: Option<i32>,
@@ -44,13 +44,13 @@ impl UserQuery {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserRoleAssignRequest {
     pub role_ids: Vec<i64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PasswordResetRequest {
     pub password: String,

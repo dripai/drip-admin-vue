@@ -13,6 +13,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_BACKUP_DIR = SCRIPT_DIR.parent / "backups" / "mysql"
+MYSQLDUMP_EXE = r"D:\tool\mysql8\bin\mysqldump.exe"
 
 
 def env(name: str, default: str) -> str:
@@ -35,7 +36,7 @@ def remove_old_backups(backup_dir: Path, keep_days: int) -> None:
 
 
 def main() -> None:
-    mysqldump = env("MYSQLDUMP_EXE", "mysqldump")
+    mysqldump = MYSQLDUMP_EXE
     host = env("MYSQL_HOST", "127.0.0.1")
     port = env("MYSQL_PORT", "3307")
     user = env("MYSQL_USER", "root")

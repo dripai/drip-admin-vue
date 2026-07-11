@@ -2,7 +2,7 @@ use crate::common::I64String;
 use crate::modules::system::vo::menu_tree_vo::MenuTreeVo;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthLoginVo {
     pub token: String,
@@ -12,7 +12,7 @@ pub struct AuthLoginVo {
     pub device_type: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthMeVo {
     pub id: I64String,

@@ -1,7 +1,7 @@
 use crate::common::{AppError, PageParams};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RoleQuery {
     pub page: Option<i32>,
@@ -29,7 +29,7 @@ impl RoleQuery {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RoleSaveRequest {
     pub role_name: String,
@@ -38,7 +38,7 @@ pub struct RoleSaveRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RolePermissionAssignRequest {
     pub menu_ids: Vec<i64>,

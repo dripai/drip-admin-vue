@@ -3,6 +3,7 @@ use axum::http::{Request, StatusCode};
 use drip_admin_rust::common::{ApiResponse, I64String, PageParams, PageQuery, PageResult};
 use drip_admin_rust::config::Settings;
 use drip_admin_rust::modules::system::dto::menu_request::MenuSaveRequest;
+use drip_admin_rust::modules::system::entity::sys_config::SysConfig;
 use drip_admin_rust::modules::system::{AppState, router};
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
@@ -168,6 +169,25 @@ fn menu_request_contract_uses_java_type_field() {
     }))
     .unwrap();
     assert_eq!(request.r#type, "MENU");
+}
+
+#[test]
+fn sys_config_accepts_database_column_names() {
+    let config: SysConfig = serde_json::from_value(json!({
+        "id": "1",
+        "config_name": "系统名称",
+        "config_key": "system.name",
+        "config_value": "Drip Admin",
+        "value_type": "string",
+        "builtin": 1,
+        "status": 1,
+        "remark": null,
+        "deleted": 0
+    }))
+    .unwrap();
+    assert_eq!(config.config_name, "系统名称");
+    let json = serde_json::to_value(config).unwrap();
+    assert_eq!(json["configName"], "系统名称");
 }
 
 #[tokio::test]

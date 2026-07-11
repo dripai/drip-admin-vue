@@ -145,7 +145,7 @@
 
 技术栈：Axum、Tokio、Tower、Rbatis、rbdc-mysql、deadpool-redis、config、tracing、tracing-subscriber、validator、utoipa、utoipa-swagger-ui、rust_xlsxwriter、cargo test。
 
-状态：已完成首版工程骨架、公共契约、分层文件结构、全量路由挂载、Redis 会话基础设施、菜单模块、角色模块、配置模块、字典模块、部门模块和契约测试；其余业务服务仍需继续按模块接入数据库和完整业务语义。
+状态：已完成工程骨架、公共契约、分层文件结构、系统模块、Redis 会话基础设施、权限中间件、请求与操作日志、定时任务、Excel 导出、utoipa OpenAPI 文档和契约测试。
 
 1. 工程骨架
    - [x] 创建 `backend-rust/`。
@@ -165,7 +165,7 @@
 3. 基础设施
    - [x] Rbatis 连接 MySQL，禁止引入 ORM migration、建表或改表逻辑。
    - [x] deadpool-redis 管理会话、在线用户、登录失败次数和缓存。
-   - [ ] tracing 接入请求日志、错误日志和操作日志写入。
+   - [x] tracing 接入请求日志、错误日志和操作日志写入。
    - [x] 实现应用分配 ID，不依赖数据库 `AUTO_INCREMENT`。
    - [x] 实现文件上传存储。
    - [x] 实现定时任务脚本执行器。
@@ -194,7 +194,7 @@
 
 6. 导出与文档
    - [x] 使用 rust_xlsxwriter 实现 Excel 导出，列标题允许请求传入，服务端校验列 `key`。
-   - [ ] 使用 utoipa 输出 OpenAPI 文档，字段和响应模型与 Java 对齐。
+   - [x] 使用 utoipa 输出 OpenAPI 文档，覆盖全部 Rust 系统接口路径，并为请求、响应和实体模型生成 Schema。
    - [x] 增加 Rust README，说明启动、配置、测试和数据库脚本使用方式。
 
 7. 测试验收

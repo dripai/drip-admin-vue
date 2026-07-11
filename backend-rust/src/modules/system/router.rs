@@ -11,6 +11,7 @@ use axum::middleware;
 use axum::routing::{delete, get, post, put};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
+use utoipa_swagger_ui::SwaggerUi;
 
 pub fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
@@ -22,17 +23,12 @@ pub fn create_router(state: AppState) -> Router {
         .route("/", get(common_controller::root))
         .route("/favicon.ico", get(common_controller::favicon))
         .route("/health", get(common_controller::health))
-        .route("/v3/api-docs", get(common_controller::openapi_docs))
-        .route("/swagger-ui.html", get(common_controller::swagger_ui))
-        .route(
-            "/swagger-ui/{*any}",
-            get(common_controller::swagger_ui_asset),
-        )
         .route(
             "/system/publicConfig",
             get(config_controller::public_config),
         )
-        .route("/system/login", post(auth_controller::login));
+        .route("/system/login", post(auth_controller::login))
+        .merge(SwaggerUi::new("/swagger-ui").url("/v3/api-docs", super::api_doc::openapi()));
 
     let protected = Router::new()
         .route("/system/logout", post(auth_controller::logout))

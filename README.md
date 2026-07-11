@@ -36,6 +36,29 @@ Go 后端：
 - testing
 - testify
 
+Python 后端：
+
+- FastAPI
+- Uvicorn
+- SQLAlchemy 2 async
+- asyncmy
+- redis-py asyncio
+- Pydantic v2
+- pydantic-settings
+- openpyxl
+- pytest
+
+Rust 后端：
+
+- Axum、Tokio、Tower
+- Rbatis、rbdc-mysql
+- deadpool-redis
+- config、tracing、tracing-subscriber
+- validator
+- utoipa、utoipa-swagger-ui
+- rust_xlsxwriter
+- cargo test
+
 ### 前端
 
 - Vue 3
@@ -58,6 +81,8 @@ Go 后端：
 .
 ├── backend/    # Java Spring Boot 后端服务
 ├── backend-go/ # Go 后端服务
+├── backend-python/ # Python FastAPI 后端服务
+├── backend-rust/ # Rust Axum 后端服务
 ├── frontend/   # Vue 管理端
 ├── mobile/     # 移动端工程目录
 ├── scripts/    # 脚本目录
@@ -67,7 +92,11 @@ Go 后端：
 
 ## 后端说明
 
-Java 后端服务位于 `backend/`，默认接口上下文为 `/api`，默认端口为 `9001`。开发环境配置位于 `backend/src/main/resources/application-dev.yml`，默认连接本地 MySQL 和 Redis。
+项目支持 Java、Go、Python、Rust 四个后端实现。Java 是 API 契约源；其余后端保持相同的 `/api` 路径、请求字段、响应结构、权限码、异常码和 Long 字符串序列化。四个后端默认端口均为 `9001`，一次只启动其中一个。
+
+### Java
+
+Java 后端位于 `backend/`，默认接口上下文为 `/api`。开发环境配置位于 `backend/src/main/resources/application-dev.yml`，默认连接本地 MySQL 和 Redis。
 
 常用命令：
 
@@ -76,7 +105,9 @@ cd backend
 mvn spring-boot:run
 ```
 
-Go 后端服务位于 `backend-go/`，实现与 Java 后端一致的 API 路径、响应结构、权限码和 Long 字符串序列化。
+### Go
+
+Go 后端位于 `backend-go/`，默认读取 `backend-go/config.yaml`，可通过 `DRIP_GO_CONFIG` 指定其他配置文件。
 
 常用命令：
 
@@ -88,7 +119,36 @@ cd backend-go
 go test ./...
 ```
 
-Go 后端默认读取 `backend-go/config.yaml`，可通过 `DRIP_GO_CONFIG` 指定其他配置文件。
+OpenAPI：`/api/v3/api-docs`、`/api/swagger-ui.html`。
+
+### Python
+
+Python 后端位于 `backend-python/`，默认读取 `backend-python/config.yaml`。
+
+```bash
+cd backend-python
+./setup.sh
+./start.sh
+./start.sh build
+pytest
+```
+
+OpenAPI：`/api/v3/api-docs`、`/api/swagger-ui.html`。
+
+### Rust
+
+Rust 后端位于 `backend-rust/`，默认读取 `backend-rust/config.yaml`，可通过 `DRIP_RUST_CONFIG` 指定其他配置文件。
+
+```bash
+cd backend-rust
+./start.sh
+./start.sh build
+cargo test
+```
+
+OpenAPI：`/api/v3/api-docs`、`/api/swagger-ui/index.html`。
+
+各后端的独立说明见 [Go](backend-go/README.md)、[Python](backend-python/README.md)、[Rust](backend-rust/README.md)。
 
 数据库 SQL 由根目录 `scripts/db` 维护，不随 Java 后端资源打包。当前只保留一份完整初始化脚本：
 

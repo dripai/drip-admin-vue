@@ -1,7 +1,7 @@
 use crate::common::{AppError, I64String};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PageQuery {
     pub page: Option<i32>,
@@ -40,7 +40,7 @@ impl Default for PageQuery {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PageResult<T>
 where

@@ -6,7 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 static SEQUENCE: AtomicU16 = AtomicU16::new(0);
 const CUSTOM_EPOCH_MILLIS: u64 = 1_735_689_600_000;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, utoipa::ToSchema)]
+#[schema(value_type = String, format = "int64")]
 pub struct I64String(pub i64);
 
 impl I64String {
