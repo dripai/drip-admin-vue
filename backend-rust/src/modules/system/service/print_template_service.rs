@@ -1,14 +1,10 @@
-use crate::common::{AppError, PageParams, PageResult};
-use serde_json::Value;
-
-pub async fn list(params: PageParams) -> Result<PageResult<Value>, AppError> {
-    Ok(PageResult::empty(params))
-}
-
-pub async fn detail() -> Result<Value, AppError> {
-    Err(AppError::not_found("资源不存在"))
-}
-
-pub async fn mutate() -> Result<(), AppError> {
-    Err(AppError::not_implemented())
-}
+use crate::common::{AppError,I64String,PageParams,PageResult,next_id};use crate::modules::system::dto::print_template_request::{PrintTemplateCopyRequest,PrintTemplateSaveRequest};use rbatis::RBatis;use serde::{Deserialize,Serialize};use std::sync::Arc;
+#[derive(Debug,Deserialize,Serialize)]#[serde(rename_all="camelCase")]pub struct PrintTemplate{pub id:I64String,pub code:String,pub name:String,pub paper_type:String,pub template_json:String,pub status:i32,pub deleted:i32}
+#[derive(Deserialize)]struct Count{total:i64}fn db(d:Option<&Arc<RBatis>>)->Result<&RBatis,AppError>{d.map(AsRef::as_ref).ok_or_else(||AppError::system("Rbatis database is not configured"))}fn validate(r:&PrintTemplateSaveRequest)->Result<(),AppError>{if r.code.trim().is_empty()||r.name.trim().is_empty()||r.paper_type.as_deref().unwrap_or("").trim().is_empty()||r.template_json.trim().is_empty(){return Err(AppError::bad_request("print template fields are required"))}if !matches!(r.status,0|1){return Err(AppError::bad_request("status is invalid"))}Ok(())}
+pub async fn list(d:Option<&Arc<RBatis>>,p:PageParams)->Result<PageResult<PrintTemplate>,AppError>{let d=db(d)?;let rows:Vec<PrintTemplate>=d.exec_decode("select id,code,name,paper_type,template_json,status,deleted from sys_print_template where deleted=0 order by updated_at desc,id desc limit ? offset ?",vec![rbs::value!(p.page_size),rbs::value!(((p.page-1)*p.page_size)as i64)]).await.map_err(|e|AppError::system(e.to_string()))?;let c:Vec<Count>=d.exec_decode("select count(*) total from sys_print_template where deleted=0",vec![]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(PageResult{list:rows,total:I64String(c.first().map(|v|v.total).unwrap_or(0)),page:p.page,page_size:p.page_size})}
+pub async fn detail(d:Option<&Arc<RBatis>>,id:i64)->Result<PrintTemplate,AppError>{let rows:Vec<PrintTemplate>=db(d)?.exec_decode("select id,code,name,paper_type,template_json,status,deleted from sys_print_template where id=? and deleted=0",vec![rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;rows.into_iter().next().ok_or_else(||AppError::not_found("print template not found"))}
+pub async fn create(d:Option<&Arc<RBatis>>,r:PrintTemplateSaveRequest)->Result<I64String,AppError>{validate(&r)?;let d=db(d)?;let id=next_id();d.exec("insert into sys_print_template(id,code,name,paper_type,template_json,status,deleted) values(?,?,?,?,?,?,0)",vec![rbs::value!(id),rbs::value!(r.code.trim()),rbs::value!(r.name.trim()),rbs::value!(r.paper_type.unwrap()),rbs::value!(r.template_json),rbs::value!(r.status)]).await.map_err(|e|if e.to_string().to_ascii_lowercase().contains("duplicate"){AppError::conflict("print template code already exists")}else{AppError::system(e.to_string())})?;Ok(I64String(id))}
+pub async fn update(d:Option<&Arc<RBatis>>,id:i64,r:PrintTemplateSaveRequest)->Result<(),AppError>{detail(d,id).await?;validate(&r)?;db(d)?.exec("update sys_print_template set code=?,name=?,paper_type=?,template_json=?,status=? where id=? and deleted=0",vec![rbs::value!(r.code.trim()),rbs::value!(r.name.trim()),rbs::value!(r.paper_type.unwrap()),rbs::value!(r.template_json),rbs::value!(r.status),rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(())}
+pub async fn delete(d:Option<&Arc<RBatis>>,id:i64)->Result<(),AppError>{detail(d,id).await?;db(d)?.exec("delete from sys_print_template where id=?",vec![rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(())}
+pub async fn status(d:Option<&Arc<RBatis>>,id:i64,status:i32)->Result<(),AppError>{if !matches!(status,0|1){return Err(AppError::bad_request("status is invalid"))}detail(d,id).await?;db(d)?.exec("update sys_print_template set status=? where id=?",vec![rbs::value!(status),rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(())}
+pub async fn copy(d:Option<&Arc<RBatis>>,id:i64,r:PrintTemplateCopyRequest)->Result<I64String,AppError>{let source=detail(d,id).await?;if r.code.trim().is_empty()||r.name.trim().is_empty()||!matches!(r.status,0|1){return Err(AppError::bad_request("print template fields are invalid"))}let d=db(d)?;let new_id=next_id();d.exec("insert into sys_print_template(id,code,name,paper_type,template_json,status,deleted) values(?,?,?,?,?,?,0)",vec![rbs::value!(new_id),rbs::value!(r.code.trim()),rbs::value!(r.name.trim()),rbs::value!(source.paper_type),rbs::value!(source.template_json),rbs::value!(r.status)]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(I64String(new_id))}

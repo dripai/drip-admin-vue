@@ -1,10 +1,6 @@
-use crate::common::{AppError, PageParams, PageResult};
-use serde_json::Value;
-
-pub async fn list(params: PageParams) -> Result<PageResult<Value>, AppError> {
-    Ok(PageResult::empty(params))
-}
-
-pub async fn detail() -> Result<Value, AppError> {
-    Err(AppError::not_found("资源不存在"))
-}
+use crate::common::{AppError, I64String, PageParams, PageResult};
+use rbatis::RBatis; use serde::{Deserialize, Serialize}; use std::sync::Arc;
+#[derive(Debug, Deserialize, Serialize)] #[serde(rename_all="camelCase")] pub struct OperationLog { pub id:I64String,pub operator_id:Option<I64String>,pub operator_name:Option<String>,pub module:String,pub action:String,pub method:String,pub path:String,pub request_params:Option<String>,pub response_status:String,pub error_message:Option<String>,pub cost_ms:i64,pub created_at:Option<chrono::NaiveDateTime> }
+#[derive(Deserialize)] struct Count{total:i64}
+pub async fn list(db:Option<&Arc<RBatis>>,p:PageParams)->Result<PageResult<OperationLog>,AppError>{let db=db.map(AsRef::as_ref).ok_or_else(||AppError::system("Rbatis database is not configured"))?;let rows:Vec<OperationLog>=db.exec_decode("select id,operator_id,operator_name,module,action,method,path,request_params,response_status,error_message,cost_ms,created_at from sys_operation_log order by created_at desc limit ? offset ?",vec![rbs::value!(p.page_size),rbs::value!(((p.page-1)*p.page_size)as i64)]).await.map_err(|e|AppError::system(e.to_string()))?;let c:Vec<Count>=db.exec_decode("select count(*) total from sys_operation_log",vec![]).await.map_err(|e|AppError::system(e.to_string()))?;Ok(PageResult{list:rows,total:I64String(c.first().map(|v|v.total).unwrap_or(0)),page:p.page,page_size:p.page_size})}
+pub async fn detail(db:Option<&Arc<RBatis>>,id:i64)->Result<OperationLog,AppError>{let db=db.map(AsRef::as_ref).ok_or_else(||AppError::system("Rbatis database is not configured"))?;let rows:Vec<OperationLog>=db.exec_decode("select id,operator_id,operator_name,module,action,method,path,request_params,response_status,error_message,cost_ms,created_at from sys_operation_log where id=?",vec![rbs::value!(id)]).await.map_err(|e|AppError::system(e.to_string()))?;rows.into_iter().next().ok_or_else(||AppError::not_found("资源不存在"))}

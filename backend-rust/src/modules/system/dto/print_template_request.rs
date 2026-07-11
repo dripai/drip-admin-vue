@@ -4,17 +4,17 @@ use serde_json::Value;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrintTemplateSaveRequest {
-    pub template_code: String,
-    pub template_name: String,
+    pub code: String,
+    pub name: String,
     pub paper_type: Option<String>,
-    pub content: Value,
-    pub status: Option<i32>,
-    pub remark: Option<String>,
+    pub template_json: String,
+    pub status: i32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrintTemplateCopyRequest {
-    pub template_code: String,
-    pub template_name: String,
+    pub code: String,
+    pub name: String,
+    pub status: i32,
 }
