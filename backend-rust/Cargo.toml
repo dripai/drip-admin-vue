@@ -20,6 +20,7 @@ tokio = { version = "1.52.3", features = ["full"] }
 tower = { version = "0.5.3", features = ["util"] }
 tower-http = { version = "0.6.7", features = ["cors", "trace"] }
 tracing = "0.1.44"
+tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
 utoipa = { version = "5.5.0", features = ["chrono", "uuid"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }

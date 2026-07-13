@@ -28,6 +28,7 @@ coverage/
 *.local
 
 # Logs and temp files
+backend-rust/logs/
 *.log
 *.tmp
 *.temp

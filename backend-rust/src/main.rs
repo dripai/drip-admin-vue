@@ -7,7 +7,7 @@ use std::sync::Arc;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = Settings::load()?;
-    logging::init(&settings.logging.level);
+    let _log_guard = logging::init(&settings.logging.level);
     let database = database::connect_mysql(&settings.mysql).await?;
     let redis_pool = redis_client::create_pool(&settings.redis)?;
     let state = AppState::new(
