@@ -328,7 +328,22 @@ async function submitPassword() {
       />
     </a-layout-sider>
     <a-layout>
-      <a-layout-header class="header">
+      <a-layout-header
+        class="header"
+        :class="{ 'header-mix-direct': preferences.layoutMode === 'mix' && !showChildSider }"
+      >
+        <div
+          v-if="preferences.layoutMode === 'mix' && !showChildSider"
+          class="mix-brand"
+        >
+          <img
+            v-if="appConfig.logoUrl"
+            class="mix-brand-logo"
+            :src="appConfig.logoUrl"
+            :alt="appConfig.systemName"
+          />
+          <span class="mix-brand-text">{{ appConfig.systemName }}</span>
+        </div>
         <a-button
           v-if="preferences.layoutMode === 'side'"
           type="text"
@@ -572,6 +587,39 @@ async function submitPassword() {
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.header-mix-direct {
+  padding-left: 0;
+}
+
+.mix-brand {
+  flex: 0 0 188px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: var(--layout-header-height);
+  padding: 0 18px;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+  border-right: 1px solid #e5e7eb;
+}
+
+.mix-brand-logo {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.mix-brand-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .top-menu {
