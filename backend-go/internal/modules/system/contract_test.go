@@ -12,6 +12,7 @@ import (
 
 	"drip-admin/backend-go/internal/common"
 	"drip-admin/backend-go/internal/config"
+	"drip-admin/backend-go/internal/modules/system/dto"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
@@ -81,6 +82,19 @@ func TestResponseContract(t *testing.T) {
 	payload, err = json.Marshal(common.ApiResponse{Code: 400000, Message: "错误信息", Data: nil})
 	require.NoError(t, err)
 	require.JSONEq(t, `{"code":400000,"message":"错误信息","data":null}`, string(payload))
+}
+
+func TestMenuRequestAcceptsStringAndNumberParentID(t *testing.T) {
+	const longID = int64(2070959730788388865)
+	var stringRequest dto.MenuSaveRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"parentId":"2070959730788388865","name":"菜单管理","type":"MENU"}`), &stringRequest))
+	require.NotNil(t, stringRequest.ParentID)
+	require.Equal(t, longID, stringRequest.ParentID.Int64())
+
+	var numericRequest dto.MenuSaveRequest
+	require.NoError(t, json.Unmarshal([]byte(`{"parentId":0,"name":"菜单管理","type":"MENU"}`), &numericRequest))
+	require.NotNil(t, numericRequest.ParentID)
+	require.EqualValues(t, 0, numericRequest.ParentID.Int64())
 }
 
 func TestPermissionContract(t *testing.T) {

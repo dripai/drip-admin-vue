@@ -23,6 +23,7 @@ from app.config.settings import (
 from app.infrastructure.script_executor import ScriptExecutor
 from app.main import create_app
 from app.modules.system.dto.config_request import ConfigSaveRequest
+from app.modules.system.dto.menu_request import MenuSaveRequest
 from app.modules.system.entity.base import Base
 from app.modules.system.entity.sys_menu import SysMenu
 from app.modules.system.service.menu_service import MenuService, _rows_with_ancestors
@@ -178,6 +179,16 @@ def test_response_pagination_long_and_error_contract(app) -> None:
     assert response.status_code == 400
     assert response.json()["code"] == 400000
     assert response.json()["data"] is None
+
+
+def test_menu_request_accepts_string_and_number_parent_id() -> None:
+    string_request = MenuSaveRequest.model_validate(
+        {"parentId": "2070959730788388865", "name": "菜单管理", "type": "MENU"}
+    )
+    numeric_request = MenuSaveRequest.model_validate({"parentId": 0, "name": "菜单管理", "type": "MENU"})
+
+    assert string_request.parent_id == 2070959730788388865
+    assert numeric_request.parent_id == 0
 
 
 def test_permission_contract() -> None:

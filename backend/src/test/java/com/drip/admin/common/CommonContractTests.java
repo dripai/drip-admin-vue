@@ -7,6 +7,7 @@ import com.drip.admin.common.export.ExportColumn;
 import com.drip.admin.common.export.ExportColumnRequest;
 import com.drip.admin.common.response.ApiResponse;
 import com.drip.admin.config.JacksonConfig;
+import com.drip.admin.modules.system.dto.MenuSaveRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,21 @@ class CommonContractTests {
 
         assertTrue(json.contains("\"id\":\"1781234567890123456\""));
         assertTrue(json.contains("\"parentId\":\"1781234567890123457\""));
+    }
+
+    @Test
+    void jacksonAcceptsMenuParentIdsAsStringOrNumber() throws Exception {
+        String payload = "{\"parentId\":\"2070959730788388865\",\"name\":\"菜单管理\",\"type\":\"MENU\"}";
+        JacksonConfig jacksonConfig = new JacksonConfig();
+        ObjectMapper jackson2 = jacksonConfig.objectMapper(jacksonConfig.longAsStringModule());
+        tools.jackson.databind.json.JsonMapper.Builder builder = tools.jackson.databind.json.JsonMapper.builder();
+        jacksonConfig.jsonMapperBuilderCustomizer(jacksonConfig.jackson3LongAsStringModule()).customize(builder);
+        var jackson3 = builder.build();
+
+        assertEquals(2070959730788388865L, jackson2.readValue(payload, MenuSaveRequest.class).getParentId());
+        assertEquals(2070959730788388865L, jackson3.readValue(payload, MenuSaveRequest.class).getParentId());
+        assertEquals(0L, jackson2.readValue("{\"parentId\":0,\"name\":\"菜单管理\",\"type\":\"MENU\"}", MenuSaveRequest.class).getParentId());
+        assertEquals(0L, jackson3.readValue("{\"parentId\":0,\"name\":\"菜单管理\",\"type\":\"MENU\"}", MenuSaveRequest.class).getParentId());
     }
 
     @Test

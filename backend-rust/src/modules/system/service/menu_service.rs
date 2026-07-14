@@ -24,7 +24,7 @@ pub async fn create(
 ) -> Result<I64String, AppError> {
     let database = require_database(database)?;
     validate_request(&request)?;
-    let parent_id = request.parent_id.unwrap_or(0);
+    let parent_id = request.parent_id.map(I64String::value).unwrap_or(0);
     assert_existing_parent(database, parent_id).await?;
     let id = next_id();
     database
@@ -57,7 +57,7 @@ pub async fn update(
     let database = require_database(database)?;
     detail_with_database(database, id).await?;
     validate_request(&request)?;
-    let parent_id = request.parent_id.unwrap_or(0);
+    let parent_id = request.parent_id.map(I64String::value).unwrap_or(0);
     assert_existing_parent(database, parent_id).await?;
     assert_valid_parent(database, id, parent_id).await?;
     database

@@ -156,7 +156,7 @@ fn dict_response_contract() {
 #[test]
 fn menu_request_contract_uses_java_type_field() {
     let request: MenuSaveRequest = serde_json::from_value(json!({
-        "parentId": 0,
+        "parentId": "2070959730788388865",
         "name": "菜单管理",
         "type": "MENU",
         "path": "/system/menu",
@@ -168,7 +168,19 @@ fn menu_request_contract_uses_java_type_field() {
         "status": 1
     }))
     .unwrap();
+    assert_eq!(
+        request.parent_id.unwrap().value(),
+        2_070_959_730_788_388_865
+    );
     assert_eq!(request.r#type, "MENU");
+
+    let numeric_request: MenuSaveRequest = serde_json::from_value(json!({
+        "parentId": 0,
+        "name": "菜单管理",
+        "type": "MENU"
+    }))
+    .unwrap();
+    assert_eq!(numeric_request.parent_id.unwrap().value(), 0);
 }
 
 #[test]

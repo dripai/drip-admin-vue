@@ -2,7 +2,6 @@
 import { computed, h, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  AppstoreOutlined,
   LayoutOutlined,
   MenuOutlined,
   MenuFoldOutlined,
@@ -79,8 +78,8 @@ const childSelectedKeys = computed(() => {
 });
 const showChildSider = computed(
   () =>
-    preferences.layoutMode === 'mix' ||
-    (preferences.layoutMode === 'doubleSide' && childMenuItems.value.length > 0),
+    childMenuItems.value.length > 0 &&
+    (preferences.layoutMode === 'mix' || preferences.layoutMode === 'doubleSide'),
 );
 const openKeys = ref<string[]>([]);
 const childOpenKeys = ref<string[]>([]);
